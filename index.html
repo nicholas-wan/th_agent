@@ -287,7 +287,7 @@
       </div>
       <div class="ps-line" id="pl2"></div>
       <div class="ps-node wait" id="ps3" onclick="setStep(3)">
-        <div class="ps-icon">🧠</div><div class="ps-label">Tradecraft Supervisor</div>
+        <div class="ps-icon">🧠</div><div class="ps-label">RAA Supervisor Agent</div>
       </div>
       <div class="ps-line" id="pl3"></div>
       <div class="ps-node wait" id="ps4" onclick="setStep(4)">
@@ -453,7 +453,7 @@
             <button class="btn btn-outline btn-sm" onclick="setStep(1)">← Back</button>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:9px;">
-            <div class="info-bar"><span class="ib-icon">📌</span><span>The <b>Hypothesis Agent</b> generated these hunt hypotheses from the extracted TTPs, informed by past hunt history and analyst notes. <b>Select a hypothesis</b> to focus the Tradecraft Supervisor's analysis, then click <b>Send to Tradecraft →</b> to proceed with adversary behaviour review.</span></div>
+            <div class="info-bar"><span class="ib-icon">📌</span><span>The <b>Hypothesis Agent</b> generated these hunt hypotheses from the extracted TTPs, informed by past hunt history and analyst notes. <b>Select a hypothesis</b> to focus the RAA Supervisor Agent's analysis, then click <b>Send to Tradecraft →</b> to proceed with adversary behaviour review.</span></div>
             <div class="hyp-recall">
               <!-- Header -->
               <div class="hyp-recall-head">
@@ -563,7 +563,7 @@
                 <span class="chip chip-indigo" style="font-size:9px;">recommendation</span>
               </div>
               <div class="agent-gate-reasoning">
-                H-01 has the highest confidence and prior confirmation — PsExec lateral movement was confirmed across 9 hosts in TH-2026-038. Sending to Tradecraft Supervisor with Splunk ES as data source. Single-hop threshold and batch-job exclusion window pre-applied from Marcus and Priya's analyst notes.
+                H-01 has the highest confidence and prior confirmation — PsExec lateral movement was confirmed across 9 hosts in TH-2026-038. Sending to RAA Supervisor Agent with Splunk ES as data source. Single-hop threshold and batch-job exclusion window pre-applied from Marcus and Priya's analyst notes.
               </div>
               <div class="agent-gate-prompt"><span class="agent-gate-prompt-dot"></span>Pipeline paused — your decision needed to continue</div>
               <div class="agent-gate-actions">
@@ -604,17 +604,17 @@
           </div>
         </div>
 
-        <!-- Stage 3: Tradecraft Supervisor -->
+        <!-- Stage 3: RAA Supervisor Agent -->
         <div class="stage card" id="stage-3">
           <div class="card-head" onclick="toggleStage('stage-3', event)">
-            <span class="card-title">🧠 Tradecraft Supervisor<span class="stage-chevron">▾</span></span>
+            <span class="card-title">🧠 RAA Supervisor Agent<span class="stage-chevron">▾</span></span>
             <div style="display:flex;gap:7px;align-items:center;">
               <span class="chip chip-indigo">H-01 · Splunk ES</span>
               <button class="btn btn-outline btn-sm" onclick="setStep(2)">← Back</button>
             </div>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <div class="info-bar"><span class="ib-icon">📌</span><span>The Tradecraft Supervisor queries your <b>2 running analytics</b> against Splunk logs and surfaces hits that match the hypothesis. TTPs with no analytic coverage are flagged as gaps and passed to the Detection Logic Agent to craft new rules.</span></div>
+            <div class="info-bar"><span class="ib-icon">📌</span><span>The RAA Supervisor Agent queries your <b>2 running analytics</b> against Splunk logs and surfaces hits that match the hypothesis. TTPs with no analytic coverage are flagged as gaps and passed to the Detection Logic Agent to craft new rules.</span></div>
 
             <!-- Analytic results -->
             <div>
@@ -842,7 +842,7 @@ index=wineventlog EventCode=<span class="str">4769</span>
             <div class="agent-pill" id="ap-ts" style="opacity:.4">
               <div class="ap-icon" style="background:rgba(245,158,11,.18)">🧠</div>
               <div style="flex:1;">
-                <div class="ap-name">Tradecraft Supervisor Agent</div>
+                <div class="ap-name">RAA Supervisor Agent</div>
                 <div class="ap-status" id="ap-ts-status">Awaiting hypotheses</div>
                 <div class="pbar"><div class="pfill" id="ap-ts-fill" style="width:0%;background:var(--blue)"></div></div>
               </div>
@@ -888,7 +888,7 @@ index=wineventlog EventCode=<span class="str">4769</span>
         <div class="card">
           <div class="card-head">
             <span class="card-title">🔌 Tools Available</span>
-            <span class="chip chip-green" style="font-size:10px;">7 active</span>
+            <span class="chip chip-green" style="font-size:10px;">6 active</span>
           </div>
           <div class="card-body" style="padding:10px 12px;">
 
@@ -932,18 +932,18 @@ index=wineventlog EventCode=<span class="str">4769</span>
                 </div>
               </div>
 
-              <!-- Technique Runbook -->
-              <div class="tool-tile" style="border-top:2px solid rgba(16,185,129,.6);" onclick="toggleToolTile(this)">
+              <!-- Tradecraft -->
+              <div class="tool-tile" style="border-top:2px solid rgba(20,184,166,.6);" onclick="toggleToolTile(this)">
                 <div class="tool-tile-head">
-                  <span class="tool-tile-icon">📖</span>
+                  <span class="tool-tile-icon">📚</span>
                   <div class="tool-tile-info">
-                    <div class="tool-tile-name">Runbook</div>
+                    <div class="tool-tile-name">Tradecraft</div>
                     <div class="tool-tile-meta"><span class="tool-tile-dot"></span>v1.0</div>
                   </div>
                   <span class="tool-tile-chevron">▼</span>
                 </div>
                 <div class="tool-tile-detail">
-                  <div class="tool-tile-row"><span>Coverage</span><span>218 ATT&amp;CK techniques</span></div>
+                  <div class="tool-tile-row"><span>Contents</span><span>6 skills · 5 runbooks</span></div>
                   <div class="tool-tile-fn-section">Functions</div>
                   <div class="tool-tile-fn-list">
                     <div class="tool-tile-fn">
@@ -952,17 +952,27 @@ index=wineventlog EventCode=<span class="str">4769</span>
                       <div class="tool-tile-fn-out">Hunt steps · evidence tips · FP guidance · SPL templates</div>
                     </div>
                     <div class="tool-tile-fn">
-                      <div class="tool-tile-fn-sig">list_ttps()</div>
-                      <div class="tool-tile-fn-desc">List all techniques covered in the runbook</div>
-                      <div class="tool-tile-fn-out">TTP IDs · technique names · tactic groupings</div>
+                      <div class="tool-tile-fn-sig">load_skills(ttp_list)</div>
+                      <div class="tool-tile-fn-desc">Match TTPs to hunter-authored skill files and load into agent context</div>
+                      <div class="tool-tile-fn-out">Matched skill IDs · patterns · SPL templates · FP exclusions</div>
                     </div>
                     <div class="tool-tile-fn">
-                      <div class="tool-tile-fn-sig">search_notes(query)</div>
-                      <div class="tool-tile-fn-desc">Full-text search across analyst hunt notes</div>
-                      <div class="tool-tile-fn-out">Matching notes · TTP context · author · date</div>
+                      <div class="tool-tile-fn-sig">get_skill(id)</div>
+                      <div class="tool-tile-fn-desc">Fetch a specific skill record by its ID</div>
+                      <div class="tool-tile-fn-out">Full skill · behavioural patterns · SPL · exclusions · version history</div>
+                    </div>
+                    <div class="tool-tile-fn">
+                      <div class="tool-tile-fn-sig">search_kb(query)</div>
+                      <div class="tool-tile-fn-desc">Full-text search across skills, runbooks, and analyst notes</div>
+                      <div class="tool-tile-fn-out">Matching entries · type (skill/runbook) · relevance scores</div>
+                    </div>
+                    <div class="tool-tile-fn">
+                      <div class="tool-tile-fn-sig">list_ttps()</div>
+                      <div class="tool-tile-fn-desc">List all techniques covered in the knowledge base</div>
+                      <div class="tool-tile-fn-out">TTP IDs · technique names · tactic groupings</div>
                     </div>
                   </div>
-                  <button class="btn btn-ghost tool-tile-open-btn" onclick="event.stopPropagation();openRunbook('T1078.002')">Open →</button>
+                  <button class="btn btn-ghost tool-tile-open-btn" onclick="event.stopPropagation();openSkillsRepo()">Open →</button>
                 </div>
               </div>
 
@@ -1113,39 +1123,6 @@ index=wineventlog EventCode=<span class="str">4769</span>
                 </div>
               </div>
 
-              <!-- Tradecraft Skills -->
-              <div class="tool-tile" style="border-top:2px solid rgba(20,184,166,.6);" onclick="toggleToolTile(this)">
-                <div class="tool-tile-head">
-                  <span class="tool-tile-icon">📚</span>
-                  <div class="tool-tile-info">
-                    <div class="tool-tile-name">Tradecraft Skills</div>
-                    <div class="tool-tile-meta"><span class="tool-tile-dot"></span>6 skills</div>
-                  </div>
-                  <span class="tool-tile-chevron">▼</span>
-                </div>
-                <div class="tool-tile-detail">
-                  <div class="tool-tile-row"><span>Contributors</span><span>3 hunters · version-controlled</span></div>
-                  <div class="tool-tile-fn-section">Functions</div>
-                  <div class="tool-tile-fn-list">
-                    <div class="tool-tile-fn">
-                      <div class="tool-tile-fn-sig">load_skills(ttp_list)</div>
-                      <div class="tool-tile-fn-desc">Match TTPs to hunter-authored skill files and load into agent context</div>
-                      <div class="tool-tile-fn-out">Matched skill IDs · patterns · SPL templates · FP exclusions</div>
-                    </div>
-                    <div class="tool-tile-fn">
-                      <div class="tool-tile-fn-sig">get_skill(id)</div>
-                      <div class="tool-tile-fn-desc">Fetch a specific skill record by its ID</div>
-                      <div class="tool-tile-fn-out">Full skill · behavioural patterns · SPL · exclusions · version history</div>
-                    </div>
-                    <div class="tool-tile-fn">
-                      <div class="tool-tile-fn-sig">search_skills(query)</div>
-                      <div class="tool-tile-fn-desc">Full-text search across skill names, patterns, and analyst notes</div>
-                      <div class="tool-tile-fn-out">Matching skills · relevance scores · pattern excerpts</div>
-                    </div>
-                  </div>
-                  <button class="btn btn-ghost tool-tile-open-btn" onclick="event.stopPropagation();openSkillsRepo()">Open →</button>
-                </div>
-              </div>
 
             </div>
 
@@ -1726,7 +1703,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           <div class="agent-row" onclick="openAgentDrawer('tradecraft',this)">
             <div style="display:flex;align-items:flex-start;gap:9px;">
               <div class="ar-av" style="background:rgba(245,158,11,.18);flex-shrink:0;margin-top:1px;">🧠</div>
-              <div><div class="ar-name">Tradecraft Supervisor Agent</div><div class="ar-desc">Scores process chains and command-line patterns against adversary tradecraft models, and loads domain expertise from the Skills Repository at invocation time.</div></div>
+              <div><div class="ar-name">RAA Supervisor Agent</div><div class="ar-desc">Supervises Reasoning Augmented Analytics — runs continuously against Splunk telemetry, scores process chains and command-line patterns against adversary behaviour models, and surfaces anomaly hits to the hunt pipeline.</div></div>
             </div>
           </div>
           <div class="agent-row" onclick="openAgentDrawer('detection',this)">
@@ -1744,7 +1721,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
       <div class="card">
         <div class="card-head">
           <span class="card-title">🔌 Tools Available</span>
-          <span class="chip chip-green" style="font-size:10px;">7 connected</span>
+          <span class="chip chip-green" style="font-size:10px;">6 connected</span>
         </div>
         <div class="card-body" style="padding:10px 12px;">
 
@@ -1788,17 +1765,18 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
               </div>
             </div>
 
-            <!-- Technique Runbook -->
-            <div class="tool-tile" style="border-top:2px solid rgba(16,185,129,.6);" onclick="toggleToolTile(this)">
+            <!-- Tradecraft -->
+            <div class="tool-tile" style="border-top:2px solid rgba(20,184,166,.6);" onclick="toggleToolTile(this)">
               <div class="tool-tile-head">
-                <span class="tool-tile-icon">📖</span>
+                <span class="tool-tile-icon">📚</span>
                 <div class="tool-tile-info">
-                  <div class="tool-tile-name">Runbook</div>
-                  <div class="tool-tile-meta"><span class="tool-tile-dot"></span>6 calls</div>
+                  <div class="tool-tile-name">Tradecraft</div>
+                  <div class="tool-tile-meta"><span class="tool-tile-dot"></span>9 calls</div>
                 </div>
                 <span class="tool-tile-chevron">▼</span>
               </div>
               <div class="tool-tile-detail">
+                <div class="tool-tile-row"><span>Active</span><span>SK-045 · SK-029 · SK-038</span></div>
                 <div class="tool-tile-fn-section">Functions</div>
                 <div class="tool-tile-fn-list">
                   <div class="tool-tile-fn">
@@ -1807,18 +1785,28 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
                     <div class="tool-tile-fn-out">Hunt steps · evidence tips · FP guidance · SPL templates</div>
                   </div>
                   <div class="tool-tile-fn">
-                    <div class="tool-tile-fn-sig">list_ttps()</div>
-                    <div class="tool-tile-fn-desc">List all techniques covered in the runbook</div>
-                    <div class="tool-tile-fn-out">TTP IDs · technique names · tactic groupings</div>
+                    <div class="tool-tile-fn-sig">load_skills(ttp_list)</div>
+                    <div class="tool-tile-fn-desc">Match TTPs to hunter-authored skill files and load into agent context</div>
+                    <div class="tool-tile-fn-out">Matched skill IDs · patterns · SPL templates · FP exclusions</div>
                   </div>
                   <div class="tool-tile-fn">
-                    <div class="tool-tile-fn-sig">search_notes(query)</div>
-                    <div class="tool-tile-fn-desc">Full-text search across analyst hunt notes</div>
-                    <div class="tool-tile-fn-out">Matching notes · TTP context · author · date</div>
+                    <div class="tool-tile-fn-sig">get_skill(id)</div>
+                    <div class="tool-tile-fn-desc">Fetch a specific skill record by its ID</div>
+                    <div class="tool-tile-fn-out">Full skill · behavioural patterns · SPL · exclusions · version history</div>
+                  </div>
+                  <div class="tool-tile-fn">
+                    <div class="tool-tile-fn-sig">search_kb(query)</div>
+                    <div class="tool-tile-fn-desc">Full-text search across skills, runbooks, and analyst notes</div>
+                    <div class="tool-tile-fn-out">Matching entries · type (skill/runbook) · relevance scores</div>
+                  </div>
+                  <div class="tool-tile-fn">
+                    <div class="tool-tile-fn-sig">list_ttps()</div>
+                    <div class="tool-tile-fn-desc">List all techniques covered in the knowledge base</div>
+                    <div class="tool-tile-fn-out">TTP IDs · technique names · tactic groupings</div>
                   </div>
                 </div>
-                <div class="tool-tile-lastcall">Last: get_runbook("T1003.001") · Tradecraft · 09:41</div>
-                <button class="btn btn-ghost tool-tile-open-btn" onclick="event.stopPropagation();openRunbook('T1078.002')">Open →</button>
+                <div class="tool-tile-lastcall">Last: load_skills(["T1570","T1003.001","T1558.003"]) · Tradecraft · 09:39</div>
+                <button class="btn btn-ghost tool-tile-open-btn" onclick="event.stopPropagation();openSkillsRepo()">Open →</button>
               </div>
             </div>
 
@@ -1971,40 +1959,6 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
               </div>
             </div>
 
-            <!-- Tradecraft Skills -->
-            <div class="tool-tile" style="border-top:2px solid rgba(20,184,166,.6);" onclick="toggleToolTile(this)">
-              <div class="tool-tile-head">
-                <span class="tool-tile-icon">📚</span>
-                <div class="tool-tile-info">
-                  <div class="tool-tile-name">Tradecraft Skills</div>
-                  <div class="tool-tile-meta"><span class="tool-tile-dot"></span>3 loaded</div>
-                </div>
-                <span class="tool-tile-chevron">▼</span>
-              </div>
-              <div class="tool-tile-detail">
-                <div class="tool-tile-row"><span>Active</span><span>SK-045 · SK-029 · SK-038</span></div>
-                <div class="tool-tile-fn-section">Functions</div>
-                <div class="tool-tile-fn-list">
-                  <div class="tool-tile-fn">
-                    <div class="tool-tile-fn-sig">load_skills(ttp_list)</div>
-                    <div class="tool-tile-fn-desc">Match TTPs to hunter-authored skill files and load into agent context</div>
-                    <div class="tool-tile-fn-out">Matched skill IDs · patterns · SPL templates · FP exclusions</div>
-                  </div>
-                  <div class="tool-tile-fn">
-                    <div class="tool-tile-fn-sig">get_skill(id)</div>
-                    <div class="tool-tile-fn-desc">Fetch a specific skill record by its ID</div>
-                    <div class="tool-tile-fn-out">Full skill · behavioural patterns · SPL · exclusions · version history</div>
-                  </div>
-                  <div class="tool-tile-fn">
-                    <div class="tool-tile-fn-sig">search_skills(query)</div>
-                    <div class="tool-tile-fn-desc">Full-text search across skill names, patterns, and analyst notes</div>
-                    <div class="tool-tile-fn-out">Matching skills · relevance scores · pattern excerpts</div>
-                  </div>
-                </div>
-                <div class="tool-tile-lastcall">Last: load_skills(["T1570","T1003.001","T1558.003"]) · Tradecraft · 09:39</div>
-                <button class="btn btn-ghost tool-tile-open-btn" onclick="event.stopPropagation();openSkillsRepo()">Open →</button>
-              </div>
-            </div>
 
           </div>
 
@@ -2545,7 +2499,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
           <div style="margin-top:12px;padding:9px 11px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-sm);font-size:11px;color:var(--sub);">
             <b style="color:var(--text);">✓ Gaps flagged → rules queued by Detection Logic Agent</b>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;margin-bottom:6px;">The Tradecraft Supervisor identifies uncovered techniques during hypothesis review. The Detection Logic Agent generates rules to close them — analytics do not change.</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;margin-bottom:6px;">The RAA Supervisor Agent identifies uncovered techniques during hypothesis review. The Detection Logic Agent generates rules to close them — analytics do not change.</div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               <div style="display:flex;align-items:center;gap:6px;"><span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;">T1021.006</span><span>WMI Lateral Movement</span><span style="margin-left:auto;color:var(--muted);font-size:10px;">rule queued ›</span></div>
               <div style="display:flex;align-items:center;gap:6px;"><span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;">T1027</span><span>PowerShell Obfuscation / AMSI Bypass</span><span style="margin-left:auto;color:var(--muted);font-size:10px;">rule queued ›</span></div>
@@ -2565,51 +2519,56 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
   <!-- Sub-tab bar -->
   <div class="kb-subtab-bar">
-    <div class="kb-stab on" id="kb-stab-skills"    onclick="switchKbTab('skills')">📚 Skills</div>
-    <div class="kb-stab"    id="kb-stab-runbooks"  onclick="switchKbTab('runbooks')">📖 TTP Runbooks</div>
-    <div class="kb-stab"    id="kb-stab-env"       onclick="switchKbTab('env')">🏗️ Environment</div>
-    <div class="kb-stab"    id="kb-stab-ioc"       onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
+    <div class="kb-stab on" id="kb-stab-tradecraft" onclick="switchKbTab('tradecraft')">📚 Tradecraft</div>
+    <div class="kb-stab"    id="kb-stab-env"        onclick="switchKbTab('env')">🏗️ Environment</div>
+    <div class="kb-stab"    id="kb-stab-ioc"        onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
   </div>
 
-  <!-- ── Skills pane ── -->
-  <div class="kb-pane on" id="kb-pane-skills">
+  <!-- ── Tradecraft pane (skills + runbooks) ── -->
+  <div class="kb-pane on" id="kb-pane-tradecraft">
     <div class="kb-skills-wrap">
 
-      <!-- Browse / Propose Edit sub-tabs -->
+      <!-- Inner tab bar: Tactic | Domain | TTP Runbooks | Propose Edit -->
       <div class="kb-sk-stab-bar">
-        <div class="kb-sk-stab on" id="kb-sk-browse-tab" onclick="switchKbSkTab('browse')">Browse</div>
-        <div class="kb-sk-stab" id="kb-sk-author-tab" onclick="switchKbSkTab('author')">✏️ Propose Edit</div>
+        <div class="kb-sk-stab on" id="kb-tc-stab-tactic"   onclick="switchTradecraftTab('tactic')">🎯 Tactic Skills</div>
+        <div class="kb-sk-stab"    id="kb-tc-stab-domain"   onclick="switchTradecraftTab('domain')">🏢 Domain Skills</div>
+        <div class="kb-sk-stab"    id="kb-tc-stab-runbooks" onclick="switchTradecraftTab('runbooks')">📖 TTP Runbooks</div>
+        <div class="kb-sk-stab"    id="kb-tc-stab-author"   onclick="switchTradecraftTab('author')">✏️ Propose Edit</div>
       </div>
 
-      <!-- Browse sub-pane -->
-      <div id="kb-sk-browse-pane">
-        <div class="sk-stats-bar" style="margin-bottom:14px;">
-          <div class="sk-stat"><div class="sk-stat-val">6</div><div class="sk-stat-lbl">Skills indexed</div></div>
-          <div class="sk-stat"><div class="sk-stat-val">4</div><div class="sk-stat-lbl">Categories</div></div>
-          <div class="sk-stat"><div class="sk-stat-val">3</div><div class="sk-stat-lbl">Contributors</div></div>
-          <div class="sk-stat"><div class="sk-stat-val" style="font-size:14px;">v2.0</div><div class="sk-stat-lbl">Latest version</div></div>
-        </div>
-        <div class="sk-type-bar">
-          <button class="sk-type-pill on" data-sktype="all"    onclick="filterKbSkType('all',this)">All Types</button>
-          <button class="sk-type-pill"    data-sktype="tactic" onclick="filterKbSkType('tactic',this)">🧠 Tactic Skills</button>
-          <button class="sk-type-pill"    data-sktype="domain" onclick="filterKbSkType('domain',this)">🏗️ Domain Skills</button>
-        </div>
-        <div id="kb-sk-type-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px;">All skills — tactic-level (cross-org) and domain-specific (this environment)</div>
-        <div class="sk-filter-bar" style="margin-bottom:12px;">
-          <span class="sk-cat-pill sk-cat-on" data-kbcat="all"      onclick="filterKbSkills('all',this)">All <span style="opacity:.6;">6</span></span>
-          <span class="sk-cat-pill" data-kbcat="credential-access"  onclick="filterKbSkills('credential-access',this)">Credential Access <span style="opacity:.6;">2</span></span>
-          <span class="sk-cat-pill" data-kbcat="lateral-movement"   onclick="filterKbSkills('lateral-movement',this)">Lateral Movement <span style="opacity:.6;">2</span></span>
-          <span class="sk-cat-pill" data-kbcat="c2"                 onclick="filterKbSkills('c2',this)">Command &amp; Control <span style="opacity:.6;">1</span></span>
-          <span class="sk-cat-pill" data-kbcat="execution"          onclick="filterKbSkills('execution',this)">Execution <span style="opacity:.6;">1</span></span>
-        </div>
+      <!-- Per-tab description — updated by switchTradecraftTab() -->
+      <div id="kb-tc-desc" class="info-bar" style="margin-bottom:14px;"></div>
+
+      <!-- Category filter — shared by Tactic + Domain tabs -->
+      <div class="sk-filter-bar" id="kb-tc-cat-bar" style="margin-bottom:12px;">
+        <span class="sk-cat-pill sk-cat-on" data-kbcat="all"      onclick="filterKbSkills('all',this)">All <span style="opacity:.6;">6</span></span>
+        <span class="sk-cat-pill" data-kbcat="credential-access"  onclick="filterKbSkills('credential-access',this)">Credential Access <span style="opacity:.6;">2</span></span>
+        <span class="sk-cat-pill" data-kbcat="lateral-movement"   onclick="filterKbSkills('lateral-movement',this)">Lateral Movement <span style="opacity:.6;">2</span></span>
+        <span class="sk-cat-pill" data-kbcat="c2"                 onclick="filterKbSkills('c2',this)">Command &amp; Control <span style="opacity:.6;">1</span></span>
+        <span class="sk-cat-pill" data-kbcat="execution"          onclick="filterKbSkills('execution',this)">Execution <span style="opacity:.6;">1</span></span>
+      </div>
+
+      <!-- Skills pane — re-rendered for Tactic or Domain tab -->
+      <div id="kb-tc-pane-skills">
         <div id="kb-sk-list"><!-- populated by renderKbSkillList() --></div>
       </div>
 
-      <!-- Author sub-pane -->
-      <div id="kb-sk-author-pane" style="display:none;">
+      <!-- TTP Runbooks pane -->
+      <div id="kb-tc-pane-runbooks" style="display:none;">
+        <div class="sk-filter-bar" id="rb-kb-tactic-filter" style="margin-bottom:12px;">
+          <span class="sk-cat-pill sk-cat-on" data-rbtactic="all"              onclick="filterKbRunbooks('all',this)">All</span>
+          <span class="sk-cat-pill" data-rbtactic="Credential Access"          onclick="filterKbRunbooks('Credential Access',this)">Credential Access</span>
+          <span class="sk-cat-pill" data-rbtactic="Lateral Movement"           onclick="filterKbRunbooks('Lateral Movement',this)">Lateral Movement</span>
+          <span class="sk-cat-pill" data-rbtactic="Execution"                  onclick="filterKbRunbooks('Execution',this)">Execution</span>
+          <span class="sk-cat-pill" data-rbtactic="Persistence"                onclick="filterKbRunbooks('Persistence',this)">Persistence</span>
+        </div>
+        <div id="kb-rb-list"><!-- populated by renderKbRunbooks() --></div>
+      </div>
+
+      <!-- Propose Edit pane -->
+      <div id="kb-tc-pane-author" style="display:none;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
           <div class="sk-author-form">
-            <div style="font-size:12px;color:var(--sub);margin-bottom:4px;line-height:1.6;">Propose a new skill or an edit to an existing one. Submissions are reviewed by senior hunters before being merged.</div>
             <div class="sk-field">
               <label class="sk-field-lbl">Skill Name</label>
               <input class="sk-finput" id="kb-draft-name" placeholder="e.g. LSASS Memory Access via Task Manager">
@@ -2660,24 +2619,6 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- ── TTP Runbooks pane ── -->
-  <div class="kb-pane" id="kb-pane-runbooks">
-    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:auto;min-height:0;">
-      <div class="info-bar">
-        <span class="ib-icon">📖</span>
-        <span>TTP-level runbooks — one entry per technique. Each covers adversary evidence indicators, hunting SPL, prior hunt notes from this environment, and known false positives. These are the same runbooks the Hypothesis Agent draws from via <code style="font-size:10px;">get_runbook(ttp_id)</code>. Edit <b>kb/runbooks.js</b> to add more.</span>
-      </div>
-      <div class="sk-filter-bar" id="rb-kb-tactic-filter">
-        <span class="sk-cat-pill sk-cat-on" data-rbtactic="all"                onclick="filterKbRunbooks('all',this)">All</span>
-        <span class="sk-cat-pill" data-rbtactic="Credential Access"            onclick="filterKbRunbooks('Credential Access',this)">Credential Access</span>
-        <span class="sk-cat-pill" data-rbtactic="Lateral Movement"             onclick="filterKbRunbooks('Lateral Movement',this)">Lateral Movement</span>
-        <span class="sk-cat-pill" data-rbtactic="Execution"                    onclick="filterKbRunbooks('Execution',this)">Execution</span>
-        <span class="sk-cat-pill" data-rbtactic="Persistence"                  onclick="filterKbRunbooks('Persistence',this)">Persistence</span>
-      </div>
-      <div id="kb-rb-list"><!-- populated by renderKbRunbooks() --></div>
     </div>
   </div>
 
@@ -2904,7 +2845,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
   </div>
   <div class="chat-msgs" id="chat-msgs">
     <div class="msg ai"><div class="msg-av">⚡</div><div class="msg-bubble">I have full context on TH-2026-041. Ask me about findings, TTPs, agents, or how to refine your hypotheses.</div></div>
-    <div class="msg ai"><div class="msg-av">⚡</div><div class="msg-bubble">🔴 <strong>Active alert:</strong> Tradecraft Supervisor flagged LSASS memory access on WIN-DC01 (process chain anomaly, score 94). Recommend immediate isolation.</div></div>
+    <div class="msg ai"><div class="msg-av">⚡</div><div class="msg-bubble">🔴 <strong>Active alert:</strong> RAA Supervisor Agent flagged LSASS memory access on WIN-DC01 (process chain anomaly, score 94). Recommend immediate isolation.</div></div>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chat-input" placeholder="Ask about TTPs, findings, queries…" onkeydown="if(event.key==='Enter')sendMsg()">
@@ -2926,7 +2867,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🎛️ Orchestrator Agent</div><div class="apick-desc">Hunt coordination &amp; task routing</div></div>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">💡 Hypothesis Agent</div><div class="apick-desc">Threat hypothesis generation from CTI</div></div>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🗄️ Data Engineering Agent</div><div class="apick-desc">CTI ingestion &amp; log normalization</div></div>
-          <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🧠 Tradecraft Supervisor Agent</div><div class="apick-desc">Cmd-line &amp; process chain anomaly</div></div>
+          <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🧠 RAA Supervisor Agent</div><div class="apick-desc">Cmd-line &amp; process chain anomaly</div></div>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">⚙️ Detection Logic Agent</div><div class="apick-desc">Hunting rule creation (KQL/Sigma)</div></div>
         </div>
       </div>

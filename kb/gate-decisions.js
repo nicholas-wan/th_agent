@@ -27,7 +27,7 @@ const gateDecisionLog = {
       original:'H-01 (LSASS access) · H-02 (Kerberoasting) · H-03 (C2 beacon)',
       change:null,
       reason:'All three hypotheses well-scoped. H-01 carries prior confirmed findings — elevated confidence warranted.' },
-    { gate:3, name:'Tradecraft Validation', agent:'tradecraft',   agentColor:'yellow', analyst:'marcus', ts:'09:38 · Apr 27', decision:'modified',
+    { gate:3, name:'RAA Supervisor Validation', agent:'tradecraft',   agentColor:'yellow', analyst:'marcus', ts:'09:38 · Apr 27', decision:'modified',
       original:'Default FP threshold: 5%',
       change:'FP threshold lowered to 2% — DC VLAN Tier-0 assets in scope. Pre-loaded jsmith exclusion from TH-2026-038 FP list.',
       reason:'Tier-0 assets justify tighter threshold. One FP on a DC is worse than alert fatigue.' },

@@ -116,7 +116,7 @@ KB tab additionally calls `initKbTab()` on first open.
 | 1 | 🎛️ | Orchestrator Agent | `orchestrator` | blue |
 | 2 | 💡 | Hypothesis Agent | `hypothesis` | teal |
 | 3 | 🗄️ | Data Engineering Agent | `dataeng` | indigo |
-| 4 | 🧠 | Tradecraft Supervisor Agent | `tradecraft` | yellow |
+| 4 | 🧠 | RAA Supervisor Agent | `tradecraft` | yellow |
 | 5 | ⚙️ | Detection Logic Agent | `detection` | green |
 | 6 | ✅ | Rule Validation Agent | `validation` | purple |
 
@@ -132,23 +132,28 @@ KB tab additionally calls `initKbTab()` on first open.
 
 ## Knowledge Base Tab
 
-**4 sub-tabs:** 📚 Skills | 📖 TTP Runbooks | 🏗️ Environment | 🔍 IOC Repository
+**3 sub-tabs:** 📚 Tradecraft | 🏗️ Environment | 🔍 IOC Repository
 
 ```js
-switchKbTab(tab)          // 'skills' | 'runbooks' | 'env' | 'ioc'
-initKbTab()               // called on first KB tab open; renders all 4 panes
+switchKbTab(tab)          // 'tradecraft' | 'env' | 'ioc'
+initKbTab()               // called on first KB tab open; renders all panes
 ```
 
-**Skills pane:**
-- Type filter: `filterKbSkType(type, el)` — `'all'` | `'tactic'` | `'domain'`
-- Category filter: `filterKbSkills(cat, el)`
-- Render: `renderKbSkillList(cat)` — injects `.sk-type-tag` after `.sk-id` span
-- CSS: `.sk-type-tactic` (indigo), `.sk-type-domain` (teal)
+**Tradecraft pane** — 4 inner tabs via `switchTradecraftTab(tab)`:
 
-**TTP Runbooks pane:**
-- Tactic filter: `filterKbRunbooks(tactic, el)` — filters by `r.tactic.includes(tactic)`
-- Render: `renderKbRunbooks()` — collapsible `.rb-kb-card` per TTP
-- Each card: evidence dots, SPL blocks, prior hunt notes, FP list
+| Inner tab | Key | Content |
+|---|---|---|
+| 🎯 Tactic Skills | `tactic` | Cross-org ATT&CK technique skills, category-filtered |
+| 🏢 Domain Skills | `domain` | Org-specific skills tuned to this environment |
+| 📖 TTP Runbooks | `runbooks` | Per-technique hunt guides, tactic-filtered |
+| ✏️ Propose Edit | `author` | Skill authoring form + draft review queue |
+
+- State: `activeTradecraftTab` — `'tactic'` (default) | `'domain'` | `'runbooks'` | `'author'`
+- Category filter bar `#kb-tc-cat-bar` — visible for tactic/domain, hidden for runbooks/author
+- `renderKbSkillList(cat)` — reads `activeTradecraftTab` to know which type to show
+- `filterKbSkills(cat, el)` — updates `activeKbSkCat`, re-renders active skills tab
+- `filterKbRunbooks(tactic, el)` — updates `activeKbRbTactic`, re-renders runbooks
+- `renderKbRunbooks()` — collapsible `.rb-kb-card` per TTP; evidence dots, SPL, hunt notes, FPs
 
 **Environment pane:**
 - Edit mode: `toggleKbEnvEdit()`, `saveKbEnvChanges()`, `cancelKbEnvEdit()`
@@ -169,7 +174,7 @@ Tool card subtitles show version only (e.g. `v2.1`) — never "MCP Server · vX.
 | Icon | Name | CSS prefix | Color |
 |---|---|---|---|
 | 🟠 | Splunk Enterprise Security | inline style | orange `rgba(249,115,22,…)` |
-| 📖 | Technique Runbook | `rb-tool-` | green `rgba(16,185,129,…)` |
+| 📚 | Tradecraft (skills + runbooks) | `kb-tool-` | teal `rgba(20,184,166,…)` |
 | 🏗️ | Environment Context | `ec-tool-` | indigo `rgba(99,102,241,…)` |
 | ✅ | Rule Validation | `rv-tool-` | purple `rgba(139,92,246,…)` |
 | 🗂️ | Past Hunts | `ph-tool-` | blue `rgba(59,130,246,…)` |
@@ -271,7 +276,7 @@ Runs in two phases: **Gather** (parallel tool calls) → **Synthesize** (generat
 3. Inline Rule Test — mock SPL execution with 1.4s delay
 4. Hunt History Modal — 3-run comparison table + diff items
 5. TTP selector in Keep — filters findings, timeline, report
-6. Technique Runbook — tool card + modal (`openRunbook`, `runbookData`, `renderRunbook`)
+6. Knowledge Base tool tile — merged Runbook + Tradecraft Skills tile (`openSkillsRepo`, navigates to KB tab)
 7. Environment Context — tool card + modal (`ec-overlay`) with Crown Jewels sub-tab
 8. Rule Validation — tool card + modal (`rv-overlay`)
 9. Past Hunts — tool card (`ph-tool-*`)
@@ -282,9 +287,9 @@ Runs in two phases: **Gather** (parallel tool calls) → **Synthesize** (generat
 14. Finding comments — inline threaded notes on Keep findings
 15. Hunt velocity metrics — MTTD / FP rate / sparklines sidebar card in Keep
 16. Skills Repository authoring — Propose Edit form + draft queue
-17. Knowledge Base main tab — Skills + TTP Runbooks + Environment (editable) + IOC Repository
+17. Knowledge Base main tab — Tradecraft (skills + runbooks) + Environment (editable) + IOC Repository
 18. Gate Decision Log — per-hunt analyst decisions in Keep
-19. Skills type differentiation — `skillType: 'tactic'` vs `'domain'` with filter toggle
+19. Skills type grouping — `skillType: 'tactic'` vs `'domain'` rendered as labelled sections in Tradecraft pane
 
 ---
 

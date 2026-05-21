@@ -1282,14 +1282,14 @@ const keepData = {
     createdBy: 'alice', createdAt: 'Apr 27, 2026 · 09:15',
     criticals: 3, highs: 9,
     findings: [
-      { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · Tradecraft Supervisor Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
-      { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · Tradecraft Supervisor Agent · T1570 · 5m ago',      drawer:'tradecraft' },
+      { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · RAA Supervisor Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
+      { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · RAA Supervisor Agent · T1570 · 5m ago',      drawer:'tradecraft' },
       { sev:'c', title:'Cobalt Strike C2 Beacon — JA3 rule match',           meta:'185.220.101.47 · Detection Logic Agent · T1071.001 · 8m ago',    drawer:'detection'  },
-      { sev:'h', title:'Kerberoasting — Cmd-line Anomaly, 7 SPNs',           meta:'corp.local · Tradecraft Supervisor Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
+      { sev:'h', title:'Kerberoasting — Cmd-line Anomaly, 7 SPNs',           meta:'corp.local · RAA Supervisor Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
       { sev:'h', title:'Registry Run Key — Validated persistence rule',      meta:'SRV-APP03 · Rule Validation Agent · T1547.001 · 15m ago',        drawer:'validation' },
       { sev:'h', title:'DNS TXT Exfiltration Pattern',                       meta:'evilc2[.]net · Detection Logic Agent · T1041 · 19m ago',         drawer:'detection'  },
-      { sev:'m', title:'PowerShell Encoded Command — Anomaly Score 81',      meta:'WIN-WS041 · Tradecraft Supervisor Agent · T1059.001 · 22m ago',  drawer:'tradecraft' },
-      { sev:'m', title:'Shadow Copy Deletion via vssadmin — Score 97',       meta:'WIN-DC01 · Tradecraft Supervisor Agent · T1490 · 31m ago',       drawer:'tradecraft' },
+      { sev:'m', title:'PowerShell Encoded Command — Anomaly Score 81',      meta:'WIN-WS041 · RAA Supervisor Agent · T1059.001 · 22m ago',  drawer:'tradecraft' },
+      { sev:'m', title:'Shadow Copy Deletion via vssadmin — Score 97',       meta:'WIN-DC01 · RAA Supervisor Agent · T1490 · 31m ago',       drawer:'tradecraft' },
     ],
     lock: {
       l: 'Ingested CISA AA24-038A (Volt Typhoon). Extracted 14 ATT&amp;CK techniques. Generated 3 hypotheses focused on lateral movement, credential harvesting, and C2 beaconing.',
@@ -1300,10 +1300,10 @@ const keepData = {
       raa: { relevant: true, note: 'RAA triggered — 2 analytics, 62 hits confirmed (T1570, T1078.002)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Tradecraft Supervisor</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
-      { color:'blue',   text:'<b>Tradecraft Supervisor</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570',     host:'CORP NET'  },
+      { color:'red',    text:'<b>RAA Supervisor Agent</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
+      { color:'blue',   text:'<b>RAA Supervisor Agent</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570',     host:'CORP NET'  },
       { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon rule matched, JA3 hit on 185.220.101.47',  time:'09:35', tag:'T1071.001', host:'EXT'       },
-      { color:'yellow', text:'<b>Tradecraft Supervisor</b> — cmd-line anomaly, Kerberoasting pattern (7 SPNs)',    time:'09:32', tag:'T1558.003', host:'WIN-WS041' },
+      { color:'yellow', text:'<b>RAA Supervisor Agent</b> — cmd-line anomaly, Kerberoasting pattern (7 SPNs)',    time:'09:32', tag:'T1558.003', host:'WIN-WS041' },
       { color:'indigo', text:'<b>Rule Validation Agent</b> — persistence rule triggered, svcupd.exe registry key',time:'09:29', tag:'T1547.001', host:'SRV-APP03' },
       { color:'green',  text:'<b>Detection Logic Agent</b> — SPL rules validated and pushed to SIEM',             time:'09:18', tag:'',          host:'SYSTEM'    },
       { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-041 started, 6 agents deployed',          time:'09:15', tag:'',          host:'SYSTEM'    },
@@ -1340,10 +1340,10 @@ const keepData = {
     createdBy: 'marcus', createdAt: 'Apr 24, 2026 · 13:15',
     criticals: 2, highs: 6,
     findings: [
-      { sev:'c', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · Tradecraft Supervisor Agent · T1490 · 3d ago',        drawer:'tradecraft' },
+      { sev:'c', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · RAA Supervisor Agent · T1490 · 3d ago',        drawer:'tradecraft' },
       { sev:'c', title:'Phishing Payload Execution — Office Macro',        meta:'WIN-WS012 · Detection Logic Agent · T1204 · 3d ago',             drawer:'detection'  },
       { sev:'h', title:'DLL Sideloading — DISM.exe',                       meta:'WIN-WS012 · Rule Validation Agent · T1574.002 · 3d ago',         drawer:'validation' },
-      { sev:'h', title:'Data Encrypted for Impact',                        meta:'WIN-FS02 · Tradecraft Supervisor Agent · T1486 · 3d ago',         drawer:'tradecraft' },
+      { sev:'h', title:'Data Encrypted for Impact',                        meta:'WIN-FS02 · RAA Supervisor Agent · T1486 · 3d ago',         drawer:'tradecraft' },
       { sev:'h', title:'Credential Access via LSASS Dump',                 meta:'WIN-DC02 · Detection Logic Agent · T1003.001 · 3d ago',           drawer:'detection'  },
       { sev:'m', title:'Phishing Email — Malicious Attachment Opened',     meta:'mail.corp.local · Detection Logic Agent · T1566.001 · 3d ago',   drawer:'detection'  },
     ],
@@ -1356,11 +1356,11 @@ const keepData = {
       raa: { relevant: true, note: 'RAA triggered — Process Chain Anomaly, 12 hits (T1204 macro chain, T1490 shadow copy deletion)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Tradecraft Supervisor</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
+      { color:'red',    text:'<b>RAA Supervisor Agent</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
       { color:'red',    text:'<b>Detection Logic Agent</b> — data encryption pattern detected on FS02',                   time:'14:19', tag:'T1486',     host:'WIN-FS02'  },
       { color:'orange', text:'<b>Rule Validation Agent</b> — DLL sideloading rule matched DISM.exe',                      time:'14:05', tag:'T1574.002', host:'WIN-WS012' },
       { color:'yellow', text:'<b>Detection Logic Agent</b> — Office macro execution flagged on WIN-WS012',                time:'13:47', tag:'T1204',     host:'WIN-WS012' },
-      { color:'blue',   text:'<b>Tradecraft Supervisor</b> — phishing email linked to FIN7 campaign',                     time:'13:30', tag:'T1566.001', host:'EXT'       },
+      { color:'blue',   text:'<b>RAA Supervisor Agent</b> — phishing email linked to FIN7 campaign',                     time:'13:30', tag:'T1566.001', host:'EXT'       },
       { color:'green',  text:'<b>Orchestrator Agent</b> — Hunt TH-2026-040 started, 5 agents deployed',                  time:'13:15', tag:'',          host:'SYSTEM'    },
     ],
     report: {
@@ -1397,7 +1397,7 @@ const keepData = {
       { sev:'c', title:'Trojanised Build Tool — Supply Chain Compromise',  meta:'build-srv01 · Detection Logic Agent · T1195.002 · 2w ago',            drawer:'detection'  },
       { sev:'h', title:'DLL Sideloading via Legitimate Binary',            meta:'10 hosts · Rule Validation Agent · T1574.002 · 2w ago',               drawer:'validation' },
       { sev:'h', title:'C2 Beacon — Cobalt Strike over HTTPS',             meta:'update.cdn-cache[.]net · Detection Logic Agent · T1071.001 · 2w ago', drawer:'detection'  },
-      { sev:'h', title:'Scheduled Task Persistence — svchost wrapper',     meta:'SRV-BUILD01 · Tradecraft Supervisor Agent · T1053.005 · 2w ago',      drawer:'tradecraft' },
+      { sev:'h', title:'Scheduled Task Persistence — svchost wrapper',     meta:'SRV-BUILD01 · RAA Supervisor Agent · T1053.005 · 2w ago',      drawer:'tradecraft' },
       { sev:'m', title:'Exfiltration over C2 Channel',                     meta:'update.cdn-cache[.]net · Detection Logic Agent · T1041 · 2w ago',     drawer:'detection'  },
     ],
     lock: {
@@ -1412,7 +1412,7 @@ const keepData = {
       { color:'red',    text:'<b>Detection Logic Agent</b> — trojanised build artifact confirmed on SRV-BUILD01',  time:'11:03', tag:'T1195.002' },
       { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon over HTTPS, JA3 match',                     time:'10:52', tag:'T1071.001' },
       { color:'indigo', text:'<b>Rule Validation Agent</b> — DLL sideloading confirmed on 10 hosts',               time:'10:44', tag:'T1574.002' },
-      { color:'yellow', text:'<b>Tradecraft Supervisor</b> — scheduled task persistence detected',                  time:'10:38', tag:'T1053.005' },
+      { color:'yellow', text:'<b>RAA Supervisor Agent</b> — scheduled task persistence detected',                  time:'10:38', tag:'T1053.005' },
       { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-039 started, 5 agents deployed',            time:'10:15', tag:''          },
     ],
     report: {
@@ -2091,20 +2091,20 @@ const agentData = {
     </div>` },
 
   orchestrator: { title:'Orchestrator Agent', sub:'Hunt Coordination & Synthesis · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives the parsed CTI from the Data Engineering Agent, assigns analytical tasks to the Tradecraft Supervisor and Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives the parsed CTI from the Data Engineering Agent, assigns analytical tasks to the RAA Supervisor Agent and Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
     <div class="ds"><div class="ds-head">Agent Topology</div>
       <div style="font-size:11px;color:var(--sub);line-height:2;">
         🎛️ Orchestrator<br>
         &nbsp;&nbsp;├─ 💡 Hypothesis Agent <span style="color:var(--muted);font-size:10px;">(spawned first · generates hypotheses)</span><br>
         &nbsp;&nbsp;├─ 🗄️ Data Engineering Agent<br>
-        &nbsp;&nbsp;├─ 🧠 Tradecraft Supervisor Agent<br>
+        &nbsp;&nbsp;├─ 🧠 RAA Supervisor Agent<br>
         &nbsp;&nbsp;├─ ⚙️ Detection Logic Agent<br>
         &nbsp;&nbsp;└─ ✅ Rule Validation Agent
       </div>
     </div>` },
 
   dataeng: { title:'Data Engineering Agent', sub:'Telemetry Ingestion & Normalization · Streaming', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Connects to Splunk Enterprise Security via MCP (Model Context Protocol) and makes enriched, CIM-normalised telemetry available to all downstream agents. It translates hunt hypotheses into SPL queries, exposes relevant data models and field extractions, and streams event context into the shared agent workspace so the Tradecraft Supervisor and Detection Logic Agent can operate on structured, hunt-ready data.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Connects to Splunk Enterprise Security via MCP (Model Context Protocol) and makes enriched, CIM-normalised telemetry available to all downstream agents. It translates hunt hypotheses into SPL queries, exposes relevant data models and field extractions, and streams event context into the shared agent workspace so the RAA Supervisor Agent and Detection Logic Agent can operate on structured, hunt-ready data.</div></div>
     <div class="ds"><div class="ds-head">🔌 MCP Connection</div>
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;">
         <span style="font-size:18px;">🟠</span>
@@ -2134,7 +2134,7 @@ const agentData = {
         &nbsp;&nbsp;| eval cmdline=lower(CommandLine)<br>
         &nbsp;&nbsp;| where match(cmdline,"powershell|encoded|bypass")<br>
         &nbsp;&nbsp;| stats count by host,ParentProcessName,cmdline<br>
-        <span style="color:var(--muted);">— feeding Tradecraft Supervisor · 342 events/min</span>
+        <span style="color:var(--muted);">— feeding RAA Supervisor Agent · 342 events/min</span>
       </div>
     </div>
     <div class="ds"><div class="ds-head">Normalisation Stats</div>
@@ -2146,26 +2146,26 @@ const agentData = {
       </div>
     </div>` },
 
-  tradecraft: { title:'Tradecraft Supervisor Agent', sub:'Reasoning Augmented Analytics · ALERTING', body:`
+  tradecraft: { title:'RAA Supervisor Agent', sub:'Reasoning Augmented Analytics · ALERTING', body:`
     <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Applies reasoning-augmented analytics to score process behaviour against adversary tradecraft models. Specialises in two core detections: <b>command-line anomaly scoring</b> (flags unusual flag combinations, encoded payloads, LOLBin abuse) and <b>process chain anomaly</b> (detects unexpected parent-child relationships against a learned baseline). Outputs enriched hypotheses with confidence scores for the Orchestrator.</div></div>
-    <div class="ds"><div class="ds-head">📚 Skills Loaded</div>
+    <div class="ds"><div class="ds-head">📊 Active RAA Analytics</div>
       <div class="ioc-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
-        <div style="display:flex;align-items:center;gap:7px;"><span class="ioc-t" style="color:var(--teal);font-family:monospace;">SK-045</span><span style="font-size:11px;font-weight:600;color:var(--text);">VMware vCenter Lateral Movement</span><span class="chip chip-gray" style="font-size:9px;">v1.2</span></div>
-        <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ vSphere API port 902 host-jump patterns · PowerCLI scope filter · vMotion exclusions</div>
+        <div style="display:flex;align-items:center;gap:7px;"><span class="chip chip-red" style="font-size:9px;">ALERTING</span><span style="font-size:11px;font-weight:600;color:var(--text);">Process Chain Anomaly</span></div>
+        <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ Detects unexpected parent-child relationships against learned baseline · 3 hits this hunt</div>
       </div>
       <div class="ioc-row" style="flex-direction:column;align-items:flex-start;gap:2px;margin-top:6px;">
-        <div style="display:flex;align-items:center;gap:7px;"><span class="ioc-t" style="color:var(--teal);font-family:monospace;">SK-029</span><span style="font-size:11px;font-weight:600;color:var(--text);">LSASS Credential Dumping — EDR Evasion</span><span class="chip chip-gray" style="font-size:9px;">v3.0</span></div>
-        <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ NtDuplicateObject handle pattern active · CrowdStrike + Defender exclusions applied</div>
+        <div style="display:flex;align-items:center;gap:7px;"><span class="chip chip-yellow" style="font-size:9px;">ACTIVE</span><span style="font-size:11px;font-weight:600;color:var(--text);">Command-Line Anomaly Scoring</span></div>
+        <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ Flags unusual flag combos, encoded payloads, LOLBin abuse · scoring threshold 75+</div>
       </div>
       <div class="ioc-row" style="flex-direction:column;align-items:flex-start;gap:2px;margin-top:6px;">
-        <div style="display:flex;align-items:center;gap:7px;"><span class="ioc-t" style="color:var(--teal);font-family:monospace;">SK-038</span><span style="font-size:11px;font-weight:600;color:var(--text);">Kerberoasting — Service Account FP Filter</span><span class="chip chip-gray" style="font-size:9px;">v2.1</span></div>
-        <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ BackupExec + MSSQLSvc SPN exclusions loaded · RC4 TGS threshold tuned to org baseline</div>
+        <div style="display:flex;align-items:center;gap:7px;"><span class="chip chip-green" style="font-size:9px;">ACTIVE</span><span style="font-size:11px;font-weight:600;color:var(--text);">Network Behaviour Baseline</span></div>
+        <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ East-west flow deviation scoring against 30-day rolling baseline · 0 hits this hunt</div>
       </div>
     </div>
 ` },
 
   detection: { title:'Detection Logic Agent', sub:'Hunting Rule Creation · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Translates hypotheses and Tradecraft Supervisor outputs into executable detection rules. Generates multi-format output: KQL for Microsoft Sentinel, Sigma for SIEM-agnostic distribution, Splunk SPL, and YARA-L for endpoint platforms. Rules are automatically passed to the Rule Validation Agent before deployment.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Translates hypotheses and RAA Supervisor Agent outputs into executable detection rules. Generates multi-format output: KQL for Microsoft Sentinel, Sigma for SIEM-agnostic distribution, Splunk SPL, and YARA-L for endpoint platforms. Rules are automatically passed to the Rule Validation Agent before deployment.</div></div>
     <div class="ds"><div class="ds-head">Output Formats</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;font-size:11px;">
         <span class="chip chip-blue">KQL</span><span class="chip chip-indigo">Sigma</span><span class="chip chip-gray">Splunk SPL</span><span class="chip chip-gray">YARA-L</span>
@@ -3868,15 +3868,17 @@ function submitSkillDraft() {
 // ─────────────────────────────────────────────
 //  KNOWLEDGE BASE TAB
 // ─────────────────────────────────────────────
-let activeKbTab      = 'skills';
-let activeKbSkTab    = 'browse';
-let activeKbSkCat    = 'all';
-let activeKbSkType   = 'all';
-let activeKbRbTactic = 'all';
+let activeKbTab         = 'tradecraft';
+let activeTradecraftTab = 'tactic';
+let activeKbSkCat       = 'all';
+let activeKbRbTactic    = 'all';
 let kbEnvEditMode  = false;
 let kbEnvSnapshot  = null; // store original values for cancel
 
 function initKbTab() {
+  // Seed the per-tab description for the default active tab
+  const desc = document.getElementById('kb-tc-desc');
+  if (desc) desc.innerHTML = _tcDesc[activeTradecraftTab] || '';
   renderKbSkillList(activeKbSkCat);
   renderKbDraftList();
   renderKbRunbooks();
@@ -3887,24 +3889,45 @@ function initKbTab() {
 // ── KB sub-tab switch ──
 function switchKbTab(tab) {
   activeKbTab = tab;
-  ['skills','runbooks','env','ioc'].forEach(k => {
+  ['tradecraft','env','ioc'].forEach(k => {
     const stab = document.getElementById('kb-stab-' + k);
     const pane = document.getElementById('kb-pane-' + k);
     if (stab) stab.classList.toggle('on', k === tab);
     if (pane) pane.classList.toggle('on', k === tab);
   });
-  if (tab === 'runbooks') renderKbRunbooks();
+  if (tab === 'tradecraft') { renderKbSkillList(activeKbSkCat); renderKbRunbooks(); }
   if (tab === 'env') renderKbEnvPane();
   if (tab === 'ioc') renderKbIocPane();
 }
 
-// ── KB Skills — Browse/Author sub-tabs ──
-function switchKbSkTab(tab) {
-  activeKbSkTab = tab;
-  document.getElementById('kb-sk-browse-tab').classList.toggle('on', tab === 'browse');
-  document.getElementById('kb-sk-author-tab').classList.toggle('on', tab === 'author');
-  document.getElementById('kb-sk-browse-pane').style.display = tab === 'browse' ? '' : 'none';
-  document.getElementById('kb-sk-author-pane').style.display = tab === 'author'  ? '' : 'none';
+// ── Tradecraft inner tab switch ──
+const _tcDesc = {
+  tactic:   '<span class="ib-icon">🎯</span><span><b>Tactic Skills</b> are generic ATT&CK technique patterns that apply across any organisation. They encode hunter intuition as SPL templates, detection logic, and FP exclusion lists — use these as a starting point when hunting a technique you haven\'t seen in this environment before.</span>',
+  domain:   '<span class="ib-icon">🏢</span><span><b>Domain Skills</b> are tuned to <em>this</em> environment. They encode your team\'s knowledge of this network\'s topology, tooling, service accounts, and known-good baselines — the exclusions, thresholds, and naming conventions that cut false positives in your specific org.</span>',
+  runbooks: '<span class="ib-icon">📖</span><span><b>TTP Runbooks</b> are technique-level hunt guides, one per ATT&CK technique. Each covers adversary evidence indicators, hunting SPL, prior hunt notes from this environment, and known false positives. The Hypothesis Agent pulls these via <code style="font-size:10px;">get_runbook(ttp_id)</code> when generating hypotheses.</span>',
+  author:   '<span class="ib-icon">✏️</span><span>Propose a new skill or an edit to an existing one. Fill in the form on the left — include behavioural patterns, an SPL template, and known FP exclusions. Submissions go into the draft queue for senior hunter review before being merged into the live knowledge base.</span>',
+};
+
+function switchTradecraftTab(tab) {
+  activeTradecraftTab = tab;
+  ['tactic','domain','runbooks','author'].forEach(k => {
+    const stab = document.getElementById('kb-tc-stab-' + k);
+    if (stab) stab.classList.toggle('on', k === tab);
+  });
+  const isSkills = tab === 'tactic' || tab === 'domain';
+  const catBar  = document.getElementById('kb-tc-cat-bar');
+  const skillsP = document.getElementById('kb-tc-pane-skills');
+  const rbP     = document.getElementById('kb-tc-pane-runbooks');
+  const authP   = document.getElementById('kb-tc-pane-author');
+  const desc    = document.getElementById('kb-tc-desc');
+  if (catBar)  catBar.style.display  = isSkills          ? '' : 'none';
+  if (skillsP) skillsP.style.display = isSkills          ? '' : 'none';
+  if (rbP)     rbP.style.display     = tab === 'runbooks' ? '' : 'none';
+  if (authP)   authP.style.display   = tab === 'author'   ? '' : 'none';
+  if (desc)    desc.innerHTML        = _tcDesc[tab] || '';
+  if (isSkills)           renderKbSkillList(activeKbSkCat);
+  if (tab === 'runbooks') renderKbRunbooks();
+  if (tab === 'author')   renderKbDraftList();
 }
 
 // ── KB Skills — filter ──
@@ -3918,36 +3941,16 @@ function renderKbSkillList(cat) {
   const el = document.getElementById('kb-sk-list');
   if (!el || typeof skillsData === 'undefined') return;
   let filtered = cat === 'all' ? skillsData : skillsData.filter(s => s.cat === cat);
-  if (activeKbSkType !== 'all') filtered = filtered.filter(s => s.skillType === activeKbSkType);
+  // Filter to the active inner tab type (tactic or domain)
+  const type = activeTradecraftTab === 'domain' ? 'domain' : 'tactic';
+  filtered = filtered.filter(s => s.skillType === type);
   if (!filtered.length) {
     el.innerHTML = '<div style="text-align:center;padding:30px 0;font-size:12px;color:var(--muted);">No skills match this filter.</div>';
     return;
   }
-  el.innerHTML = filtered.map(s => {
-    const typeTag = s.skillType === 'tactic'
-      ? `<span class="sk-type-tag sk-type-tactic">🧠 Tactic</span>`
-      : s.skillType === 'domain'
-      ? `<span class="sk-type-tag sk-type-domain">🏗️ Domain</span>` : '';
-    let card = renderSkillCard(s);
-    // Inject type tag after the skill ID span
-    card = card.replace(/<span class="sk-id">([^<]+)<\/span>/, `<span class="sk-id">$1</span>${typeTag}`);
-    return card;
-  }).join('');
+  el.innerHTML = filtered.map(s => renderSkillCard(s)).join('');
 }
 
-// ── Skills type filter ──
-function filterKbSkType(type, el) {
-  activeKbSkType = type;
-  document.querySelectorAll('[data-sktype]').forEach(b => b.classList.toggle('on', b.dataset.sktype === type));
-  const hint = document.getElementById('kb-sk-type-hint');
-  if (hint) {
-    const labels = { all:'All skills — tactic-level (cross-org) and domain-specific (this environment)',
-      tactic:'🧠 Tactic skills — generic ATT&CK technique knowledge, applies across organisations',
-      domain:'🏗️ Domain skills — tuned to this environment\'s topology, tooling, and known-good baselines' };
-    hint.textContent = labels[type] || '';
-  }
-  renderKbSkillList(activeKbSkCat);
-}
 
 // ── TTP Runbooks ──
 function filterKbRunbooks(tactic, el) {
