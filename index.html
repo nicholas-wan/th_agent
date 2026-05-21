@@ -890,6 +890,47 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .sk-draft-name { font-size:11px; color:var(--text); flex:1; }
 .sk-draft-badge { font-size:9px; font-weight:700; padding:2px 6px; border-radius:3px; color:var(--yellow); background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.2); }
 
+/* ═══════════════════════════════════
+   KNOWLEDGE BASE TAB
+═══════════════════════════════════ */
+.kb-subtab-bar { display:flex; align-items:center; gap:0; padding:0 22px; background:var(--s1); border-bottom:1px solid var(--border); flex-shrink:0; height:42px; }
+.kb-stab { padding:0 18px; height:100%; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:var(--sub); border-bottom:2px solid transparent; cursor:pointer; transition:color .12s; white-space:nowrap; }
+.kb-stab:hover { color:var(--text); }
+.kb-stab.on { color:var(--teal); border-bottom-color:var(--teal); }
+.kb-pane { display:none; flex:1; overflow:auto; flex-direction:column; min-height:0; }
+.kb-pane.on { display:flex; }
+/* Skills sub-pane */
+.kb-skills-wrap { padding:20px 24px; display:flex; flex-direction:column; gap:0; flex:1; min-height:0; overflow:auto; }
+.kb-sk-stab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:16px; }
+.kb-sk-stab { padding:8px 16px; font-size:12px; font-weight:500; color:var(--sub); cursor:pointer; border-bottom:2px solid transparent; transition:color .12s; white-space:nowrap; }
+.kb-sk-stab:hover { color:var(--text); }
+.kb-sk-stab.on { color:var(--teal); border-bottom-color:var(--teal); }
+/* Environment sub-pane */
+.kb-env-wrap { padding:20px 24px; display:flex; flex-direction:column; gap:16px; flex:1; overflow:auto; }
+.kb-env-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+.kb-card { background:var(--s1); border:1px solid var(--border); border-radius:var(--radius); }
+.kb-card-head { padding:11px 15px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.kb-card-title { font-weight:600; font-size:13px; }
+.kb-card-body { padding:12px 15px; display:flex; flex-direction:column; gap:9px; }
+/* Editable fields */
+.kb-field { display:flex; flex-direction:column; gap:3px; }
+.kb-field-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+.kb-input { background:var(--s2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; font-size:12px; color:var(--text); outline:none; font-family:inherit; width:100%; transition:border-color .12s; }
+.kb-input:focus { border-color:var(--teal); }
+.kb-input[disabled] { opacity:.55; background:transparent; border-color:transparent; padding-left:0; cursor:default; }
+.kb-textarea { background:var(--s2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:11px; color:var(--text); outline:none; font-family:'SF Mono','Consolas',monospace; width:100%; line-height:1.7; resize:vertical; transition:border-color .12s; }
+.kb-textarea:focus { border-color:var(--teal); }
+.kb-textarea[disabled] { opacity:.55; background:transparent; border-color:transparent; padding-left:0; cursor:default; }
+/* Editable table */
+.kb-table { width:100%; border-collapse:collapse; font-size:11px; }
+.kb-table th { text-align:left; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:5px 10px; border-bottom:1px solid var(--border); }
+.kb-table td { padding:6px 10px; border-bottom:1px solid rgba(31,45,71,.4); color:var(--sub); vertical-align:top; }
+.kb-table tr:last-child td { border-bottom:none; }
+.kb-cell-input { background:var(--s3); border:1px solid var(--border2); border-radius:3px; padding:3px 6px; font-size:11px; color:var(--text); font-family:inherit; width:100%; outline:none; transition:border-color .12s; }
+.kb-cell-input:focus { border-color:var(--teal); }
+.kb-edit-bar { display:flex; align-items:center; gap:8px; padding:10px 0 2px; }
+.kb-edit-hint { font-size:10px; color:var(--muted); flex:1; }
+
 /* lock record */
 .lock-section { margin-bottom: 14px; }
 .lock-letter { display: inline-flex; width: 20px; height: 20px; border-radius: 4px; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; margin-right: 6px; }
@@ -1432,6 +1473,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
     <div class="nav-tab on" onclick="goTab('hunts',this)">🎯 Hunts</div>
     <div class="nav-tab" onclick="goTab('observe',this)">🤖 Agents</div>
     <div class="nav-tab" onclick="goTab('coverage',this)">📊 Coverage</div>
+    <div class="nav-tab" onclick="goTab('kb',this);initKbTab()">📚 Knowledge Base</div>
   </nav>
   <div class="topbar-end">
     <div class="splunk-badge" style="display:flex;align-items:center;gap:5px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:5px;padding:3px 9px;cursor:pointer;" onclick="openHunt('TH-2026-041')" title="MCP-connected tools">
@@ -3948,6 +3990,227 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
   </div><!-- /cov-wrap -->
 </div>
+
+<!-- ═══════ KNOWLEDGE BASE PANE ═══════ -->
+<div id="pane-kb" class="tab-pane" style="flex-direction:column;">
+
+  <!-- Sub-tab bar -->
+  <div class="kb-subtab-bar">
+    <div class="kb-stab on" id="kb-stab-skills" onclick="switchKbTab('skills')">📚 Skills Repository</div>
+    <div class="kb-stab" id="kb-stab-env" onclick="switchKbTab('env')">🏗️ Environment</div>
+  </div>
+
+  <!-- ── Skills pane ── -->
+  <div class="kb-pane on" id="kb-pane-skills">
+    <div class="kb-skills-wrap">
+
+      <!-- Browse / Propose Edit sub-tabs -->
+      <div class="kb-sk-stab-bar">
+        <div class="kb-sk-stab on" id="kb-sk-browse-tab" onclick="switchKbSkTab('browse')">Browse</div>
+        <div class="kb-sk-stab" id="kb-sk-author-tab" onclick="switchKbSkTab('author')">✏️ Propose Edit</div>
+      </div>
+
+      <!-- Browse sub-pane -->
+      <div id="kb-sk-browse-pane">
+        <div class="sk-stats-bar" style="margin-bottom:14px;">
+          <div class="sk-stat"><div class="sk-stat-val">6</div><div class="sk-stat-lbl">Skills indexed</div></div>
+          <div class="sk-stat"><div class="sk-stat-val">4</div><div class="sk-stat-lbl">Categories</div></div>
+          <div class="sk-stat"><div class="sk-stat-val">3</div><div class="sk-stat-lbl">Contributors</div></div>
+          <div class="sk-stat"><div class="sk-stat-val" style="font-size:14px;">v2.0</div><div class="sk-stat-lbl">Latest version</div></div>
+        </div>
+        <div class="sk-filter-bar" style="margin-bottom:12px;">
+          <span class="sk-cat-pill sk-cat-on" data-kbcat="all"      onclick="filterKbSkills('all',this)">All <span style="opacity:.6;">6</span></span>
+          <span class="sk-cat-pill" data-kbcat="credential-access"  onclick="filterKbSkills('credential-access',this)">Credential Access <span style="opacity:.6;">2</span></span>
+          <span class="sk-cat-pill" data-kbcat="lateral-movement"   onclick="filterKbSkills('lateral-movement',this)">Lateral Movement <span style="opacity:.6;">2</span></span>
+          <span class="sk-cat-pill" data-kbcat="c2"                 onclick="filterKbSkills('c2',this)">Command &amp; Control <span style="opacity:.6;">1</span></span>
+          <span class="sk-cat-pill" data-kbcat="execution"          onclick="filterKbSkills('execution',this)">Execution <span style="opacity:.6;">1</span></span>
+        </div>
+        <div id="kb-sk-list"><!-- populated by renderKbSkillList() --></div>
+      </div>
+
+      <!-- Author sub-pane -->
+      <div id="kb-sk-author-pane" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+          <div class="sk-author-form">
+            <div style="font-size:12px;color:var(--sub);margin-bottom:4px;line-height:1.6;">Propose a new skill or an edit to an existing one. Submissions are reviewed by senior hunters before being merged.</div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">Skill Name</label>
+              <input class="sk-finput" id="kb-draft-name" placeholder="e.g. LSASS Memory Access via Task Manager">
+            </div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">Category</label>
+              <select class="sk-finput" id="kb-draft-cat">
+                <option value="">Select category…</option>
+                <option value="credential-access">Credential Access</option>
+                <option value="lateral-movement">Lateral Movement</option>
+                <option value="c2">Command &amp; Control</option>
+                <option value="execution">Execution</option>
+                <option value="persistence">Persistence</option>
+                <option value="defense-evasion">Defense Evasion</option>
+              </select>
+            </div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">Summary</label>
+              <textarea class="sk-finput" id="kb-draft-summary" rows="2" placeholder="One-paragraph description of what this skill detects and why it matters…"></textarea>
+            </div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">Behavioural Patterns <span style="color:var(--muted);font-weight:400;text-transform:none;">(one per line)</span></label>
+              <textarea class="sk-finput mono" id="kb-draft-patterns" rows="4" placeholder="LSASS access from non-SYSTEM non-antivirus processes&#10;OpenProcess with PROCESS_VM_READ on lsass.exe…"></textarea>
+            </div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">SPL Template</label>
+              <textarea class="sk-finput mono" id="kb-draft-spl" rows="4" placeholder="index=wineventlog sourcetype=XmlWinEventLog&#10;| where EventCode=4656 …"></textarea>
+            </div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">FP Exclusions <span style="color:var(--muted);font-weight:400;text-transform:none;">(one per line)</span></label>
+              <textarea class="sk-finput mono" id="kb-draft-exclusions" rows="2" placeholder='process_name IN ("MsMpEng.exe", "SentinelAgent.exe")'></textarea>
+            </div>
+            <div class="sk-field">
+              <label class="sk-field-lbl">Linked ATT&amp;CK Techniques</label>
+              <input class="sk-finput mono" id="kb-draft-ttps" placeholder="T1003.001, T1003.004">
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+              <button class="btn btn-outline btn-sm" onclick="clearKbDraft()">Clear</button>
+              <button class="btn btn-primary btn-sm" id="kb-submit-btn" onclick="submitKbDraft()">Submit for Review →</button>
+            </div>
+          </div>
+          <!-- Draft queue -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">
+              Pending Review <span class="chip chip-yellow" style="font-size:9px;" id="kb-draft-count">2 pending</span>
+            </div>
+            <div id="kb-draft-list" style="display:flex;flex-direction:column;gap:7px;"><!-- populated --></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Environment pane ── -->
+  <div class="kb-pane" id="kb-pane-env">
+    <div class="kb-env-wrap">
+
+      <div class="info-bar">
+        <span class="ib-icon">🏗️</span>
+        <span>This is the <b>Environment Context</b> your agents draw from at hunt time. Fields marked with a teal border are editable — changes update the live agent context immediately.</span>
+      </div>
+
+      <!-- Edit bar -->
+      <div class="kb-edit-bar">
+        <span class="kb-edit-hint" id="kb-env-hint">Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.</span>
+        <button class="btn btn-outline btn-sm" id="kb-env-edit-btn" onclick="toggleKbEnvEdit()">✏️ Edit</button>
+        <button class="btn btn-primary btn-sm" id="kb-env-save-btn" style="display:none;" onclick="saveKbEnvChanges()">✓ Save Changes</button>
+        <button class="btn btn-outline btn-sm" id="kb-env-cancel-btn" style="display:none;" onclick="cancelKbEnvEdit()">Cancel</button>
+      </div>
+
+      <div class="kb-env-2col">
+
+        <!-- Overview -->
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-card-title">🌐 Domain Overview</span>
+            <span class="chip chip-blue" style="font-size:10px;">CORP.LOCAL</span>
+          </div>
+          <div class="kb-card-body">
+            <div class="kb-field">
+              <label class="kb-field-lbl">Domain Name</label>
+              <input class="kb-input" id="kb-env-domain" disabled>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="kb-field">
+                <label class="kb-field-lbl">Total Endpoints</label>
+                <input class="kb-input" id="kb-env-endpoints" disabled>
+              </div>
+              <div class="kb-field">
+                <label class="kb-field-lbl">Total Servers</label>
+                <input class="kb-input" id="kb-env-servers" disabled>
+              </div>
+            </div>
+            <div class="kb-field">
+              <label class="kb-field-lbl">Hunt Scope</label>
+              <input class="kb-input" id="kb-env-scope" disabled>
+            </div>
+            <div class="kb-field">
+              <label class="kb-field-lbl">SIEM Platform</label>
+              <input class="kb-input" id="kb-env-siem" disabled>
+            </div>
+            <div class="kb-field">
+              <label class="kb-field-lbl">EDR Platform</label>
+              <input class="kb-input" id="kb-env-edr" disabled>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Segments -->
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-card-title">🗺️ Network Segments</span>
+            <span class="chip chip-gray" style="font-size:10px;" id="kb-seg-count">— segments</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="kb-table" id="kb-seg-table">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Subnet</th><th>Sensitivity</th>
+                </tr>
+              </thead>
+              <tbody id="kb-seg-body"><!-- populated by renderKbEnvPane() --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Key Assets -->
+        <div class="kb-card" style="grid-column:1/-1;">
+          <div class="kb-card-head">
+            <span class="kb-card-title">🖥️ Key Assets</span>
+            <span class="chip chip-gray" style="font-size:10px;" id="kb-asset-count">— assets</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="kb-table" id="kb-asset-table">
+              <thead>
+                <tr>
+                  <th>Hostname</th><th>IP</th><th>Role</th><th>OS</th><th>Segment</th><th>Owner</th>
+                </tr>
+              </thead>
+              <tbody id="kb-asset-body"><!-- populated by renderKbEnvPane() --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Key Accounts -->
+        <div class="kb-card" style="grid-column:1/-1;">
+          <div class="kb-card-head">
+            <span class="kb-card-title">👤 Key Accounts</span>
+            <span class="chip chip-gray" style="font-size:10px;" id="kb-acct-count">— accounts</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="kb-table" id="kb-acct-table">
+              <thead>
+                <tr>
+                  <th>Account</th><th>Type</th><th>Status</th><th>Normal Behaviour</th>
+                </tr>
+              </thead>
+              <tbody id="kb-acct-body"><!-- populated by renderKbEnvPane() --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Topology Map -->
+        <div class="kb-card" style="grid-column:1/-1;">
+          <div class="kb-card-head">
+            <span class="kb-card-title">📡 Network Topology Map</span>
+            <span style="font-size:10px;color:var(--muted);">ASCII reference · used by agents at scope-setting time</span>
+          </div>
+          <div class="kb-card-body">
+            <textarea class="kb-textarea" id="kb-env-topo" rows="14" disabled></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /pane-kb -->
 
 <!-- ═══════ DRAWER ═══════ -->
 <div class="drawer" id="drawer">
@@ -8283,13 +8546,255 @@ function submitSkillDraft() {
   if (btn) { const orig = btn.textContent; btn.textContent = '✓ Submitted!'; btn.style.background='var(--green)'; setTimeout(()=>{ btn.textContent=orig; btn.style.background=''; }, 2000); }
 }
 
+// ─────────────────────────────────────────────
+//  KNOWLEDGE BASE TAB
+// ─────────────────────────────────────────────
+let activeKbTab    = 'skills';
+let activeKbSkTab  = 'browse';
+let activeKbSkCat  = 'all';
+let kbEnvEditMode  = false;
+let kbEnvSnapshot  = null; // store original values for cancel
+
+function initKbTab() {
+  renderKbSkillList(activeKbSkCat);
+  renderKbDraftList();
+  renderKbEnvPane();
+}
+
+// ── KB sub-tab switch ──
+function switchKbTab(tab) {
+  activeKbTab = tab;
+  ['skills','env'].forEach(k => {
+    document.getElementById('kb-stab-' + k).classList.toggle('on', k === tab);
+    document.getElementById('kb-pane-' + k).classList.toggle('on', k === tab);
+  });
+  if (tab === 'env') renderKbEnvPane();
+}
+
+// ── KB Skills — Browse/Author sub-tabs ──
+function switchKbSkTab(tab) {
+  activeKbSkTab = tab;
+  document.getElementById('kb-sk-browse-tab').classList.toggle('on', tab === 'browse');
+  document.getElementById('kb-sk-author-tab').classList.toggle('on', tab === 'author');
+  document.getElementById('kb-sk-browse-pane').style.display = tab === 'browse' ? '' : 'none';
+  document.getElementById('kb-sk-author-pane').style.display = tab === 'author'  ? '' : 'none';
+}
+
+// ── KB Skills — filter ──
+function filterKbSkills(cat, el) {
+  activeKbSkCat = cat;
+  document.querySelectorAll('[data-kbcat]').forEach(p => p.classList.toggle('sk-cat-on', p.dataset.kbcat === cat));
+  renderKbSkillList(cat);
+}
+
+function renderKbSkillList(cat) {
+  const el = document.getElementById('kb-sk-list');
+  if (!el || typeof skillsData === 'undefined') return;
+  const filtered = cat === 'all' ? skillsData : skillsData.filter(s => s.cat === cat);
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px 0;font-size:12px;color:var(--muted);">No skills in this category yet.</div>';
+    return;
+  }
+  // Reuse the exact same card renderer as the modal
+  el.innerHTML = filtered.map(renderSkillCard).join('');
+}
+
+// ── KB Draft queue ──
+function renderKbDraftList() {
+  const el = document.getElementById('kb-draft-list');
+  const ct = document.getElementById('kb-draft-count');
+  if (!el) return;
+  if (ct) ct.textContent = skillDrafts.length + ' pending';
+  const catLabels = { 'credential-access':'Credential Access', 'lateral-movement':'Lateral Movement',
+    'c2':'C2', 'execution':'Execution', 'persistence':'Persistence', 'defense-evasion':'Defense Evasion' };
+  el.innerHTML = !skillDrafts.length
+    ? '<div style="font-size:11px;color:var(--muted);text-align:center;padding:20px 0;">No drafts pending review.</div>'
+    : skillDrafts.map(dr => `
+        <div class="sk-draft-item">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">${dr.name}</div>
+            <div style="font-size:10px;color:var(--muted);">${catLabels[dr.cat]||dr.cat} · by ${dr.author} · ${dr.ts}</div>
+          </div>
+          <span class="chip chip-yellow" style="font-size:9px;flex-shrink:0;">Pending</span>
+        </div>`).join('');
+}
+
+function clearKbDraft() {
+  ['kb-draft-name','kb-draft-summary','kb-draft-patterns','kb-draft-spl','kb-draft-exclusions','kb-draft-ttps']
+    .forEach(id => { const e = document.getElementById(id); if(e) e.value = ''; });
+  const c = document.getElementById('kb-draft-cat'); if(c) c.value = '';
+}
+
+function submitKbDraft() {
+  const name = (document.getElementById('kb-draft-name')?.value||'').trim();
+  const cat  = document.getElementById('kb-draft-cat')?.value||'';
+  if (!name || !cat) { alert('Please fill in at least Skill Name and Category.'); return; }
+  const now = new Date();
+  const ts = now.toISOString().slice(0,10) + ' ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  skillDrafts.push({ id:'SK-' + (8+skillDrafts.length) + '-draft', name, cat, author:currentUser||'analyst', ts, status:'pending' });
+  clearKbDraft();
+  renderKbDraftList();
+  renderSkillDrafts(); // also update the modal's draft list
+  const btn = document.getElementById('kb-submit-btn');
+  if (btn) { const o=btn.textContent; btn.textContent='✓ Submitted!'; btn.style.background='var(--green)';
+    setTimeout(()=>{ btn.textContent=o; btn.style.background=''; },2000); }
+}
+
+// ── KB Environment pane ──
+function renderKbEnvPane() {
+  const d = envData;
+  if (!d) return;
+
+  // Overview fields
+  const set = (id, val) => { const e = document.getElementById(id); if(e) e.value = val ?? ''; };
+  const getStat = label => (d.stats||[]).find(s=>s.label===label)?.value || '';
+  set('kb-env-domain',    d.domain?.name || 'CORP.LOCAL');
+  set('kb-env-endpoints', getStat('Endpoints')  || '2,412');
+  set('kb-env-servers',   getStat('Servers')    || '34');
+  set('kb-env-scope',     d.domain?.sites?.join(' · ') || '10.0.0.0/8 · 8 segments');
+  set('kb-env-siem',      'Splunk Enterprise Security 7.3');
+  set('kb-env-edr',       'CrowdStrike Falcon 7.1');
+  set('kb-env-topo',      d.topology ? d.topology.replace(/<[^>]+>/g,'') : '');
+
+  // Segments table
+  const segs = d.segments || [];
+  const segCount = document.getElementById('kb-seg-count');
+  if (segCount) segCount.textContent = segs.length + ' segments';
+  const segBody = document.getElementById('kb-seg-body');
+  if (segBody) {
+    segBody.innerHTML = segs.map((s,i) => {
+      const cls = kbEnvEditMode ? 'kb-cell-input' : '';
+      const attr = kbEnvEditMode ? '' : ' readonly style="background:transparent;border:none;color:var(--sub);font-size:11px;font-family:inherit;width:100%;outline:none;"';
+      return `<tr>
+        <td><input class="${cls}" data-seg="${i}" data-field="name" value="${s.name}"${attr}></td>
+        <td><input class="${cls}" data-seg="${i}" data-field="cidr" value="${s.cidr||''}"${attr}></td>
+        <td><input class="${cls}" data-seg="${i}" data-field="sensitivity" value="${s.sensitivity||''}"${attr}></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Assets table
+  const assets = d.assets || [];
+  const assetCount = document.getElementById('kb-asset-count');
+  if (assetCount) assetCount.textContent = assets.length + ' assets';
+  const assetBody = document.getElementById('kb-asset-body');
+  if (assetBody) {
+    assetBody.innerHTML = assets.map((a,i) => {
+      const cls = kbEnvEditMode ? 'kb-cell-input' : '';
+      const attr = kbEnvEditMode ? '' : ' readonly style="background:transparent;border:none;color:var(--sub);font-size:11px;font-family:inherit;width:100%;outline:none;"';
+      return `<tr>
+        <td><input class="${cls}" data-asset="${i}" data-field="hostname" value="${a.hostname}"${attr}></td>
+        <td><input class="${cls}" data-asset="${i}" data-field="ip"       value="${a.ip}"${attr}></td>
+        <td><input class="${cls}" data-asset="${i}" data-field="role"     value="${a.role||''}"${attr}></td>
+        <td><input class="${cls}" data-asset="${i}" data-field="os"       value="${a.os||''}"${attr}></td>
+        <td><input class="${cls}" data-asset="${i}" data-field="segment"  value="${a.segment||''}"${attr}></td>
+        <td><input class="${cls}" data-asset="${i}" data-field="owner"    value="${a.owner||''}"${attr}></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Accounts table
+  const accounts = d.accounts || [];
+  const acctCount = document.getElementById('kb-acct-count');
+  if (acctCount) acctCount.textContent = accounts.length + ' accounts';
+  const acctBody = document.getElementById('kb-acct-body');
+  if (acctBody) {
+    acctBody.innerHTML = accounts.map((a,i) => {
+      const cls = kbEnvEditMode ? 'kb-cell-input' : '';
+      const attr = kbEnvEditMode ? '' : ' readonly style="background:transparent;border:none;color:var(--sub);font-size:11px;font-family:inherit;width:100%;outline:none;"';
+      return `<tr>
+        <td><input class="${cls}" data-acct="${i}" data-field="name"   value="${a.name}"${attr}></td>
+        <td><input class="${cls}" data-acct="${i}" data-field="type"   value="${a.type||''}"${attr}></td>
+        <td><input class="${cls}" data-acct="${i}" data-field="status" value="${a.status||''}"${attr}></td>
+        <td><input class="${cls}" data-acct="${i}" data-field="normal" value="${(a.normal||'').replace(/'/g,"&#39;")}"${attr}></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function toggleKbEnvEdit() {
+  // snapshot current values
+  kbEnvSnapshot = {
+    domain:   { ...envData.domain },
+    stats:    (envData.stats||[]).map(s=>({...s})),
+    segments: envData.segments.map(s=>({...s})),
+    assets:   envData.assets.map(a=>({...a})),
+    accounts: envData.accounts.map(a=>({...a})),
+    topology: envData.topology,
+  };
+  kbEnvEditMode = true;
+  document.getElementById('kb-env-edit-btn').style.display   = 'none';
+  document.getElementById('kb-env-save-btn').style.display   = '';
+  document.getElementById('kb-env-cancel-btn').style.display = '';
+  document.getElementById('kb-env-hint').innerHTML = '🖊 Edit mode active — all fields are now editable. Click <b>Save Changes</b> when done.';
+  renderKbEnvPane();
+}
+
+function cancelKbEnvEdit() {
+  if (kbEnvSnapshot) {
+    envData.domain   = { ...kbEnvSnapshot.domain };
+    envData.stats    = kbEnvSnapshot.stats.map(s=>({...s}));
+    envData.segments = kbEnvSnapshot.segments.map(s=>({...s}));
+    envData.assets   = kbEnvSnapshot.assets.map(a=>({...a}));
+    envData.accounts = kbEnvSnapshot.accounts.map(a=>({...a}));
+    envData.topology = kbEnvSnapshot.topology;
+  }
+  kbEnvEditMode = false;
+  kbEnvSnapshot = null;
+  document.getElementById('kb-env-edit-btn').style.display   = '';
+  document.getElementById('kb-env-save-btn').style.display   = 'none';
+  document.getElementById('kb-env-cancel-btn').style.display = 'none';
+  document.getElementById('kb-env-hint').innerHTML = 'Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.';
+  renderKbEnvPane();
+}
+
+function saveKbEnvChanges() {
+  // Flush overview fields
+  const g = id => document.getElementById(id)?.value || '';
+  if (!envData.domain) envData.domain = {};
+  envData.domain.name = g('kb-env-domain');
+  const setStat = (label, val) => { const s = (envData.stats||[]).find(s=>s.label===label); if(s) s.value=val; };
+  setStat('Endpoints', g('kb-env-endpoints'));
+  setStat('Servers',   g('kb-env-servers'));
+  // Flush segment table inputs
+  document.querySelectorAll('[data-seg]').forEach(inp => {
+    const i = parseInt(inp.dataset.seg), f = inp.dataset.field;
+    if (envData.segments[i]) envData.segments[i][f] = inp.value;
+  });
+  // Flush asset table inputs
+  document.querySelectorAll('[data-asset]').forEach(inp => {
+    const i = parseInt(inp.dataset.asset), f = inp.dataset.field;
+    if (envData.assets[i]) envData.assets[i][f] = inp.value;
+  });
+  // Flush account table inputs
+  document.querySelectorAll('[data-acct]').forEach(inp => {
+    const i = parseInt(inp.dataset.acct), f = inp.dataset.field;
+    if (envData.accounts[i]) envData.accounts[i][f] = inp.value;
+  });
+  // Flush topology
+  const topoEl = document.getElementById('kb-env-topo');
+  if (topoEl) envData.topology = topoEl.value;
+
+  kbEnvEditMode = false;
+  kbEnvSnapshot = null;
+  document.getElementById('kb-env-edit-btn').style.display   = '';
+  document.getElementById('kb-env-save-btn').style.display   = 'none';
+  document.getElementById('kb-env-cancel-btn').style.display = 'none';
+  const hint = document.getElementById('kb-env-hint');
+  hint.innerHTML = '✓ Changes saved — agents will use updated context on next invocation.';
+  hint.style.color = 'var(--green)';
+  setTimeout(() => {
+    hint.innerHTML = 'Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.';
+    hint.style.color = '';
+  }, 3000);
+  renderKbEnvPane();
+}
+
 function openSkillsRepo() {
-  renderSkillsRepo('all');
-  activeSkillCat = 'all';
-  document.querySelectorAll('.sk-cat-pill').forEach(p => p.classList.toggle('sk-cat-on', p.dataset.cat === 'all'));
-  document.getElementById('sk-overlay').classList.add('open');
-  // Ensure browse tab is active on open
-  switchSkillTab('browse');
+  // Navigate to Knowledge Base tab
+  const kbTab = Array.from(document.querySelectorAll('.nav-tab')).find(t => t.textContent.includes('Knowledge Base'));
+  if (kbTab) { goTab('kb', kbTab); initKbTab(); }
+  else { document.getElementById('sk-overlay').classList.add('open'); switchSkillTab('browse'); }
 }
 function closeSkillsRepo() {
   document.getElementById('sk-overlay').classList.remove('open');
