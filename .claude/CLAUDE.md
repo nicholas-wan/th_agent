@@ -1,1 +1,1 @@
-@SKILLS.md
+@../README.md
