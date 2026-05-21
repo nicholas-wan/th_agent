@@ -805,6 +805,90 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .tl-text b { color: var(--text); }
 .tl-time { font-size: 10px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 5px; }
 .tl-tag { background: rgba(59,130,246,.1); color: var(--blue); border-radius: 3px; padding: 0 4px; font-size: 9px; font-weight: 700; }
+.tl-view-toggle { display:flex; gap:2px; }
+.tl-vbtn { font-size:10px; padding:2px 8px; border-radius:3px; border:1px solid var(--border); background:none; color:var(--muted); cursor:pointer; transition:all .12s; }
+.tl-vbtn.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+/* swimlane */
+.swimlane-wrap { overflow-x:auto; padding:4px 0 8px; }
+.swimlane { min-width:460px; }
+.swimlane-axis { display:flex; align-items:flex-end; height:22px; padding-left:86px; position:relative; margin-bottom:4px; }
+.swimlane-tick { position:absolute; font-size:9px; color:var(--muted); transform:translateX(-50%); white-space:nowrap; }
+.swimlane-tick::before { content:''; position:absolute; bottom:100%; left:50%; width:1px; height:4px; background:var(--border); transform:translateX(-50%); }
+.swimlane-lane { display:flex; align-items:center; height:40px; border-bottom:1px solid rgba(31,45,71,.5); }
+.swimlane-lane:last-child { border-bottom:none; }
+.swimlane-lane-lbl { width:86px; font-size:10px; color:var(--sub); font-weight:600; flex-shrink:0; padding-right:10px; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.swimlane-track { flex:1; position:relative; height:100%; }
+.swimlane-baseline { position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border); }
+.swimlane-evt { position:absolute; top:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; cursor:pointer; z-index:1; transition:transform .1s; }
+.swimlane-evt:hover { transform:translate(-50%,-50%) scale(1.6); }
+.swimlane-tooltip { position:absolute; bottom:calc(50% + 8px); left:50%; transform:translateX(-50%); font-size:9px; white-space:nowrap; background:var(--s1); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); pointer-events:none; opacity:0; transition:opacity .1s; z-index:10; }
+.swimlane-evt:hover .swimlane-tooltip { opacity:1; }
+
+/* agent topology */
+.topo-card { background:var(--s1); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:0; }
+.topo-svg-wrap { padding:16px 20px 12px; }
+.topo-node-circle { stroke-width:2; }
+.topo-label { font-size:10px; font-weight:600; }
+.topo-sub { font-size:9px; fill:var(--muted); }
+.topo-pulse { animation:topoPulse 2s infinite; }
+@keyframes topoPulse { 0%,100%{opacity:.3;r:6} 50%{opacity:.8;r:9} }
+.topo-line { stroke-dasharray:4 3; animation:topoDash 1.5s linear infinite; }
+@keyframes topoDash { to { stroke-dashoffset:-14; } }
+
+/* finding comments */
+.fc-toggle { font-size:10px; color:var(--muted); cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:5px; margin-top:5px; }
+.fc-toggle:hover { color:var(--sub); }
+.fc-thread { display:none; flex-direction:column; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+.fc-thread.open { display:flex; }
+.fc-item { display:flex; gap:7px; }
+.fc-av { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; flex-shrink:0; margin-top:1px; }
+.fc-bubble { flex:1; background:var(--s3); border:1px solid var(--border); border-radius:5px; padding:5px 8px; }
+.fc-bubble-top { display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap; }
+.fc-author { font-size:10px; font-weight:600; color:var(--text); }
+.fc-ts { font-size:9px; color:var(--muted); }
+.fc-tag-inv  { font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; color:var(--yellow); background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.22); }
+.fc-tag-conf { font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; color:var(--green);  background:rgba(16,185,129,.12);  border:1px solid rgba(16,185,129,.22); }
+.fc-tag-fp   { font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; color:var(--muted);  background:rgba(78,97,128,.12);   border:1px solid rgba(78,97,128,.22); }
+.fc-text { font-size:11px; color:var(--sub); line-height:1.5; }
+.fc-input-row { display:flex; gap:5px; margin-top:6px; }
+.fc-input { flex:1; background:var(--s2); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:11px; color:var(--text); outline:none; font-family:inherit; }
+.fc-input:focus { border-color:var(--blue); }
+
+/* coverage tactic bars */
+.cc-tactic-row { display:flex; align-items:center; gap:7px; }
+.cc-tactic-name { font-size:10px; color:var(--sub); flex:0 0 115px; }
+.cc-tactic-bar { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+.cc-tactic-fill { height:100%; border-radius:2px; }
+.cc-tactic-pct { font-size:10px; font-weight:700; min-width:28px; text-align:right; }
+
+/* velocity metrics */
+.vel-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.vel-item { background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:9px 10px; }
+.vel-val { font-size:16px; font-weight:700; color:var(--text); line-height:1; }
+.vel-lbl { font-size:10px; color:var(--muted); margin-top:3px; line-height:1.3; }
+.vel-trend-up   { color:var(--green); }
+.vel-trend-down { color:var(--red); }
+.vel-trend-flat { color:var(--muted); }
+.vel-sparkline { display:flex; align-items:flex-end; gap:2px; height:20px; margin-top:8px; }
+.vel-bar { flex:1; border-radius:2px 2px 0 0; min-height:3px; transition:height .3s; }
+
+/* skills authoring tab */
+.sk-tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); padding:0 20px; flex-shrink:0; }
+.sk-tab { padding:10px 16px; font-size:12px; font-weight:500; color:var(--sub); cursor:pointer; border-bottom:2px solid transparent; transition:color .12s; white-space:nowrap; }
+.sk-tab:hover { color:var(--text); }
+.sk-tab.sk-tab-on { color:var(--teal); border-bottom-color:var(--teal); }
+.sk-author-form { display:flex; flex-direction:column; gap:11px; }
+.sk-field { display:flex; flex-direction:column; gap:4px; }
+.sk-field-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+.sk-finput { background:var(--s2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font-size:12px; color:var(--text); outline:none; font-family:inherit; width:100%; transition:border-color .12s; }
+.sk-finput:focus { border-color:var(--teal); }
+.sk-finput.mono { font-family:'SF Mono','Consolas',monospace; font-size:11px; resize:vertical; line-height:1.6; }
+.sk-draft-strip { display:flex; flex-direction:column; gap:6px; margin-top:16px; }
+.sk-draft-item { display:flex; align-items:center; gap:9px; background:var(--s2); border:1px solid var(--border); border-left:3px solid var(--teal); border-radius:var(--radius-sm); padding:8px 12px; }
+.sk-draft-id { font-size:10px; font-weight:700; color:var(--teal); font-family:monospace; }
+.sk-draft-name { font-size:11px; color:var(--text); flex:1; }
+.sk-draft-badge { font-size:9px; font-weight:700; padding:2px 6px; border-radius:3px; color:var(--yellow); background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.2); }
 
 /* lock record */
 .lock-section { margin-bottom: 14px; }
@@ -2404,6 +2488,14 @@ index=wineventlog EventCode=<span class="str">4769</span>
                 </div>
                 <div class="tool-tile-detail">
                   <div class="tool-tile-row"><span>Coverage</span><span><span style="color:var(--yellow);font-weight:600;">38%</span> · <span style="color:var(--red);">12 gaps</span></span></div>
+                  <div class="tool-tile-fn-section" style="margin-top:6px;">Tactic Gap Score</div>
+                  <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:6px;">
+                    <div class="cc-tactic-row"><span class="cc-tactic-name">Credential Access</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:50%;background:var(--yellow);"></div></div><span class="cc-tactic-pct" style="color:var(--yellow);">50%</span></div>
+                    <div class="cc-tactic-row"><span class="cc-tactic-name">Lateral Movement</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:50%;background:var(--yellow);"></div></div><span class="cc-tactic-pct" style="color:var(--yellow);">50%</span></div>
+                    <div class="cc-tactic-row"><span class="cc-tactic-name">Command &amp; Control</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:25%;background:var(--orange);"></div></div><span class="cc-tactic-pct" style="color:var(--orange);">25%</span></div>
+                    <div class="cc-tactic-row"><span class="cc-tactic-name">Persistence</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:25%;background:var(--orange);"></div></div><span class="cc-tactic-pct" style="color:var(--orange);">25%</span></div>
+                    <div class="cc-tactic-row"><span class="cc-tactic-name">Defense Evasion</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:8%;background:var(--red);"></div></div><span class="cc-tactic-pct" style="color:var(--red);">8%</span></div>
+                  </div>
                   <div class="tool-tile-fn-section">Functions</div>
                   <div class="tool-tile-fn-list">
                     <div class="tool-tile-fn">
@@ -2693,7 +2785,11 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
       <div class="card card-collapsible" id="card-timeline">
         <div class="card-head" onclick="toggleCollapse('card-timeline',event)">
           <span class="card-title">Timeline</span>
-          <div style="display:flex;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="tl-view-toggle" onclick="event.stopPropagation()">
+              <button class="tl-vbtn on" id="tlv-list" onclick="toggleTimelineView('list')">List</button>
+              <button class="tl-vbtn" id="tlv-swim" onclick="toggleTimelineView('swim')">Swimlane</button>
+            </div>
             <span class="card-summary" id="timeline-summary"></span>
             <button class="collapse-btn" onclick="toggleCollapse('card-timeline',event)">▾</button>
           </div>
@@ -2735,6 +2831,17 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
     <!-- Sidebar -->
     <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Hunt Velocity Metrics -->
+      <div class="card" id="card-velocity">
+        <div class="card-head">
+          <span class="card-title">⚡ Hunt Velocity</span>
+          <span class="chip chip-blue" style="font-size:10px;" id="vel-runs-chip">3 runs</span>
+        </div>
+        <div class="card-body" style="padding:10px 12px;" id="velocity-body">
+          <!-- populated by renderVelocityCard() -->
+        </div>
+      </div>
 
       <!-- Similar Hunts -->
       <div class="card card-collapsible" id="card-simhunts">
@@ -3223,6 +3330,14 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
               </div>
               <div class="tool-tile-detail">
                 <div class="tool-tile-row"><span>Coverage</span><span><span style="color:var(--yellow);font-weight:600;">38%</span> · <span style="color:var(--red);">12 gaps</span></span></div>
+                <div class="tool-tile-fn-section" style="margin-top:6px;">Tactic Gap Score</div>
+                <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:6px;">
+                  <div class="cc-tactic-row"><span class="cc-tactic-name">Credential Access</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:50%;background:var(--yellow);"></div></div><span class="cc-tactic-pct" style="color:var(--yellow);">50%</span></div>
+                  <div class="cc-tactic-row"><span class="cc-tactic-name">Lateral Movement</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:50%;background:var(--yellow);"></div></div><span class="cc-tactic-pct" style="color:var(--yellow);">50%</span></div>
+                  <div class="cc-tactic-row"><span class="cc-tactic-name">Command &amp; Control</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:25%;background:var(--orange);"></div></div><span class="cc-tactic-pct" style="color:var(--orange);">25%</span></div>
+                  <div class="cc-tactic-row"><span class="cc-tactic-name">Persistence</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:25%;background:var(--orange);"></div></div><span class="cc-tactic-pct" style="color:var(--orange);">25%</span></div>
+                  <div class="cc-tactic-row"><span class="cc-tactic-name">Defense Evasion</span><div class="cc-tactic-bar"><div class="cc-tactic-fill" style="width:8%;background:var(--red);"></div></div><span class="cc-tactic-pct" style="color:var(--red);">8%</span></div>
+                </div>
                 <div class="tool-tile-fn-section">Functions</div>
                 <div class="tool-tile-fn-list">
                   <div class="tool-tile-fn">
@@ -4718,6 +4833,34 @@ const checkSummaryData = {
 };
 let checkQueryRun = {};   // tracks per-hypothesis post-run state
 
+// ── Hunt velocity metrics ──
+const velocityData = {
+  '041': { mttd:'26 min', h2rule:'12 min', fpRate:'2.1%', fpTrend:'down', mttdBars:[65,48,26], fpBars:[8.3,5.2,2.1] },
+  '040': { mttd:'2h 14m', h2rule:'38 min', fpRate:'8.3%', fpTrend:'up',   mttdBars:[240,150,134], fpBars:[4.1,6.9,8.3] },
+  '039': { mttd:'4h 05m', h2rule:'1h 12m', fpRate:'5.2%', fpTrend:'flat', mttdBars:[310,280,245], fpBars:[6.1,5.8,5.2] },
+};
+
+// ── Finding comments (per hunt, per finding index) ──
+const findingComments = {
+  '041': {
+    0: [ // LSASS Memory Access
+      { author:'marcus',  ts:'09:44', text:'Confirmed — rundll32.exe parent was explorer.exe on WIN-DC01. Full LSASS handle. Escalating to IR now.', tag:'conf' },
+      { author:'priya',   ts:'09:47', text:'Memory image requested from WIN-DC01 before any reboot. IR team notified via Slack.', tag:null },
+    ],
+    1: [ // PsExec lateral movement
+      { author:'alice',   ts:'09:40', text:'jsmith account touched 14 hosts in one session. Isolating account pending IR review.', tag:'conf' },
+    ],
+    2: [ // C2 Beacon
+      { author:'alice',   ts:'09:37', text:'JA3 hash 769c10… is a known Cobalt Strike malleable profile. Pushing network block to firewall now.', tag:'conf' },
+      { author:'marcus',  ts:'09:52', text:'Block confirmed on perimeter FW. Beacon sessions dropped.', tag:null },
+    ],
+  },
+  '040': {
+    0: [ { author:'priya', ts:'14:25', text:'WIN-FS02 isolated by EDR. Payroll data partially encrypted — recovery from Apr 23 backup initiated.', tag:'conf' } ],
+  },
+};
+const openFindingComments = {};  // tracks which finding comment threads are expanded
+
 // ── Archived Check data for closed hunts ──
 const closedCheckSummaries = {
   '040': {
@@ -5149,14 +5292,14 @@ const keepData = {
       raa: { relevant: true, note: 'RAA triggered — 2 analytics, 62 hits confirmed (T1570, T1078.002)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Tradecraft Supervisor</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001' },
-      { color:'blue',   text:'<b>Tradecraft Supervisor</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570'     },
-      { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon rule matched, JA3 hit on 185.220.101.47',  time:'09:35', tag:'T1071.001' },
-      { color:'yellow', text:'<b>Tradecraft Supervisor</b> — cmd-line anomaly, Kerberoasting pattern (7 SPNs)',    time:'09:32', tag:'T1558.003' },
-      { color:'indigo', text:'<b>Rule Validation Agent</b> — persistence rule triggered, svcupd.exe registry key',time:'09:29', tag:'T1547.001' },
-      { color:'green',  text:'<b>Detection Logic Agent</b> — SPL rules validated and pushed to SIEM',             time:'09:18', tag:''          },
-      { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-041 started, 6 agents deployed',          time:'09:15', tag:''          },
-      { color:'teal',   text:'<b>Hypothesis Agent</b> — 3 hypotheses generated from 14 TTPs · 3 past hunts recalled · coverage gaps flagged', time:'09:14', tag:'' },
+      { color:'red',    text:'<b>Tradecraft Supervisor</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
+      { color:'blue',   text:'<b>Tradecraft Supervisor</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570',     host:'CORP NET'  },
+      { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon rule matched, JA3 hit on 185.220.101.47',  time:'09:35', tag:'T1071.001', host:'EXT'       },
+      { color:'yellow', text:'<b>Tradecraft Supervisor</b> — cmd-line anomaly, Kerberoasting pattern (7 SPNs)',    time:'09:32', tag:'T1558.003', host:'WIN-WS041' },
+      { color:'indigo', text:'<b>Rule Validation Agent</b> — persistence rule triggered, svcupd.exe registry key',time:'09:29', tag:'T1547.001', host:'SRV-APP03' },
+      { color:'green',  text:'<b>Detection Logic Agent</b> — SPL rules validated and pushed to SIEM',             time:'09:18', tag:'',          host:'SYSTEM'    },
+      { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-041 started, 6 agents deployed',          time:'09:15', tag:'',          host:'SYSTEM'    },
+      { color:'teal',   text:'<b>Hypothesis Agent</b> — 3 hypotheses generated from 14 TTPs · 3 past hunts recalled · coverage gaps flagged', time:'09:14', tag:'', host:'SYSTEM' },
     ],
     report: {
       status: 'Active', statusClass: 'chip-red',
@@ -5205,12 +5348,12 @@ const keepData = {
       raa: { relevant: true, note: 'RAA triggered — Process Chain Anomaly, 12 hits (T1204 macro chain, T1490 shadow copy deletion)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Tradecraft Supervisor</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490'     },
-      { color:'red',    text:'<b>Detection Logic Agent</b> — data encryption pattern detected on FS02',                   time:'14:19', tag:'T1486'     },
-      { color:'orange', text:'<b>Rule Validation Agent</b> — DLL sideloading rule matched DISM.exe',                      time:'14:05', tag:'T1574.002' },
-      { color:'yellow', text:'<b>Detection Logic Agent</b> — Office macro execution flagged on WIN-WS012',                time:'13:47', tag:'T1204'     },
-      { color:'blue',   text:'<b>Tradecraft Supervisor</b> — phishing email linked to FIN7 campaign',                     time:'13:30', tag:'T1566.001' },
-      { color:'green',  text:'<b>Orchestrator Agent</b> — Hunt TH-2026-040 started, 5 agents deployed',                  time:'13:15', tag:''          },
+      { color:'red',    text:'<b>Tradecraft Supervisor</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
+      { color:'red',    text:'<b>Detection Logic Agent</b> — data encryption pattern detected on FS02',                   time:'14:19', tag:'T1486',     host:'WIN-FS02'  },
+      { color:'orange', text:'<b>Rule Validation Agent</b> — DLL sideloading rule matched DISM.exe',                      time:'14:05', tag:'T1574.002', host:'WIN-WS012' },
+      { color:'yellow', text:'<b>Detection Logic Agent</b> — Office macro execution flagged on WIN-WS012',                time:'13:47', tag:'T1204',     host:'WIN-WS012' },
+      { color:'blue',   text:'<b>Tradecraft Supervisor</b> — phishing email linked to FIN7 campaign',                     time:'13:30', tag:'T1566.001', host:'EXT'       },
+      { color:'green',  text:'<b>Orchestrator Agent</b> — Hunt TH-2026-040 started, 5 agents deployed',                  time:'13:15', tag:'',          host:'SYSTEM'    },
     ],
     report: {
       status: 'Closed', statusClass: 'chip-green',
@@ -5323,6 +5466,7 @@ const huntNotes = {
 };
 let activeKeepHunt = '041';
 let activeKeepTTP   = 'all';
+let activeTimelineView = 'list';
 
 function toggleCollapse(cardId, e) {
   if (e) e.stopPropagation();
@@ -5437,6 +5581,7 @@ function renderKeepHunt(id) {
   renderTTPSelector(d);
   renderKeepFindings(d);
   renderKeepTimeline(d);
+  renderVelocityCard(id);
 
   // Similar hunts summary
   const ss = document.getElementById('simhunts-summary');
@@ -5444,6 +5589,51 @@ function renderKeepHunt(id) {
 
   // Refresh notes
   renderNotes();
+}
+
+function renderVelocityCard(huntId) {
+  const el = document.getElementById('velocity-body');
+  if (!el) return;
+  const shortId = huntId.replace('TH-2026-', '');
+  const v = velocityData[shortId];
+  if (!v) { el.innerHTML = '<div style="font-size:11px;color:var(--muted);">No velocity data for this hunt.</div>'; return; }
+
+  const trendIcon = v.fpTrend === 'down' ? '↓' : v.fpTrend === 'up' ? '↑' : '→';
+  const trendColor = v.fpTrend === 'down' ? 'var(--green)' : v.fpTrend === 'up' ? 'var(--red)' : 'var(--muted)';
+
+  const mttdMax = Math.max(...v.mttdBars);
+  const fpMax   = Math.max(...v.fpBars);
+
+  function sparkline(bars, max, color) {
+    return bars.map(b => {
+      const h = Math.max(3, Math.round((b / max) * 20));
+      return `<div class="vel-bar" style="height:${h}px;background:${color};"></div>`;
+    }).join('');
+  }
+
+  el.innerHTML = `
+    <div class="vel-grid">
+      <div class="vel-item">
+        <div class="vel-val">${v.mttd}</div>
+        <div class="vel-lbl">Mean Time to Detect</div>
+        <div class="vel-sparkline">${sparkline(v.mttdBars, mttdMax, 'var(--blue)')}</div>
+      </div>
+      <div class="vel-item">
+        <div class="vel-val">${v.h2rule}</div>
+        <div class="vel-lbl">Hyp → Rule Time</div>
+        <div class="vel-sparkline">${sparkline([...v.mttdBars].map(b=>b*.45), mttdMax*.45, 'var(--indigo)')}</div>
+      </div>
+      <div class="vel-item" style="grid-column:1/-1;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="vel-val">${v.fpRate} <span style="font-size:12px;color:${trendColor};">${trendIcon}</span></div>
+            <div class="vel-lbl">False Positive Rate</div>
+          </div>
+          <div class="vel-sparkline" style="width:70px;">${sparkline(v.fpBars, fpMax, 'var(--yellow)')}</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted);text-align:center;">Last 3 hunts · same TTP cluster</div>`;
 }
 
 function renderTTPSelector(d) {
@@ -5528,25 +5718,172 @@ function renderKeepFindings(d) {
     : highs ? `<span class="chip chip-yellow" style="font-size:9px;">${highs} High</span>` : '';
 
   const fl = document.getElementById('keep-findings-list');
+  const huntComments = findingComments[activeKeepHunt] || {};
+  const usersObj = typeof users !== 'undefined' ? users : {};
+
   if (!filtered.length) {
     fl.innerHTML = `<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">No findings for ${activeKeepTTP} in this hunt.</div>`;
   } else {
-    fl.innerHTML = filtered.map(f =>
-      `<div class="finding-row" onclick="openAgentDrawer('${f.drawer}')">
-        <div class="fr-inner">
+    const fullFindings = d.findings;
+    fl.innerHTML = filtered.map(f => {
+      const globalIdx = fullFindings.indexOf(f);
+      const comments = huntComments[globalIdx] || [];
+      const commentCount = comments.length;
+      const tagMap = { conf:'conf', fp:'fp', inv:'inv' };
+      const threadHTML = comments.map(c => {
+        const u = usersObj[c.author] || { color:'#4e6180', initials: (c.author||'?')[0].toUpperCase() };
+        const tagEl = c.tag === 'conf'
+          ? `<span class="fc-tag-conf">✓ Confirmed</span>`
+          : c.tag === 'fp'
+          ? `<span class="fc-tag-fp">FP</span>` : '';
+        return `<div style="display:flex;gap:7px;align-items:flex-start;">
+          <div class="fc-av" style="background:${u.bg||u.color+'20'};color:${u.color};">${u.initials}</div>
+          <div class="fc-bubble">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <span style="font-size:11px;font-weight:600;color:var(--text);">${c.author}</span>
+              <span style="font-size:10px;color:var(--muted);">${c.ts}</span>
+              ${tagEl}
+            </div>
+            <div style="font-size:11px;color:var(--sub);line-height:1.5;">${c.text}</div>
+          </div>
+        </div>`;
+      }).join('');
+      const isOpen = openFindingComments[activeKeepHunt + '-' + globalIdx];
+      return `<div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+        <div class="fr-inner" onclick="openAgentDrawer('${f.drawer}')" style="cursor:pointer;">
           <div class="sev-pip ${f.sev}"></div>
           <div class="fr-content">
             <div class="fr-title">${f.title}</div>
             <div class="fr-meta">${f.meta}</div>
           </div>
         </div>
-      </div>`
-    ).join('');
+        <div>
+          <span class="fc-toggle" onclick="toggleFindingComments('${activeKeepHunt}',${globalIdx})">
+            💬 ${commentCount ? commentCount + ' comment' + (commentCount > 1 ? 's' : '') : 'Add comment'}
+            <span style="font-size:9px;">${isOpen ? '▲' : '▼'}</span>
+          </span>
+        </div>
+        <div class="fc-thread${isOpen ? ' open' : ''}" id="fc-thread-${activeKeepHunt}-${globalIdx}">
+          ${threadHTML}
+          <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
+            <input class="fc-input" id="fc-inp-${activeKeepHunt}-${globalIdx}" placeholder="Add a note… (Enter to save)" onkeydown="if(event.key==='Enter')addFindingComment('${activeKeepHunt}',${globalIdx})">
+            <select id="fc-tag-${activeKeepHunt}-${globalIdx}" style="background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;color:var(--sub);outline:none;">
+              <option value="">No tag</option>
+              <option value="conf">✓ Confirmed</option>
+              <option value="fp">FP</option>
+              <option value="inv">Investigating</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="addFindingComment('${activeKeepHunt}',${globalIdx})">+</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   // Collapsed summary
   const fs = document.getElementById('findings-summary');
   if (fs) fs.textContent = `${filtered.length} findings · ${crits} Critical · ${highs} High`;
+}
+
+function toggleFindingComments(huntId, idx) {
+  const key = huntId + '-' + idx;
+  openFindingComments[key] = !openFindingComments[key];
+  const thread = document.getElementById('fc-thread-' + key);
+  if (thread) thread.classList.toggle('open', !!openFindingComments[key]);
+  // re-render to update toggle arrow text
+  const d = keepData[huntId];
+  if (d) renderKeepFindings(d);
+}
+
+function addFindingComment(huntId, idx) {
+  const key = huntId + '-' + idx;
+  const inp = document.getElementById('fc-inp-' + key);
+  const tagSel = document.getElementById('fc-tag-' + key);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  if (!findingComments[huntId]) findingComments[huntId] = {};
+  if (!findingComments[huntId][idx]) findingComments[huntId][idx] = [];
+  const now = new Date();
+  const ts = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  findingComments[huntId][idx].push({
+    author: currentUser || 'analyst',
+    ts,
+    text,
+    tag: tagSel ? tagSel.value || null : null,
+  });
+  openFindingComments[key] = true;
+  inp.value = '';
+  const d = keepData[huntId];
+  if (d) renderKeepFindings(d);
+}
+
+function toggleTimelineView(v) {
+  activeTimelineView = v;
+  ['list','swim'].forEach(k => {
+    const btn = document.getElementById('tlv-' + k);
+    if (btn) btn.classList.toggle('on', k === v);
+  });
+  const d = keepData[activeKeepHunt];
+  if (d) renderKeepTimeline(d);
+}
+
+function renderSwimlane(filtered) {
+  if (!filtered.length) return '<div style="font-size:11px;color:var(--muted);padding:10px 0;">No timeline events.</div>';
+
+  // Collect ordered unique hosts
+  const hostOrder = [];
+  filtered.forEach(t => { if (t.host && !hostOrder.includes(t.host)) hostOrder.push(t.host); });
+
+  // Parse times to compute axis
+  const toMin = ts => {
+    const [h,m] = ts.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const times = filtered.map(t => toMin(t.time));
+  const minT = Math.min(...times);
+  const maxT = Math.max(...times);
+  const span = Math.max(maxT - minT, 10); // avoid div/0
+
+  // Build tick labels (up to 5 ticks)
+  const tickCount = Math.min(5, filtered.length);
+  const ticks = Array.from({length: tickCount}, (_, i) => {
+    const pct = i / (tickCount - 1) * 100;
+    const m = Math.round(minT + (i / (tickCount - 1)) * span);
+    const h = Math.floor(m / 60).toString().padStart(2,'0');
+    const mm = (m % 60).toString().padStart(2,'0');
+    return `<div class="swimlane-tick" style="left:${pct}%">${h}:${mm}</div>`;
+  });
+
+  const colorMap = {
+    red:'var(--red)', blue:'var(--blue)', orange:'var(--orange)',
+    yellow:'var(--yellow)', indigo:'var(--indigo)', green:'var(--green)',
+    teal:'var(--teal)'
+  };
+
+  const lanes = hostOrder.map(host => {
+    const evts = filtered.filter(t => t.host === host);
+    const evtsHTML = evts.map(t => {
+      const pct = span > 0 ? ((toMin(t.time) - minT) / span) * 100 : 50;
+      const bg = colorMap[t.color] || 'var(--sub)';
+      const label = (t.tag || t.text.slice(0, 30)) + (t.text.length > 30 && !t.tag ? '…' : '');
+      return `<div class="swimlane-evt" style="left:${pct}%;background:${bg};">
+        <div class="swimlane-tooltip">${t.time}${t.tag ? ' · ' + t.tag : ''} — ${t.text.slice(0,45)}${t.text.length>45?'…':''}</div>
+      </div>`;
+    }).join('');
+    return `<div class="swimlane-lane">
+      <div class="swimlane-lane-lbl">${host}</div>
+      <div class="swimlane-track">
+        <div class="swimlane-baseline"></div>
+        ${evtsHTML}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="swimlane-wrap"><div class="swimlane">
+    <div class="swimlane-axis">${ticks.join('')}</div>
+    ${lanes}
+  </div></div>`;
 }
 
 function renderKeepTimeline(d) {
@@ -5557,6 +5894,8 @@ function renderKeepTimeline(d) {
   const tl = document.getElementById('keep-timeline');
   if (!filtered.length) {
     tl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:10px 0;">No timeline events for ${activeKeepTTP}.</div>`;
+  } else if (activeTimelineView === 'swim') {
+    tl.innerHTML = renderSwimlane(filtered);
   } else {
     tl.innerHTML = filtered.map((t, i) =>
       `<div class="tl-row">
@@ -5566,7 +5905,7 @@ function renderKeepTimeline(d) {
         </div>
         <div class="tl-body">
           <div class="tl-text">${t.text}</div>
-          <div class="tl-time">${t.time}${t.tag ? ` <span class="tl-tag">${t.tag}</span>` : ''}</div>
+          <div class="tl-time">${t.time}${t.tag ? ` <span class="tl-tag">${t.tag}</span>` : ''}${t.host ? `<span style="font-size:9px;color:var(--muted);margin-left:4px;">${t.host}</span>` : ''}</div>
         </div>
       </div>`
     ).join('');
@@ -6137,7 +6476,53 @@ function renderHuntObserve(id) {
   const obsHTML = Object.entries(d.observables).map(([cat, items]) => `
     <div class="obs-cat-label">${cat}</div>
     ${items.map(item => `<div class="obs-observable">${item}</div>`).join('')}`).join('');
+
+  const topoSVG = `<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+    <defs>
+      <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L6,3 z" fill="#263550"/>
+      </marker>
+    </defs>
+    <!-- Lines from Orchestrator (130,110) to agents -->
+    <line x1="130" y1="110" x2="50" y2="50"  stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
+    <line x1="130" y1="110" x2="210" y2="50" stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
+    <line x1="130" y1="110" x2="50" y2="175" stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
+    <line x1="130" y1="110" x2="210" y2="175"stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
+    <line x1="130" y1="110" x2="130" y2="185" stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
+    <!-- Orchestrator node (center) -->
+    <circle cx="130" cy="110" r="22" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="2"/>
+    <circle cx="130" cy="110" r="8" fill="#3b82f6" class="topo-pulse"/>
+    <text x="130" y="141" text-anchor="middle" class="topo-label" fill="#94a3b8">Orchestrator</text>
+    <!-- Hypothesis (top-left) -->
+    <circle cx="50" cy="50" r="15" fill="rgba(20,184,166,.12)" stroke="#14b8a6" stroke-width="1.5"/>
+    <text x="50" y="54" text-anchor="middle" style="font-size:13px;" fill="#14b8a6">💡</text>
+    <text x="50" y="72" text-anchor="middle" class="topo-sub" fill="#4e6180">Hypothesis</text>
+    <!-- Data Eng (top-right) -->
+    <circle cx="210" cy="50" r="15" fill="rgba(99,102,241,.12)" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="210" y="54" text-anchor="middle" style="font-size:13px;" fill="#6366f1">🗄️</text>
+    <text x="210" y="72" text-anchor="middle" class="topo-sub" fill="#4e6180">Data Eng</text>
+    <!-- Tradecraft (bottom-left) -->
+    <circle cx="50" cy="175" r="15" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="50" y="179" text-anchor="middle" style="font-size:13px;" fill="#f59e0b">🧠</text>
+    <text x="50" y="197" text-anchor="middle" class="topo-sub" fill="#4e6180">Tradecraft</text>
+    <!-- Detection (bottom-center) -->
+    <circle cx="130" cy="185" r="15" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="130" y="189" text-anchor="middle" style="font-size:13px;" fill="#10b981">⚙️</text>
+    <text x="130" y="207" text-anchor="middle" class="topo-sub" fill="#4e6180">Detection</text>
+    <!-- Validation (bottom-right) -->
+    <circle cx="210" cy="175" r="15" fill="rgba(139,92,246,.12)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="210" y="179" text-anchor="middle" style="font-size:13px;" fill="#8b5cf6">✅</text>
+    <text x="210" y="197" text-anchor="middle" class="topo-sub" fill="#4e6180">Validation</text>
+  </svg>`;
+
   side.innerHTML = `
+    <div class="card topo-card">
+      <div class="card-head">
+        <span class="card-title">🔗 Agent Topology</span>
+        <span class="chip chip-blue" style="font-size:10px;">5 agents</span>
+      </div>
+      <div class="topo-svg-wrap">${topoSVG}</div>
+    </div>
     <div class="card">
       <div class="card-head"><span class="card-title">🔭 Expected Observables</span></div>
       <div class="card-body" style="padding:8px 14px;">${obsHTML}</div>
@@ -7837,11 +8222,74 @@ const skillsData = [
 
 let activeSkillCat = 'all';
 
+// Skills authoring draft queue
+const skillDrafts = [
+  { id:'SK-007-draft', name:'Pass-the-Hash via SMB (wmiexec pattern)', cat:'lateral-movement', author:'rmendez', ts:'2026-05-19 14:32', status:'pending' },
+  { id:'SK-008-draft', name:'Living-off-the-Land Persistence via Scheduled Tasks', cat:'persistence', author:'alice', ts:'2026-05-20 09:17', status:'pending' },
+];
+let activeSkillTab = 'browse';
+
+function switchSkillTab(tab) {
+  activeSkillTab = tab;
+  document.getElementById('sk-browse-pane').style.display = tab === 'browse' ? '' : 'none';
+  document.getElementById('sk-author-pane').style.display  = tab === 'author'  ? '' : 'none';
+  document.getElementById('sk-tab-browse').classList.toggle('sk-tab-on', tab === 'browse');
+  document.getElementById('sk-tab-author').classList.toggle('sk-tab-on', tab === 'author');
+  if (tab === 'author') renderSkillDrafts();
+}
+
+function renderSkillDrafts() {
+  const el = document.getElementById('sk-draft-list');
+  const countEl = document.getElementById('sk-draft-count');
+  if (!el) return;
+  if (countEl) countEl.textContent = skillDrafts.length + ' pending';
+  if (!skillDrafts.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:20px 0;">No drafts pending review.</div>';
+    return;
+  }
+  const catLabels = { 'credential-access':'Credential Access', 'lateral-movement':'Lateral Movement',
+    'c2':'C2', 'execution':'Execution', 'persistence':'Persistence', 'defense-evasion':'Defense Evasion' };
+  el.innerHTML = skillDrafts.map((dr, i) => `
+    <div class="sk-draft-item">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">${dr.name}</div>
+        <div style="font-size:10px;color:var(--muted);">${catLabels[dr.cat] || dr.cat} · by ${dr.author} · ${dr.ts}</div>
+      </div>
+      <span class="chip chip-yellow" style="font-size:9px;flex-shrink:0;">Pending</span>
+    </div>`).join('');
+}
+
+function clearSkillDraft() {
+  ['sk-draft-name','sk-draft-summary','sk-draft-patterns','sk-draft-spl','sk-draft-exclusions','sk-draft-ttps']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  const cat = document.getElementById('sk-draft-cat'); if(cat) cat.value = '';
+}
+
+function submitSkillDraft() {
+  const name = (document.getElementById('sk-draft-name')?.value || '').trim();
+  const cat  = document.getElementById('sk-draft-cat')?.value || '';
+  if (!name || !cat) {
+    alert('Please fill in at least the Skill Name and Category before submitting.');
+    return;
+  }
+  const now = new Date();
+  const ts = now.toLocaleDateString('en-GB',{year:'numeric',month:'2-digit',day:'2-digit'}).split('/').reverse().join('-')
+    + ' ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  skillDrafts.push({ id:'SK-' + (7 + skillDrafts.length) + '-draft', name, cat, author: currentUser || 'analyst', ts, status:'pending' });
+  clearSkillDraft();
+  renderSkillDrafts();
+  // Brief success flash
+  const btn = document.querySelector('#sk-author-pane .btn-primary');
+  if (btn) { const orig = btn.textContent; btn.textContent = '✓ Submitted!'; btn.style.background='var(--green)'; setTimeout(()=>{ btn.textContent=orig; btn.style.background=''; }, 2000); }
+}
+
 function openSkillsRepo() {
   renderSkillsRepo('all');
   activeSkillCat = 'all';
   document.querySelectorAll('.sk-cat-pill').forEach(p => p.classList.toggle('sk-cat-on', p.dataset.cat === 'all'));
   document.getElementById('sk-overlay').classList.add('open');
+  // Ensure browse tab is active on open
+  switchSkillTab('browse');
 }
 function closeSkillsRepo() {
   document.getElementById('sk-overlay').classList.remove('open');
@@ -8518,7 +8966,11 @@ function switchRvTab(tab) {
         <button class="btn btn-ghost" style="flex-shrink:0;font-size:16px;padding:2px 8px;" onclick="closeSkillsRepo()">✕</button>
       </div>
     </div>
-    <div class="sk-modal-body">
+    <div class="sk-tab-bar">
+      <div class="sk-tab sk-tab-on" id="sk-tab-browse" onclick="switchSkillTab('browse')">Browse</div>
+      <div class="sk-tab" id="sk-tab-author" onclick="switchSkillTab('author')">✏️ Propose Edit</div>
+    </div>
+    <div class="sk-modal-body" id="sk-browse-pane">
       <div class="sk-stats-bar">
         <div class="sk-stat"><div class="sk-stat-val">6</div><div class="sk-stat-lbl">Skills indexed</div></div>
         <div class="sk-stat"><div class="sk-stat-val">4</div><div class="sk-stat-lbl">Categories</div></div>
@@ -8533,6 +8985,68 @@ function switchRvTab(tab) {
         <span class="sk-cat-pill" data-cat="execution" onclick="filterSkills('execution',this)">Execution <span style="opacity:.6;">1</span></span>
       </div>
       <div class="sk-list" id="sk-list"><!-- populated by renderSkillsRepo() --></div>
+    </div>
+    <!-- Author / Propose Edit pane -->
+    <div class="sk-modal-body" id="sk-author-pane" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+        <!-- Form -->
+        <div class="sk-author-form">
+          <div style="font-size:12px;color:var(--sub);margin-bottom:6px;line-height:1.6;">Propose a new skill or an edit to an existing one. Submissions are reviewed by senior hunters before being merged into the repository.</div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">Skill ID <span style="color:var(--muted);font-weight:400;text-transform:none;">(auto-generated on submit)</span></label>
+            <input class="sk-finput" id="sk-draft-id" placeholder="SK-0XX — assigned on review" readonly style="opacity:.5;cursor:default;">
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">Skill Name</label>
+            <input class="sk-finput" id="sk-draft-name" placeholder="e.g. LSASS Memory Access via Task Manager">
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">Category</label>
+            <select class="sk-finput" id="sk-draft-cat">
+              <option value="">Select category…</option>
+              <option value="credential-access">Credential Access</option>
+              <option value="lateral-movement">Lateral Movement</option>
+              <option value="c2">Command &amp; Control</option>
+              <option value="execution">Execution</option>
+              <option value="persistence">Persistence</option>
+              <option value="defense-evasion">Defense Evasion</option>
+            </select>
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">Summary</label>
+            <textarea class="sk-finput" id="sk-draft-summary" rows="2" placeholder="One-paragraph description of what this skill detects and why it matters…"></textarea>
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">Behavioural Patterns <span style="color:var(--muted);font-weight:400;text-transform:none;">(one per line)</span></label>
+            <textarea class="sk-finput mono" id="sk-draft-patterns" rows="4" placeholder="LSASS access from non-SYSTEM non-antivirus processes&#10;OpenProcess with PROCESS_VM_READ on lsass.exe&#10;ReadProcessMemory calls targeting PID of lsass…"></textarea>
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">SPL Template</label>
+            <textarea class="sk-finput mono" id="sk-draft-spl" rows="4" placeholder="index=wineventlog sourcetype=XmlWinEventLog&#10;| where EventCode=4656&#10;| where match(ObjectName,&quot;lsass.exe&quot;)…"></textarea>
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">FP Exclusions <span style="color:var(--muted);font-weight:400;text-transform:none;">(one per line)</span></label>
+            <textarea class="sk-finput mono" id="sk-draft-exclusions" rows="2" placeholder="process_name IN (&quot;MsMpEng.exe&quot;, &quot;SentinelAgent.exe&quot;)&#10;user=&quot;NT AUTHORITY\\SYSTEM&quot; AND parent=&quot;wininit.exe&quot;"></textarea>
+          </div>
+          <div class="sk-field">
+            <label class="sk-field-lbl">Linked ATT&amp;CK Techniques</label>
+            <input class="sk-finput mono" id="sk-draft-ttps" placeholder="T1003.001, T1003.004">
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+            <button class="btn btn-outline btn-sm" onclick="clearSkillDraft()">Clear</button>
+            <button class="btn btn-primary btn-sm" onclick="submitSkillDraft()">Submit for Review →</button>
+          </div>
+        </div>
+        <!-- Draft queue -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">
+            Pending Review <span class="chip chip-yellow" style="font-size:9px;" id="sk-draft-count">2 pending</span>
+          </div>
+          <div id="sk-draft-list" style="display:flex;flex-direction:column;gap:7px;">
+            <!-- populated by renderSkillDrafts() -->
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
