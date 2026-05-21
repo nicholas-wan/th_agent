@@ -931,6 +931,54 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .kb-edit-bar { display:flex; align-items:center; gap:8px; padding:10px 0 2px; }
 .kb-edit-hint { font-size:10px; color:var(--muted); flex:1; }
 
+/* ── Gate Decision Log ── */
+.gdl-entry { display:flex; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
+.gdl-entry:last-child { border-bottom:none; padding-bottom:2px; }
+.gdl-spine { display:flex; flex-direction:column; align-items:center; gap:0; flex-shrink:0; }
+.gdl-gate-num { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+.gdl-connector { width:1px; background:var(--border); flex:1; min-height:10px; margin-top:3px; }
+.gdl-body { flex:1; min-width:0; padding-bottom:2px; }
+.gdl-top { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:4px; }
+.gdl-gate-name { font-size:12px; font-weight:600; color:var(--text); }
+.gdl-agent-tag { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; padding:1px 5px; border-radius:3px; }
+.gdl-who { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--muted); margin-left:auto; white-space:nowrap; }
+.gdl-dec { font-size:10px; font-weight:700; padding:2px 7px; border-radius:3px; }
+.gdl-dec-approved { background:rgba(16,185,129,.12); color:var(--green); border:1px solid rgba(16,185,129,.22); }
+.gdl-dec-modified { background:rgba(245,158,11,.12); color:var(--yellow); border:1px solid rgba(245,158,11,.22); }
+.gdl-dec-rejected { background:rgba(239,68,68,.12);  color:var(--red);    border:1px solid rgba(239,68,68,.22); }
+.gdl-change { font-size:11px; color:var(--sub); margin-top:5px; padding:6px 9px; background:var(--s3); border-left:2px solid var(--border2); border-radius:0 4px 4px 0; line-height:1.55; }
+.gdl-change b { color:var(--text); font-weight:600; }
+.gdl-reason { font-size:10px; color:var(--muted); margin-top:4px; font-style:italic; line-height:1.5; }
+
+/* ── IOC Repository ── */
+.ioc-filter-bar { display:flex; gap:5px; flex-wrap:wrap; }
+.ioc-fpill { padding:3px 10px; border-radius:4px; font-size:11px; font-weight:500; color:var(--sub); border:1px solid var(--border); background:none; cursor:pointer; transition:all .12s; }
+.ioc-fpill:hover { color:var(--text); border-color:var(--blue); }
+.ioc-fpill.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ioc-type { display:inline-flex; align-items:center; padding:2px 7px; border-radius:3px; font-size:10px; font-weight:700; white-space:nowrap; }
+.ioc-t-ip      { background:rgba(239,68,68,.1);  color:var(--red);    border:1px solid rgba(239,68,68,.2); }
+.ioc-t-domain  { background:rgba(249,115,22,.1); color:var(--orange); border:1px solid rgba(249,115,22,.2); }
+.ioc-t-hash    { background:rgba(99,102,241,.1); color:var(--indigo); border:1px solid rgba(99,102,241,.2); }
+.ioc-t-ja3     { background:rgba(245,158,11,.1); color:var(--yellow); border:1px solid rgba(245,158,11,.2); }
+.ioc-t-account { background:rgba(59,130,246,.1); color:var(--blue);   border:1px solid rgba(59,130,246,.2); }
+.ioc-status { font-size:10px; font-weight:600; }
+.ioc-s-blocked    { color:var(--red); }
+.ioc-s-monitoring { color:var(--yellow); }
+.ioc-s-isolated   { color:var(--orange); }
+.ioc-s-suspended  { color:var(--indigo); }
+.ioc-s-cleared    { color:var(--green); }
+.ioc-table-wrap { overflow-x:auto; }
+.ioc-table { width:100%; border-collapse:collapse; font-size:11px; }
+.ioc-table th { text-align:left; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:7px 12px; border-bottom:1px solid var(--border); white-space:nowrap; background:var(--s1); position:sticky; top:0; z-index:1; }
+.ioc-table td { padding:8px 12px; border-bottom:1px solid rgba(31,45,71,.4); color:var(--sub); vertical-align:middle; }
+.ioc-table tr:last-child td { border-bottom:none; }
+.ioc-table tr:hover td { background:rgba(59,130,246,.03); }
+.ioc-val { font-family:'SF Mono','Consolas',monospace; font-size:10px; color:var(--text); word-break:break-all; }
+.ioc-add-row { display:grid; grid-template-columns:auto 1fr 1fr auto auto auto; gap:8px; align-items:end; padding:10px 14px; background:var(--s2); border-top:1px solid var(--border); }
+.ioc-add-input { background:var(--s1); border:1px solid var(--border); border-radius:4px; padding:5px 9px; font-size:11px; color:var(--text); outline:none; font-family:inherit; transition:border-color .12s; width:100%; }
+.ioc-add-input:focus { border-color:var(--teal); }
+.ioc-add-select { background:var(--s1); border:1px solid var(--border); border-radius:4px; padding:5px 8px; font-size:11px; color:var(--sub); outline:none; cursor:pointer; }
+
 /* lock record */
 .lock-section { margin-bottom: 14px; }
 .lock-letter { display: inline-flex; width: 20px; height: 20px; border-radius: 4px; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; margin-right: 6px; }
@@ -2766,6 +2814,21 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
         <span>This is the <b>Keep</b> stage — the hunt record. <b>Click any finding</b> to see the agent's reasoning and recommended actions. Use <b>Export</b> to generate a report for IR hand-off.</span>
       </div>
 
+      <!-- Gate Decision Log -->
+      <div class="card card-collapsible" id="card-gate-log">
+        <div class="card-head" onclick="toggleCollapse('card-gate-log',event)">
+          <span class="card-title">🔏 Agent Gate Decisions</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip chip-gray" style="font-size:10px;" id="gdl-count-chip">— decisions</span>
+            <span class="card-summary" id="gdl-summary"></span>
+            <button class="collapse-btn" onclick="toggleCollapse('card-gate-log',event)">▾</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:4px 15px 10px;" id="gdl-body">
+          <!-- populated by renderGateDecisionLog() -->
+        </div>
+      </div>
+
       <!-- TTP Selector -->
       <div class="ttp-sel-card" id="keep-ttp-card" style="display:none;">
         <div class="ttp-sel-header">
@@ -3998,6 +4061,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
   <div class="kb-subtab-bar">
     <div class="kb-stab on" id="kb-stab-skills" onclick="switchKbTab('skills')">📚 Skills Repository</div>
     <div class="kb-stab" id="kb-stab-env" onclick="switchKbTab('env')">🏗️ Environment</div>
+    <div class="kb-stab" id="kb-stab-ioc" onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
   </div>
 
   <!-- ── Skills pane ── -->
@@ -4207,6 +4271,83 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <!-- ── IOC Repository pane ── -->
+  <div class="kb-pane" id="kb-pane-ioc" style="flex-direction:column;">
+    <div style="padding:20px 24px 0;display:flex;flex-direction:column;gap:14px;flex-shrink:0;">
+      <div class="info-bar">
+        <span class="ib-icon">🔍</span>
+        <span>Confirmed IOCs from all hunts — IPs, domains, file hashes, JA3 fingerprints, and compromised accounts. All entries are tagged to their source hunt and TTP. Use <b>Export</b> to generate a block list for firewall or EDR ingestion.</span>
+      </div>
+      <!-- Stats -->
+      <div class="stat-row stat-row-4" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card c-red"><div class="label">Total IOCs</div><div class="val" id="ioc-stat-total">—</div><div class="note">Across all hunts</div></div>
+        <div class="stat-card c-red"><div class="label">IPs Blocked</div><div class="val" id="ioc-stat-ip">—</div><div class="note">Firewall / EDR</div></div>
+        <div class="stat-card c-orange"><div class="label">Domains Blocked</div><div class="val" id="ioc-stat-domain">—</div><div class="note">DNS / proxy</div></div>
+        <div class="stat-card c-indigo"><div class="label">Hashes / JA3</div><div class="val" id="ioc-stat-hash">—</div><div class="note">EDR block rules</div></div>
+        <div class="stat-card c-blue"><div class="label">Accounts</div><div class="val" id="ioc-stat-acct">—</div><div class="note">Suspended / monitored</div></div>
+      </div>
+      <!-- Filter bar -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="ioc-filter-bar" id="ioc-type-filter">
+          <button class="ioc-fpill on" data-ioctype="all"     onclick="filterKbIoc('type','all',this)">All</button>
+          <button class="ioc-fpill"    data-ioctype="IP"      onclick="filterKbIoc('type','IP',this)">IP</button>
+          <button class="ioc-fpill"    data-ioctype="Domain"  onclick="filterKbIoc('type','Domain',this)">Domain</button>
+          <button class="ioc-fpill"    data-ioctype="Hash"    onclick="filterKbIoc('type','Hash',this)">Hash</button>
+          <button class="ioc-fpill"    data-ioctype="JA3"     onclick="filterKbIoc('type','JA3',this)">JA3</button>
+          <button class="ioc-fpill"    data-ioctype="Account" onclick="filterKbIoc('type','Account',this)">Account</button>
+        </div>
+        <div style="width:1px;height:16px;background:var(--border2);"></div>
+        <div class="ioc-filter-bar" id="ioc-status-filter">
+          <button class="ioc-fpill on" data-iocstatus="all"        onclick="filterKbIoc('status','all',this)">All Status</button>
+          <button class="ioc-fpill"    data-iocstatus="blocked"    onclick="filterKbIoc('status','blocked',this)">Blocked</button>
+          <button class="ioc-fpill"    data-iocstatus="monitoring" onclick="filterKbIoc('status','monitoring',this)">Monitoring</button>
+          <button class="ioc-fpill"    data-iocstatus="isolated"   onclick="filterKbIoc('status','isolated',this)">Isolated</button>
+          <button class="ioc-fpill"    data-iocstatus="suspended"  onclick="filterKbIoc('status','suspended',this)">Suspended</button>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="exportKbIoc()">↓ Export CSV</button>
+      </div>
+    </div>
+    <!-- Table -->
+    <div class="ioc-table-wrap" style="flex:1;overflow-y:auto;margin:12px 0 0;">
+      <table class="ioc-table" style="border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="padding-left:24px;">Type</th>
+            <th>Value</th>
+            <th>Hunt</th>
+            <th>TTP</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>Analyst</th>
+            <th>Added</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="ioc-table-body"><!-- populated by renderKbIocPane() --></tbody>
+      </table>
+    </div>
+    <!-- Add IOC row -->
+    <div class="ioc-add-row">
+      <span style="font-size:11px;font-weight:600;color:var(--sub);white-space:nowrap;">+ Add IOC</span>
+      <select class="ioc-add-select" id="ioc-add-type">
+        <option value="IP">IP</option>
+        <option value="Domain">Domain</option>
+        <option value="Hash">Hash</option>
+        <option value="JA3">JA3</option>
+        <option value="Account">Account</option>
+      </select>
+      <input class="ioc-add-input" id="ioc-add-value" placeholder="IOC value…" style="min-width:0;">
+      <input class="ioc-add-input" id="ioc-add-ttp" placeholder="TTP (optional)" style="width:100px;">
+      <select class="ioc-add-select" id="ioc-add-status">
+        <option value="monitoring">Monitoring</option>
+        <option value="blocked">Blocked</option>
+        <option value="isolated">Isolated</option>
+        <option value="suspended">Suspended</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="addKbIoc()">Add</button>
     </div>
   </div>
 
@@ -5124,6 +5265,59 @@ const findingComments = {
 };
 const openFindingComments = {};  // tracks which finding comment threads are expanded
 
+// ── Gate Decision Log ──
+const gateDecisionLog = {
+  '041': [
+    { gate:1, name:'Scope Approval',        agent:'orchestrator', agentColor:'blue',   analyst:'alice',  ts:'09:22 · Apr 27', decision:'modified',
+      original:'Proposed scope: T1078.002 · T1570 · T1003.001 · T1558.003',
+      change:'Removed T1558.003 — existing rule DR-2041 covers this with 97% fidelity. Agent cycles redirected to uncovered TTPs.',
+      reason:'No value in re-hunting a technique with a deployed high-fidelity rule. Kept remaining 3 TTPs.' },
+    { gate:2, name:'Hypothesis Review',     agent:'hypothesis',   agentColor:'teal',   analyst:'alice',  ts:'09:31 · Apr 27', decision:'approved',
+      original:'H-01 (LSASS access) · H-02 (Kerberoasting) · H-03 (C2 beacon)',
+      change:null,
+      reason:'All three hypotheses well-scoped. H-01 carries prior confirmed findings — elevated confidence warranted.' },
+    { gate:3, name:'Tradecraft Validation', agent:'tradecraft',   agentColor:'yellow', analyst:'marcus', ts:'09:38 · Apr 27', decision:'modified',
+      original:'Default FP threshold: 5%',
+      change:'FP threshold lowered to 2% — DC VLAN Tier-0 assets in scope. Pre-loaded jsmith exclusion from TH-2026-038 FP list.',
+      reason:'Tier-0 assets justify tighter threshold. One FP on a DC is worse than alert fatigue.' },
+  ],
+  '040': [
+    { gate:1, name:'Scope Approval',        agent:'orchestrator', agentColor:'blue',   analyst:'marcus', ts:'13:22 · Apr 24', decision:'approved',
+      original:'Proposed scope: T1566.001 · T1204 · T1574.002 · T1486 · T1490',
+      change:null,
+      reason:'Scope matches BEC pre-cursor playbook exactly. Finance VLAN telemetry covers all TTPs.' },
+    { gate:2, name:'Hypothesis Review',     agent:'hypothesis',   agentColor:'teal',   analyst:'marcus', ts:'13:35 · Apr 24', decision:'modified',
+      original:'H-01 (phishing lure) · H-02 (DLL sideload)',
+      change:'Added H-03: ransomware pre-cursor (shadow copy deletion via vssadmin) — not in original CTI but flagged by Hypothesis Agent branch logic from TH-2026-038.',
+      reason:'FIN7 cluster reliably deletes shadow copies before encryption. CTI miss corrected by agent recall.' },
+  ],
+  '039': [
+    { gate:1, name:'Scope Approval',        agent:'orchestrator', agentColor:'blue',   analyst:'priya',  ts:'10:08 · Apr 14', decision:'approved',
+      original:'Proposed scope: T1195.002 · T1059.001 · T1105',
+      change:null,
+      reason:'Supply chain TTPs confirmed in external CTI feed. DevOps pipeline telemetry available.' },
+    { gate:2, name:'Hypothesis Review',     agent:'hypothesis',   agentColor:'teal',   analyst:'priya',  ts:'10:18 · Apr 14', decision:'modified',
+      original:'H-01 (malicious package) · H-02 (C2 via CI/CD runner)',
+      change:'Confidence on H-02 lowered to medium — runner logs show no anomalies in past 7 days.',
+      reason:'Evidence does not yet support high confidence on H-02. Keeping it in scope but flagging for analyst attention.' },
+  ],
+};
+
+// ── IOC Repository ──
+const iocRepository = [
+  { id:'IOC-001', type:'IP',      value:'185.220.101.47',              hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:52', note:'Cobalt Strike C2 — JA3 watermark 0x4e4b5547 confirmed' },
+  { id:'IOC-002', type:'JA3',     value:'769c10b3d4a2e5c91f3b8d2e410f', hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:43', note:'Malleable C2 profile — matching known CS kit' },
+  { id:'IOC-003', type:'Hash',    value:'7f3a9c2b1e44d0f8a6c3b2d9e1f441', hunt:'TH-2026-041', ttp:'T1003.001', sev:'c', status:'blocked',  analyst:'marcus', ts:'2026-04-27 09:45', note:'Unsigned rundll32 variant — LSASS handle access' },
+  { id:'IOC-004', type:'Account', value:'jsmith',                       hunt:'TH-2026-041', ttp:'T1078.002', sev:'h', status:'suspended',  analyst:'alice',  ts:'2026-04-27 09:47', note:'Lateral movement — 14 hosts in session, off-hours' },
+  { id:'IOC-005', type:'IP',      value:'10.0.8.44',                    hunt:'TH-2026-040', ttp:'T1486',     sev:'c', status:'isolated',   analyst:'priya',  ts:'2026-04-24 14:25', note:'WIN-FS02 — payroll data encrypted, isolated by EDR' },
+  { id:'IOC-006', type:'Domain',  value:'update-cdn.microsoftx.com',    hunt:'TH-2026-040', ttp:'T1566.001', sev:'h', status:'blocked',    analyst:'marcus', ts:'2026-04-24 13:55', note:'Phishing lure domain — typosquat of Microsoft CDN' },
+  { id:'IOC-007', type:'Hash',    value:'b2e7f1a4c03d8e92f1b7c4a5d3e309', hunt:'TH-2026-040', ttp:'T1574.002', sev:'h', status:'monitoring', analyst:'marcus', ts:'2026-04-24 14:10', note:'DLL sideloading payload via signed binary' },
+  { id:'IOC-008', type:'IP',      value:'91.108.56.183',                 hunt:'TH-2026-039', ttp:'T1195.002', sev:'h', status:'monitoring', analyst:'priya',  ts:'2026-04-14 11:30', note:'Supply chain C2 — attributed to APT cluster via CTI' },
+  { id:'IOC-009', type:'Domain',  value:'pkg-update.npmjs-cdn.com',      hunt:'TH-2026-039', ttp:'T1195.002', sev:'h', status:'blocked',    analyst:'priya',  ts:'2026-04-14 11:45', note:'Malicious NPM mirror domain — used in supply chain implant' },
+];
+let activeIocTypeFilter   = 'all';
+let activeIocStatusFilter = 'all';
+
 // ── Archived Check data for closed hunts ──
 const closedCheckSummaries = {
   '040': {
@@ -5845,6 +6039,7 @@ function renderKeepHunt(id) {
   renderKeepFindings(d);
   renderKeepTimeline(d);
   renderVelocityCard(id);
+  renderGateDecisionLog(id);
 
   // Similar hunts summary
   const ss = document.getElementById('simhunts-summary');
@@ -5852,6 +6047,55 @@ function renderKeepHunt(id) {
 
   // Refresh notes
   renderNotes();
+}
+
+function renderGateDecisionLog(huntId) {
+  const el = document.getElementById('gdl-body');
+  const chip = document.getElementById('gdl-count-chip');
+  const summary = document.getElementById('gdl-summary');
+  if (!el) return;
+  const shortId = huntId.replace('TH-2026-','');
+  const entries = gateDecisionLog[shortId] || [];
+  if (chip) chip.textContent = entries.length + ' decision' + (entries.length !== 1 ? 's' : '');
+  const mods = entries.filter(e => e.decision === 'modified').length;
+  if (summary) summary.textContent = mods ? mods + ' modified' : entries.length ? 'all approved' : '';
+
+  const agentColors = { orchestrator:'var(--blue)', hypothesis:'var(--teal)', tradecraft:'var(--yellow)',
+    dataeng:'var(--indigo)', detection:'var(--green)' };
+  const agentIcons  = { orchestrator:'🎛️', hypothesis:'💡', tradecraft:'🧠', dataeng:'🗄️', detection:'⚙️' };
+  const decLabel = { approved:'✓ Approved', modified:'✏️ Modified', rejected:'✗ Rejected' };
+
+  if (!entries.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:10px 0;text-align:center;">No gate decisions recorded for this hunt.</div>';
+    return;
+  }
+
+  el.innerHTML = entries.map((e, i) => {
+    const clr    = agentColors[e.agent] || 'var(--sub)';
+    const icon   = agentIcons[e.agent] || '·';
+    const decCls = 'gdl-dec gdl-dec-' + e.decision;
+    const u      = users[e.analyst] || { initials:'?', bg:'rgba(100,116,139,.2)', color:'var(--sub)' };
+    return `<div class="gdl-entry">
+      <div class="gdl-spine">
+        <div class="gdl-gate-num" style="background:${clr}18;color:${clr};">G${e.gate}</div>
+        ${i < entries.length - 1 ? '<div class="gdl-connector"></div>' : ''}
+      </div>
+      <div class="gdl-body">
+        <div class="gdl-top">
+          <span style="font-size:12px;">${icon}</span>
+          <span class="gdl-gate-name">${e.name}</span>
+          <span class="${decCls}">${decLabel[e.decision]}</span>
+          <div class="gdl-who">
+            <div class="user-av" style="width:16px;height:16px;font-size:7px;background:${u.bg};color:${u.color};">${u.initials}</div>
+            <span>${e.analyst} · ${e.ts}</span>
+          </div>
+        </div>
+        ${e.original ? `<div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Original: <span style="color:var(--sub);">${e.original}</span></div>` : ''}
+        ${e.change ? `<div class="gdl-change"><b>Change:</b> ${e.change}</div>` : ''}
+        ${e.reason ? `<div class="gdl-reason">💬 "${e.reason}"</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderVelocityCard(huntId) {
@@ -8559,16 +8803,20 @@ function initKbTab() {
   renderKbSkillList(activeKbSkCat);
   renderKbDraftList();
   renderKbEnvPane();
+  renderKbIocPane();
 }
 
 // ── KB sub-tab switch ──
 function switchKbTab(tab) {
   activeKbTab = tab;
-  ['skills','env'].forEach(k => {
-    document.getElementById('kb-stab-' + k).classList.toggle('on', k === tab);
-    document.getElementById('kb-pane-' + k).classList.toggle('on', k === tab);
+  ['skills','env','ioc'].forEach(k => {
+    const stab = document.getElementById('kb-stab-' + k);
+    const pane = document.getElementById('kb-pane-' + k);
+    if (stab) stab.classList.toggle('on', k === tab);
+    if (pane) pane.classList.toggle('on', k === tab);
   });
   if (tab === 'env') renderKbEnvPane();
+  if (tab === 'ioc') renderKbIocPane();
 }
 
 // ── KB Skills — Browse/Author sub-tabs ──
@@ -8788,6 +9036,99 @@ function saveKbEnvChanges() {
     hint.style.color = '';
   }, 3000);
   renderKbEnvPane();
+}
+
+// ── IOC Repository ──
+function renderKbIocPane() {
+  const tbody = document.getElementById('ioc-table-body');
+  if (!tbody) return;
+
+  // Filtered set
+  let rows = iocRepository.filter(r => {
+    const typeMatch   = activeIocTypeFilter   === 'all' || r.type   === activeIocTypeFilter;
+    const statusMatch = activeIocStatusFilter === 'all' || r.status === activeIocStatusFilter;
+    return typeMatch && statusMatch;
+  });
+
+  // Stats (always whole set)
+  const all = iocRepository;
+  const setText = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  setText('ioc-stat-total',  all.length);
+  setText('ioc-stat-ip',     all.filter(r=>r.type==='IP'     && (r.status==='blocked'||r.status==='isolated')).length);
+  setText('ioc-stat-domain', all.filter(r=>r.type==='Domain' && r.status==='blocked').length);
+  setText('ioc-stat-hash',   all.filter(r=>r.type==='Hash'||r.type==='JA3').length);
+  setText('ioc-stat-acct',   all.filter(r=>r.type==='Account').length);
+
+  const sevColor  = { c:'var(--red)', h:'var(--orange)', m:'var(--yellow)', l:'var(--green)' };
+  const sevLabel  = { c:'Critical',   h:'High',          m:'Medium',        l:'Low'         };
+  const typeClass = { IP:'ioc-t-ip', Domain:'ioc-t-domain', Hash:'ioc-t-hash', JA3:'ioc-t-ja3', Account:'ioc-t-account' };
+  const statusIco = { blocked:'🚫', monitoring:'👁️', isolated:'🔒', suspended:'⛔', cleared:'✓' };
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted);font-size:12px;">No IOCs match the current filter.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const u = users[r.analyst] || { initials:'?', bg:'rgba(100,116,139,.2)', color:'var(--sub)' };
+    return `<tr>
+      <td style="padding-left:24px;"><span class="ioc-type ${typeClass[r.type]||''}">${r.type}</span></td>
+      <td><span class="ioc-val">${r.value}</span></td>
+      <td><span style="font-size:10px;color:var(--blue);font-weight:600;">${r.hunt}</span></td>
+      <td><span style="font-size:10px;color:var(--sub);">${r.ttp||'—'}</span></td>
+      <td><span style="font-size:11px;font-weight:600;color:${sevColor[r.sev]||'var(--sub)'};">${sevLabel[r.sev]||r.sev}</span></td>
+      <td><span class="ioc-status ioc-s-${r.status}">${statusIco[r.status]||''} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span></td>
+      <td><div style="display:flex;align-items:center;gap:5px;">
+        <div class="user-av" style="width:16px;height:16px;font-size:7px;background:${u.bg};color:${u.color};flex-shrink:0;">${u.initials}</div>
+        <span>${r.analyst}</span>
+      </div></td>
+      <td style="font-size:10px;white-space:nowrap;color:var(--muted);">${r.ts}</td>
+      <td style="max-width:200px;font-size:10px;color:var(--muted);line-height:1.4;">${r.note}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterKbIoc(dimension, value, el) {
+  if (dimension === 'type') {
+    activeIocTypeFilter = value;
+    document.querySelectorAll('[data-ioctype]').forEach(b => b.classList.toggle('on', b.dataset.ioctype === value));
+  } else {
+    activeIocStatusFilter = value;
+    document.querySelectorAll('[data-iocstatus]').forEach(b => b.classList.toggle('on', b.dataset.iocstatus === value));
+  }
+  renderKbIocPane();
+}
+
+function addKbIoc() {
+  const type   = document.getElementById('ioc-add-type')?.value || 'IP';
+  const value  = (document.getElementById('ioc-add-value')?.value || '').trim();
+  const ttp    = (document.getElementById('ioc-add-ttp')?.value   || '').trim();
+  const status = document.getElementById('ioc-add-status')?.value || 'monitoring';
+  if (!value) { alert('Please enter an IOC value.'); return; }
+  const now = new Date();
+  const ts  = now.toISOString().slice(0,10) + ' ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  iocRepository.push({
+    id: 'IOC-' + String(iocRepository.length + 1).padStart(3,'0'),
+    type, value, hunt: 'TH-2026-' + activeKeepHunt,
+    ttp: ttp || '—', sev: 'h', status,
+    analyst: currentUser || 'analyst', ts, note: 'Manually added',
+  });
+  document.getElementById('ioc-add-value').value = '';
+  document.getElementById('ioc-add-ttp').value   = '';
+  renderKbIocPane();
+}
+
+function exportKbIoc() {
+  const headers = ['ID','Type','Value','Hunt','TTP','Severity','Status','Analyst','Added','Note'];
+  const rows = iocRepository.map(r =>
+    [r.id,r.type,r.value,r.hunt,r.ttp,r.sev,r.status,r.analyst,r.ts,r.note].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'ioc-repository-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
 }
 
 function openSkillsRepo() {
