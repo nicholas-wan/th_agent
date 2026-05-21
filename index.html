@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -899,6 +899,39 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .kb-stab.on { color:var(--teal); border-bottom-color:var(--teal); }
 .kb-pane { display:none; flex:1; overflow:auto; flex-direction:column; min-height:0; }
 .kb-pane.on { display:flex; }
+
+/* ── Skills type filter ── */
+.sk-type-bar { display:flex; gap:4px; margin-bottom:10px; }
+.sk-type-pill { padding:3px 11px; border-radius:4px; font-size:11px; font-weight:500; color:var(--sub); border:1px solid var(--border); background:none; cursor:pointer; transition:all .12s; }
+.sk-type-pill.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+.sk-type-tag { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; padding:1px 5px; border-radius:3px; }
+.sk-type-tactic { background:rgba(99,102,241,.12); color:var(--indigo); border:1px solid rgba(99,102,241,.2); }
+.sk-type-domain { background:rgba(20,184,166,.12); color:var(--teal); border:1px solid rgba(20,184,166,.2); }
+
+/* ── TTP Runbook cards (KB pane) ── */
+.rb-kb-card { background:var(--s1); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:9px; transition:border-color .12s; }
+.rb-kb-card:last-child { margin-bottom:0; }
+.rb-kb-card:hover { border-color:var(--border2); }
+.rb-kb-head { display:flex; align-items:center; gap:10px; padding:11px 15px; cursor:pointer; user-select:none; }
+.rb-kb-ttp-id { font-family:'SF Mono','Consolas',monospace; font-size:11px; font-weight:700; color:var(--blue); flex-shrink:0; }
+.rb-kb-name { font-size:13px; font-weight:600; color:var(--text); flex:1; min-width:0; }
+.rb-kb-tactic { font-size:10px; color:var(--muted); white-space:nowrap; }
+.rb-kb-chev { font-size:11px; color:var(--muted); transition:transform .15s; flex-shrink:0; }
+.rb-kb-card.open .rb-kb-chev { transform:rotate(180deg); }
+.rb-kb-body { display:none; border-top:1px solid var(--border); padding:14px 16px; }
+.rb-kb-card.open .rb-kb-body { display:block; }
+.rb-kb-summary { font-size:12px; color:var(--sub); line-height:1.6; margin-bottom:12px; }
+.rb-kb-section { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:10px 0 6px; }
+.rb-kb-ev { display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid rgba(31,45,71,.4); font-size:11px; color:var(--sub); line-height:1.5; }
+.rb-kb-ev:last-child { border-bottom:none; }
+.rb-kb-ev-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.rb-kb-query { background:var(--s3); border:1px solid var(--border); border-radius:5px; overflow:hidden; margin-bottom:6px; }
+.rb-kb-qlabel { padding:6px 11px; font-size:10px; font-weight:600; color:var(--sub); background:var(--s2); border-bottom:1px solid var(--border); }
+.rb-kb-qspl { padding:9px 11px; font-family:'SF Mono','Consolas',monospace; font-size:10px; color:#93c5fd; line-height:1.65; white-space:pre; overflow-x:auto; }
+.rb-kb-hunt-note { background:var(--s3); border-left:2px solid var(--blue); border-radius:0 4px 4px 0; padding:7px 10px; margin-bottom:6px; font-size:11px; color:var(--sub); line-height:1.5; }
+.rb-kb-hunt-note b { color:var(--text); }
+.rb-kb-fp-item { font-size:11px; color:var(--muted); padding:3px 0 3px 14px; position:relative; line-height:1.5; }
+.rb-kb-fp-item::before { content:'·'; position:absolute; left:4px; color:var(--border2); }
 /* Skills sub-pane */
 .kb-skills-wrap { padding:20px 24px; display:flex; flex-direction:column; gap:0; flex:1; min-height:0; overflow:auto; }
 .kb-sk-stab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:16px; }
@@ -4059,9 +4092,10 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
   <!-- Sub-tab bar -->
   <div class="kb-subtab-bar">
-    <div class="kb-stab on" id="kb-stab-skills" onclick="switchKbTab('skills')">📚 Skills Repository</div>
-    <div class="kb-stab" id="kb-stab-env" onclick="switchKbTab('env')">🏗️ Environment</div>
-    <div class="kb-stab" id="kb-stab-ioc" onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
+    <div class="kb-stab on" id="kb-stab-skills"    onclick="switchKbTab('skills')">📚 Skills</div>
+    <div class="kb-stab"    id="kb-stab-runbooks"  onclick="switchKbTab('runbooks')">📖 TTP Runbooks</div>
+    <div class="kb-stab"    id="kb-stab-env"       onclick="switchKbTab('env')">🏗️ Environment</div>
+    <div class="kb-stab"    id="kb-stab-ioc"       onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
   </div>
 
   <!-- ── Skills pane ── -->
@@ -4082,6 +4116,12 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           <div class="sk-stat"><div class="sk-stat-val">3</div><div class="sk-stat-lbl">Contributors</div></div>
           <div class="sk-stat"><div class="sk-stat-val" style="font-size:14px;">v2.0</div><div class="sk-stat-lbl">Latest version</div></div>
         </div>
+        <div class="sk-type-bar">
+          <button class="sk-type-pill on" data-sktype="all"    onclick="filterKbSkType('all',this)">All Types</button>
+          <button class="sk-type-pill"    data-sktype="tactic" onclick="filterKbSkType('tactic',this)">🧠 Tactic Skills</button>
+          <button class="sk-type-pill"    data-sktype="domain" onclick="filterKbSkType('domain',this)">🏗️ Domain Skills</button>
+        </div>
+        <div id="kb-sk-type-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px;">All skills — tactic-level (cross-org) and domain-specific (this environment)</div>
         <div class="sk-filter-bar" style="margin-bottom:12px;">
           <span class="sk-cat-pill sk-cat-on" data-kbcat="all"      onclick="filterKbSkills('all',this)">All <span style="opacity:.6;">6</span></span>
           <span class="sk-cat-pill" data-kbcat="credential-access"  onclick="filterKbSkills('credential-access',this)">Credential Access <span style="opacity:.6;">2</span></span>
@@ -4147,6 +4187,24 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── TTP Runbooks pane ── -->
+  <div class="kb-pane" id="kb-pane-runbooks">
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:auto;min-height:0;">
+      <div class="info-bar">
+        <span class="ib-icon">📖</span>
+        <span>TTP-level runbooks — one entry per technique. Each covers adversary evidence indicators, hunting SPL, prior hunt notes from this environment, and known false positives. These are the same runbooks the Hypothesis Agent draws from via <code style="font-size:10px;">get_runbook(ttp_id)</code>. Edit <b>kb/runbooks.js</b> to add more.</span>
+      </div>
+      <div class="sk-filter-bar" id="rb-kb-tactic-filter">
+        <span class="sk-cat-pill sk-cat-on" data-rbtactic="all"                onclick="filterKbRunbooks('all',this)">All</span>
+        <span class="sk-cat-pill" data-rbtactic="Credential Access"            onclick="filterKbRunbooks('Credential Access',this)">Credential Access</span>
+        <span class="sk-cat-pill" data-rbtactic="Lateral Movement"             onclick="filterKbRunbooks('Lateral Movement',this)">Lateral Movement</span>
+        <span class="sk-cat-pill" data-rbtactic="Execution"                    onclick="filterKbRunbooks('Execution',this)">Execution</span>
+        <span class="sk-cat-pill" data-rbtactic="Persistence"                  onclick="filterKbRunbooks('Persistence',this)">Persistence</span>
+      </div>
+      <div id="kb-rb-list"><!-- populated by renderKbRunbooks() --></div>
     </div>
   </div>
 
@@ -4403,6 +4461,13 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
     <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="launchHunt()">Launch Hunt → Learn</button></div>
   </div>
 </div>
+
+<!-- ── KB data files — edit files in kb/ to add TTPs, skills, IOCs ── -->
+<script src="kb/gate-decisions.js"></script>
+<script src="kb/iocs.js"></script>
+<script src="kb/environment.js"></script>
+<script src="kb/runbooks.js"></script>
+<script src="kb/skills.js"></script>
 
 <script>
 // ── Tab switching ──
@@ -5265,56 +5330,9 @@ const findingComments = {
 };
 const openFindingComments = {};  // tracks which finding comment threads are expanded
 
-// ── Gate Decision Log ──
-const gateDecisionLog = {
-  '041': [
-    { gate:1, name:'Scope Approval',        agent:'orchestrator', agentColor:'blue',   analyst:'alice',  ts:'09:22 · Apr 27', decision:'modified',
-      original:'Proposed scope: T1078.002 · T1570 · T1003.001 · T1558.003',
-      change:'Removed T1558.003 — existing rule DR-2041 covers this with 97% fidelity. Agent cycles redirected to uncovered TTPs.',
-      reason:'No value in re-hunting a technique with a deployed high-fidelity rule. Kept remaining 3 TTPs.' },
-    { gate:2, name:'Hypothesis Review',     agent:'hypothesis',   agentColor:'teal',   analyst:'alice',  ts:'09:31 · Apr 27', decision:'approved',
-      original:'H-01 (LSASS access) · H-02 (Kerberoasting) · H-03 (C2 beacon)',
-      change:null,
-      reason:'All three hypotheses well-scoped. H-01 carries prior confirmed findings — elevated confidence warranted.' },
-    { gate:3, name:'Tradecraft Validation', agent:'tradecraft',   agentColor:'yellow', analyst:'marcus', ts:'09:38 · Apr 27', decision:'modified',
-      original:'Default FP threshold: 5%',
-      change:'FP threshold lowered to 2% — DC VLAN Tier-0 assets in scope. Pre-loaded jsmith exclusion from TH-2026-038 FP list.',
-      reason:'Tier-0 assets justify tighter threshold. One FP on a DC is worse than alert fatigue.' },
-  ],
-  '040': [
-    { gate:1, name:'Scope Approval',        agent:'orchestrator', agentColor:'blue',   analyst:'marcus', ts:'13:22 · Apr 24', decision:'approved',
-      original:'Proposed scope: T1566.001 · T1204 · T1574.002 · T1486 · T1490',
-      change:null,
-      reason:'Scope matches BEC pre-cursor playbook exactly. Finance VLAN telemetry covers all TTPs.' },
-    { gate:2, name:'Hypothesis Review',     agent:'hypothesis',   agentColor:'teal',   analyst:'marcus', ts:'13:35 · Apr 24', decision:'modified',
-      original:'H-01 (phishing lure) · H-02 (DLL sideload)',
-      change:'Added H-03: ransomware pre-cursor (shadow copy deletion via vssadmin) — not in original CTI but flagged by Hypothesis Agent branch logic from TH-2026-038.',
-      reason:'FIN7 cluster reliably deletes shadow copies before encryption. CTI miss corrected by agent recall.' },
-  ],
-  '039': [
-    { gate:1, name:'Scope Approval',        agent:'orchestrator', agentColor:'blue',   analyst:'priya',  ts:'10:08 · Apr 14', decision:'approved',
-      original:'Proposed scope: T1195.002 · T1059.001 · T1105',
-      change:null,
-      reason:'Supply chain TTPs confirmed in external CTI feed. DevOps pipeline telemetry available.' },
-    { gate:2, name:'Hypothesis Review',     agent:'hypothesis',   agentColor:'teal',   analyst:'priya',  ts:'10:18 · Apr 14', decision:'modified',
-      original:'H-01 (malicious package) · H-02 (C2 via CI/CD runner)',
-      change:'Confidence on H-02 lowered to medium — runner logs show no anomalies in past 7 days.',
-      reason:'Evidence does not yet support high confidence on H-02. Keeping it in scope but flagging for analyst attention.' },
-  ],
-};
+// gateDecisionLog — see kb/gate-decisions.js
 
-// ── IOC Repository ──
-const iocRepository = [
-  { id:'IOC-001', type:'IP',      value:'185.220.101.47',              hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:52', note:'Cobalt Strike C2 — JA3 watermark 0x4e4b5547 confirmed' },
-  { id:'IOC-002', type:'JA3',     value:'769c10b3d4a2e5c91f3b8d2e410f', hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:43', note:'Malleable C2 profile — matching known CS kit' },
-  { id:'IOC-003', type:'Hash',    value:'7f3a9c2b1e44d0f8a6c3b2d9e1f441', hunt:'TH-2026-041', ttp:'T1003.001', sev:'c', status:'blocked',  analyst:'marcus', ts:'2026-04-27 09:45', note:'Unsigned rundll32 variant — LSASS handle access' },
-  { id:'IOC-004', type:'Account', value:'jsmith',                       hunt:'TH-2026-041', ttp:'T1078.002', sev:'h', status:'suspended',  analyst:'alice',  ts:'2026-04-27 09:47', note:'Lateral movement — 14 hosts in session, off-hours' },
-  { id:'IOC-005', type:'IP',      value:'10.0.8.44',                    hunt:'TH-2026-040', ttp:'T1486',     sev:'c', status:'isolated',   analyst:'priya',  ts:'2026-04-24 14:25', note:'WIN-FS02 — payroll data encrypted, isolated by EDR' },
-  { id:'IOC-006', type:'Domain',  value:'update-cdn.microsoftx.com',    hunt:'TH-2026-040', ttp:'T1566.001', sev:'h', status:'blocked',    analyst:'marcus', ts:'2026-04-24 13:55', note:'Phishing lure domain — typosquat of Microsoft CDN' },
-  { id:'IOC-007', type:'Hash',    value:'b2e7f1a4c03d8e92f1b7c4a5d3e309', hunt:'TH-2026-040', ttp:'T1574.002', sev:'h', status:'monitoring', analyst:'marcus', ts:'2026-04-24 14:10', note:'DLL sideloading payload via signed binary' },
-  { id:'IOC-008', type:'IP',      value:'91.108.56.183',                 hunt:'TH-2026-039', ttp:'T1195.002', sev:'h', status:'monitoring', analyst:'priya',  ts:'2026-04-14 11:30', note:'Supply chain C2 — attributed to APT cluster via CTI' },
-  { id:'IOC-009', type:'Domain',  value:'pkg-update.npmjs-cdn.com',      hunt:'TH-2026-039', ttp:'T1195.002', sev:'h', status:'blocked',    analyst:'priya',  ts:'2026-04-14 11:45', note:'Malicious NPM mirror domain — used in supply chain implant' },
-];
+// iocRepository — see kb/iocs.js
 let activeIocTypeFilter   = 'all';
 let activeIocStatusFilter = 'all';
 
@@ -7947,191 +7965,7 @@ setInterval(() => {
 // ════════════════════════════════════════
 // ENVIRONMENT CONTEXT  (MCP tool)
 // ════════════════════════════════════════
-const envData = {
-  domain: {
-    name: 'CORP.LOCAL',
-    netbios: 'CORP',
-    forest: 'CORP.LOCAL',
-    functionalLevel: 'Windows Server 2019',
-    dcs: ['WIN-DC01.corp.local (10.0.1.10)', 'WIN-DC02.corp.local (10.0.1.11)'],
-    sites: ['HQ-Site (10.0.0.0/16)', 'DR-Site (10.10.0.0/16)'],
-    trusts: ['One-way outbound → PARTNER.LOCAL (selective auth)'],
-    adfsUrl: 'https://adfs.corp.local',
-    adSync: 'Azure AD Connect · delta sync every 30 min',
-  },
-
-  stats: [
-    { label:'Endpoints',    value:'2,412', note:'Windows · macOS · Linux', color:'blue' },
-    { label:'Servers',      value:'34',    note:'On-prem · virtualised',   color:'indigo' },
-    { label:'Segments',     value:'8',     note:'VLANs mapped',            color:'green' },
-    { label:'User Accounts',value:'1,847', note:'638 service accounts',    color:'yellow' },
-  ],
-
-  anomalies: [
-    { sev:'crit', text:'CORP\\jsmith authenticated from 3 source IPs in 6h — off-hours logon anomaly (T1078.002)' },
-    { sev:'high', text:'WIN-DC01: unexpected outbound SMB to 10.0.8.44 (Workstations VLAN) at 02:14 UTC' },
-    { sev:'high', text:'svc-backup account interactive logon detected on WIN-WS041 — service accounts should never be interactive' },
-    { sev:'med',  text:'WIN-WS041: new service installed outside patch window — svchost.exe variant (T1543.003)' },
-  ],
-
-  segments: [
-    {
-      id:'seg-dc',    name:'Domain Controllers',  icon:'🏛️',  sensitivity:'critical',
-      cidr:'10.0.1.0/24', vlan:10, gateway:'10.0.1.1',
-      desc:'Tier-0 assets. No workstation traffic permitted. Firewalled from all non-admin VLANs.',
-      hosts:2, tags:['Tier-0','Jump-access only','IDS monitored'],
-      acls:['Allow: Admin VLAN (10.0.9.0/24)', 'Allow: Splunk ES (10.0.5.20)', 'Deny: all others'],
-    },
-    {
-      id:'seg-srv',   name:'Server Farm',          icon:'🖥️',  sensitivity:'high',
-      cidr:'10.0.2.0/24', vlan:20, gateway:'10.0.2.1',
-      desc:'Application and file servers. East-west traffic restricted via host-based firewall policy.',
-      hosts:28, tags:['Production','Change-controlled','Sysmon deployed'],
-      acls:['Allow: Corp Workstations','Allow: Admin VLAN','Deny: Guest/IoT'],
-    },
-    {
-      id:'seg-ws',    name:'Corp Workstations',    icon:'💻',  sensitivity:'medium',
-      cidr:'10.0.3.0/24', vlan:30, gateway:'10.0.3.1',
-      desc:'Standard employee endpoints. Managed via Intune. No server-to-workstation initiation permitted.',
-      hosts:1840, tags:['Intune managed','EDR deployed','User VLAN'],
-      acls:['Allow: Internet via proxy','Allow: Server Farm (restricted ports)','Deny: DC direct'],
-    },
-    {
-      id:'seg-dmz',   name:'DMZ / Public-facing',  icon:'🌐',  sensitivity:'high',
-      cidr:'10.0.4.0/24', vlan:40, gateway:'10.0.4.1',
-      desc:'Web servers, reverse proxies, email gateways. Strict egress filtering. No internal DNS.',
-      hosts:6, tags:['Internet-facing','WAF protected','Isolated DNS'],
-      acls:['Allow: inbound 443/80 from Internet','Deny: lateral to internal subnets','Allow: outbound SMTP 25'],
-    },
-    {
-      id:'seg-sec',   name:'Security / SOC',        icon:'🛡️',  sensitivity:'high',
-      cidr:'10.0.5.0/24', vlan:50, gateway:'10.0.5.1',
-      desc:'Splunk ES, EDR management console, SOAR. Read-only access to all other VLANs for log collection.',
-      hosts:8, tags:['SOC tools','Log collection','Splunk ES'],
-      acls:['Allow: syslog/UDP 514 from all','Allow: Splunk forwarder 9997 from all','Deny: outbound to Internet'],
-    },
-    {
-      id:'seg-admin', name:'Admin / Privileged',    icon:'🔑',  sensitivity:'critical',
-      cidr:'10.0.9.0/24', vlan:90, gateway:'10.0.9.1',
-      desc:'Jump hosts, PAM solution, admin workstations. Requires MFA + privileged session recording.',
-      hosts:4, tags:['Tier-0 access','PAM enforced','Session recorded'],
-      acls:['Allow: DC VLAN','Allow: Server Farm','Allow: Splunk ES (read)','Deny: Internet direct'],
-    },
-    {
-      id:'seg-iot',   name:'IoT / OT',              icon:'📡',  sensitivity:'medium',
-      cidr:'10.0.6.0/24', vlan:60, gateway:'10.0.6.1',
-      desc:'Building management, printers, physical security cameras. Isolated from corp network.',
-      hosts:312, tags:['Isolated','No domain join','Unmanaged endpoints'],
-      acls:['Allow: outbound NTP/DNS only','Deny: all inbound','Deny: corp subnets'],
-    },
-    {
-      id:'seg-dr',    name:'DR Site',               icon:'🔄',  sensitivity:'high',
-      cidr:'10.10.0.0/16', vlan:100, gateway:'10.10.0.1',
-      desc:'Disaster recovery site. Site-to-site VPN to HQ. Replication traffic only during off-hours.',
-      hosts:220, tags:['DR site','VPN tunnel','Replication VLAN'],
-      acls:['Allow: replication ports from HQ DCs','Allow: backup traffic from svc-backup','Deny: user traffic'],
-    },
-  ],
-
-  assets: [
-    { hostname:'WIN-DC01',   ip:'10.0.1.10', role:'dc',  os:'Windows Server 2022',   segment:'Domain Controllers',  owner:'IT Ops',        lastSeen:'2 min ago',  status:'online',
-      details:{ fqdn:'WIN-DC01.corp.local', mac:'00:50:56:A1:01:10', cpu:'Intel Xeon E5 ×16', ram:'32 GB', disk:'SSD 500 GB', uptime:'147 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-15', criticality:'Tier-0', notes:'Primary DC. FSMO roles: PDC, RID, Infrastructure. Kerberos KDC. Do not reboot without change ticket.' }},
-    { hostname:'WIN-DC02',   ip:'10.0.1.11', role:'dc',  os:'Windows Server 2022',   segment:'Domain Controllers',  owner:'IT Ops',        lastSeen:'3 min ago',  status:'online',
-      details:{ fqdn:'WIN-DC02.corp.local', mac:'00:50:56:A1:01:11', cpu:'Intel Xeon E5 ×16', ram:'32 GB', disk:'SSD 500 GB', uptime:'147 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-15', criticality:'Tier-0', notes:'Secondary DC. DNS secondary. AD replication partner to WIN-DC01.' }},
-    { hostname:'WIN-FS01',   ip:'10.0.2.20', role:'srv', os:'Windows Server 2019',   segment:'Server Farm',         owner:'IT Ops',        lastSeen:'1 min ago',  status:'online',
-      details:{ fqdn:'WIN-FS01.corp.local', mac:'00:50:56:A2:02:20', cpu:'Intel Xeon ×8', ram:'64 GB', disk:'NAS 20 TB', uptime:'312 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-15', criticality:'High', notes:'Primary file server. DFS namespace root. Shares: \\\\corp\\finance, \\\\corp\\hr, \\\\corp\\shared.' }},
-    { hostname:'WIN-APP01',  ip:'10.0.2.21', role:'srv', os:'Windows Server 2019',   segment:'Server Farm',         owner:'App Team',      lastSeen:'4 min ago',  status:'online',
-      details:{ fqdn:'WIN-APP01.corp.local', mac:'00:50:56:A2:02:21', cpu:'Intel Xeon ×8', ram:'32 GB', disk:'SSD 200 GB', uptime:'89 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-10', criticality:'High', notes:'Internal ERP application server (SAP). Service account: svc-erp. Connects to SQL-DB01.' }},
-    { hostname:'SQL-DB01',   ip:'10.0.2.30', role:'srv', os:'Windows Server 2019',   segment:'Server Farm',         owner:'DBA Team',      lastSeen:'2 min ago',  status:'online',
-      details:{ fqdn:'SQL-DB01.corp.local', mac:'00:50:56:A2:02:30', cpu:'Intel Xeon ×16', ram:'128 GB', disk:'SSD RAID 2 TB', uptime:'201 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-03-20', criticality:'Critical', notes:'SQL Server 2019. Hosts ERP and HR databases. SA account disabled. svc-sql service account. Named pipes disabled.' }},
-    { hostname:'SPLUNK-ES',  ip:'10.0.5.20', role:'sec', os:'Linux (RHEL 8)',         segment:'Security / SOC',      owner:'SOC',           lastSeen:'< 1 min',    status:'online',
-      details:{ fqdn:'splunk-es.corp.local', mac:'00:50:56:A5:05:20', cpu:'AMD EPYC ×32', ram:'256 GB', disk:'SSD RAID 10 TB', uptime:'61 days', sysmon:'N/A', edr:'CrowdStrike 7.1', patch:'2026-04-20', criticality:'Critical', notes:'Splunk Enterprise Security 8.x. Ingest: ~80 GB/day. Indexes: main, security, windows, sysmon, network. REST API used by hunt agents.' }},
-    { hostname:'WIN-WS041',  ip:'10.0.3.41', role:'ws',  os:'Windows 11 Pro',        segment:'Corp Workstations',   owner:'jsmith',        lastSeen:'18 min ago', status:'online',
-      details:{ fqdn:'WIN-WS041.corp.local', mac:'00:50:56:A3:03:41', cpu:'Intel i7 ×8', ram:'16 GB', disk:'SSD 256 GB', uptime:'12 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-08', criticality:'Medium', notes:'⚠ ALERT: Unusual LSASS access detected (EventCode 10, GrantedAccess 0x1fffff). Assigned to jsmith — currently under investigation (TH-2026-041).' }},
-    { hostname:'WIN-WS042',  ip:'10.0.3.42', role:'ws',  os:'Windows 11 Pro',        segment:'Corp Workstations',   owner:'mwebb',         lastSeen:'7 min ago',  status:'online',
-      details:{ fqdn:'WIN-WS042.corp.local', mac:'00:50:56:A3:03:42', cpu:'Intel i7 ×8', ram:'16 GB', disk:'SSD 256 GB', uptime:'5 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-15', criticality:'Low', notes:'Standard workstation assigned to Marcus Webb (SOC analyst).' }},
-    { hostname:'JUMP-01',    ip:'10.0.9.10', role:'net', os:'Windows Server 2022',   segment:'Admin / Privileged',  owner:'IT Ops',        lastSeen:'5 min ago',  status:'online',
-      details:{ fqdn:'JUMP-01.corp.local', mac:'00:50:56:A9:09:10', cpu:'Intel Xeon ×4', ram:'8 GB', disk:'SSD 120 GB', uptime:'88 days', sysmon:'v15.0', edr:'CrowdStrike 7.1', patch:'2026-04-15', criticality:'High', notes:'Privileged access workstation. CyberArk PSM installed. All admin sessions recorded. MFA enforced via Duo.' }},
-  ],
-
-  accounts: [
-    { name:'jsmith',       type:'User',    status:'active',   groups:['Domain Users','Finance-RW','VPN-Users'],
-      normal:'Business hours · Corp Workstations · WIN-WS041',
-      anomaly:'⚠ Off-hours logons from 3 source IPs in 6h — matches T1078.002 pattern (TH-2026-041)',
-      lastLogon:'2026-04-27 02:41 UTC · WIN-DC01', pwdAge:'47 days', mfa:'Duo · enrolled' },
-    { name:'mwebb',        type:'User',    status:'active',   groups:['Domain Users','SOC-Analysts','Splunk-Users'],
-      normal:'Business hours · Corp Workstations + JUMP-01',
-      anomaly:null,
-      lastLogon:'2026-04-27 09:12 UTC · WIN-WS042', pwdAge:'12 days', mfa:'Duo · enrolled' },
-    { name:'svc-backup',   type:'Service', status:'active',   groups:['Domain Users','Backup Operators'],
-      normal:'Non-interactive · scheduled tasks only · Server Farm + DC VLAN',
-      anomaly:'⚠ Interactive logon detected on WIN-WS041 at 02:18 UTC — service accounts must not log on interactively',
-      lastLogon:'2026-04-27 02:18 UTC · WIN-WS041', pwdAge:'180 days', mfa:'N/A (service account)' },
-    { name:'svc-sql',      type:'Service', status:'active',   groups:['Domain Users','SQL-Service'],
-      normal:'Non-interactive · SQL-DB01 only',
-      anomaly:null,
-      lastLogon:'2026-04-26 22:00 UTC · SQL-DB01', pwdAge:'90 days', mfa:'N/A (service account)' },
-    { name:'svc-splunk',   type:'Service', status:'active',   groups:['Domain Users','Splunk-Service'],
-      normal:'Non-interactive · SPLUNK-ES only · read-only domain access',
-      anomaly:null,
-      lastLogon:'2026-04-27 09:05 UTC · SPLUNK-ES', pwdAge:'60 days', mfa:'N/A (service account)' },
-    { name:'adm-itops',    type:'Admin',   status:'active',   groups:['Domain Admins','Enterprise Admins','Schema Admins'],
-      normal:'Business hours · JUMP-01 only · PAM session required',
-      anomaly:null,
-      lastLogon:'2026-04-25 14:30 UTC · JUMP-01', pwdAge:'30 days', mfa:'Duo · hardware token' },
-    { name:'krbtgt',       type:'Service', status:'active',   groups:['Domain Users'],
-      normal:'Never logged on interactively — Kerberos KDC account',
-      anomaly:null,
-      lastLogon:'Never (system account)', pwdAge:'364 days', mfa:'N/A' },
-  ],
-
-  topology: `<span class="t-hi">CORP.LOCAL — Network Topology</span>
-═══════════════════════════════════════════════════════════
-
-  Internet
-      │
-  ┌───┴────────────────────────────────────────┐
-  │  Perimeter Firewall (Palo Alto PA-5220)    │
-  │  <span class="t-ip">203.0.113.1</span> (external) · <span class="t-ip">10.0.4.1</span> (DMZ GW)      │
-  └───┬────────────────────────────────────────┘
-      │
-  ┌───┴──────────────────────┐
-  │  DMZ  <span class="t-ip">10.0.4.0/24</span>  VLAN 40  │  Web · Mail · Reverse Proxy
-  └───┬──────────────────────┘
-      │   (restricted — no lateral to internal)
-  ┌───┴──────────────────────────────────────────────────┐
-  │  Core Switch (Cisco Nexus 9000)                      │
-  │  Inter-VLAN routing · ACL enforcement · span port ──→ SPLUNK-ES
-  └──┬──────────┬──────────┬──────────┬──────────┬──────┘
-     │          │          │          │          │
-  ┌──┴──┐   ┌──┴──┐   ┌──┴──┐   ┌──┴──┐   ┌──┴──────┐
-  │ DC  │   │ SRV │   │ WS  │   │SEC  │   │ ADMIN   │
-  │VLAN │   │VLAN │   │VLAN │   │VLAN │   │VLAN 90  │
-  │ 10  │   │ 20  │   │ 30  │   │ 50  │   │(PAM+MFA)│
-  │<span class="t-ip">/24</span>  │   │<span class="t-ip">/24</span>  │   │<span class="t-ip">/24</span>  │   │<span class="t-ip">/24</span>  │   └──┬──────┘
-  │<span class="t-ok">Tier-0</span>│   │<span class="t-ok">Prod </span>│   │Users│   │SOC  │      │
-  └──┬──┘   └─────┘   └─────┘   └─────┘   jump hosts
-     │
-  <span class="t-warn">⚠ WIN-WS041 (10.0.3.41) → WIN-DC01 (10.0.1.10)</span>
-  <span class="t-warn">  Unexpected SMB (445) lateral movement detected  </span>
-  <span class="t-warn">  TH-2026-041 · EventCode 5145 · jsmith / svc-backup</span>
-
-     │ Site-to-Site VPN (IPSec)
-  ┌──┴──────────────────┐
-  │  DR Site  <span class="t-ip">10.10.0.0/16</span>  │  Replication · Backup
-  └─────────────────────┘
-
-  IoT  VLAN 60  <span class="t-ip">10.0.6.0/24</span>  — isolated · no corp routing`,
-
-  infrastructure: [
-    { icon:'🏛️', name:'WIN-DC01 / WIN-DC02', role:'Domain Controllers · FSMO roles · KDC', ip:'10.0.1.10–11', crit:'Tier-0' },
-    { icon:'🛡️', name:'SPLUNK-ES',            role:'SIEM · Hunt agent MCP endpoint',          ip:'10.0.5.20',    crit:'Critical' },
-    { icon:'🔑', name:'JUMP-01',               role:'Privileged Access Workstation · PAM',     ip:'10.0.9.10',    crit:'High' },
-    { icon:'🔥', name:'Palo Alto PA-5220',     role:'Perimeter firewall · IPS · URL filtering',ip:'203.0.113.1',  crit:'Critical' },
-    { icon:'🔀', name:'Cisco Nexus 9000',      role:'Core switch · Inter-VLAN routing · SPAN', ip:'10.0.0.1',     crit:'Critical' },
-    { icon:'🗄️', name:'SQL-DB01',              role:'SQL Server 2019 · ERP + HR databases',    ip:'10.0.2.30',    crit:'Critical' },
-  ],
-};
+// envData + crownJewels — see kb/environment.js
 
 // ── Render helpers ──
 function renderEcOverview() {
@@ -8297,23 +8131,7 @@ function renderEcTopology() {
 }
 
 // ── Crown Jewels ──
-const crownJewels = {
-  assets: [
-    { tier:0, icon:'🏛️', name:'WIN-DC01',    role:'Primary Domain Controller',   ip:'10.0.1.10', segment:'DC VLAN',       blast:'Domain dominance · Golden Ticket · DCSync · extract all credential hashes from AD',            exposure:'high',   ttp:'T1078.002 · T1003.001' },
-    { tier:0, icon:'🏛️', name:'WIN-DC02',    role:'Secondary Domain Controller',  ip:'10.0.1.11', segment:'DC VLAN',       blast:'AD replication access · offline database copy · Tier-0 redundancy path',                      exposure:'medium', ttp:'T1003.001' },
-    { tier:0, icon:'🔐', name:'PKI-01',      role:'Root Certificate Authority',   ip:'10.0.2.5',  segment:'Mgmt VLAN',     blast:'Certificate forgery · impersonate any identity · ESC1–8 ADCS attack surface · HTTPS interception', exposure:'low',    ttp:null },
-    { tier:0, icon:'💾', name:'BACKUP-01',   role:'Enterprise Backup Server',     ip:'10.0.3.15', segment:'Mgmt VLAN',     blast:'Full data corpus · stored credentials · offline AD database copy · ransomware primary target',   exposure:'medium', ttp:'T1570' },
-    { tier:1, icon:'⚙️', name:'SCCM-01',    role:'SCCM / ConfigMgr Server',      ip:'10.0.5.20', segment:'Mgmt VLAN',     blast:'Code execution on ~2,400 endpoints · software push · local admin rights across all workstations',  exposure:'low',    ttp:null },
-    { tier:1, icon:'🔍', name:'SIEM-01',     role:'Splunk Enterprise Security',   ip:'10.0.4.10', segment:'Security VLAN', blast:'Security visibility manipulation · log tampering · detection blind spots · hunt data access',      exposure:'low',    ttp:null },
-    { tier:1, icon:'🗄️', name:'SQL-PROD-01', role:'Production SQL Server',        ip:'10.0.6.5',  segment:'Server VLAN',   blast:'Financial records · customer PII · business-critical operational data · exfiltration target',     exposure:'low',    ttp:null },
-  ],
-  accounts: [
-    { icon:'👑', name:'Administrator', type:'Built-in Domain Admin', group:'Domain Admins',   desc:'Full domain control if compromised — primary adversary target for privilege escalation endpoint', exposure:'medium', ttp:'T1078.002' },
-    { icon:'🔑', name:'krbtgt',        type:'Kerberos TGT Account',  group:'Domain Users',    desc:'Golden Ticket via NTLM hash extraction — DCSync prerequisite · compromise = unrestricted domain access',     exposure:'medium', ttp:'T1003.006' },
-    { icon:'🛡️', name:'svc-backup',    type:'Service Account',       group:'Backup Operators',desc:'Access to BACKUP-01 and the full backup data corpus · SPN registered · Kerberoasting target',              exposure:'low',    ttp:'T1558.003' },
-    { icon:'⚠️', name:'jsmith',        type:'Domain User',           group:'Corp Workstations',desc:'Current hunt subject · off-hours logon anomaly · touched 14 hosts · MFA enrolled · elevated exposure',     exposure:'high',   ttp:'T1078.002 · T1570' },
-  ],
-};
+// crownJewels — see kb/environment.js
 
 function renderCrownJewels() {
   const pane = document.getElementById('ec-pane-crownJewels');
@@ -8436,132 +8254,7 @@ function filterEcAccounts(v) { renderEcAccounts(v); }
 // ════════════════════════════════════════
 // TECHNIQUE RUNBOOK  (MCP tool)
 // ════════════════════════════════════════
-const runbookData = {
-  'T1003.001': {
-    name: 'OS Credential Dumping: LSASS Memory',
-    tactic: 'Credential Access',
-    summary: 'Adversaries access the LSASS process to extract plaintext passwords, hashes, and Kerberos tickets. Common tools include Mimikatz, ProcDump, and Task Manager.',
-    evidence: [
-      { sev:'crit', icon:'🔴', label:'Critical', text:'Process handle to <code>lsass.exe</code> with access mask <code>0x1fffff</code> (PROCESS_ALL_ACCESS) from a non-AV/EDR source image.' },
-      { sev:'crit', icon:'🔴', label:'Critical', text:'<code>sekurlsa::logonpasswords</code> or <code>sekurlsa::wdigest</code> in command-line arguments — direct Mimikatz invocation.' },
-      { sev:'high', icon:'🟡', label:'High', text:'<code>MiniDumpWriteDump</code> API calls targeting <code>lsass.exe</code> PID from <code>procdump.exe</code>, <code>rundll32.exe comsvcs.dll MiniDump</code>, or custom loaders.' },
-      { sev:'high', icon:'🟡', label:'High', text:'Driver load of <code>mimidrv.sys</code> or unsigned kernel driver interacting with LSASS.' },
-      { sev:'info', icon:'🔵', label:'Hunting tip', text:'Check Sysmon Event ID 10 (ProcessAccess) for <code>TargetImage = lsass.exe</code> with <code>GrantedAccess != 0x1410</code> (standard AV pattern).' },
-    ],
-    queries: [
-      { label:'Sysmon Event 10 — suspicious LSASS handle', spl:`index=sysmon EventCode=10 TargetImage="*lsass.exe"
-  NOT SourceImage IN ("*\\\\MsMpEng.exe","*\\\\CylanceSvc.exe","*\\\\SentinelAgent.exe")
-| eval suspicious=if(match(GrantedAccess,"0x1fffff|0x1410ff|0x143a"),1,0)
-| where suspicious=1
-| stats count by SourceImage, GrantedAccess, host, _time
-| sort -count` },
-      { label:'comsvcs.dll MiniDump LOLBin', spl:`index=windows EventCode=4688
-  CommandLine="*comsvcs*" CommandLine="*MiniDump*"
-| table _time, host, user, CommandLine` },
-    ],
-    huntNotes: [
-      { hunt:'TH-2026-038', date:'2026-04-12', analyst:'Marcus Webb', text:'Confirmed rundll32.exe comsvcs.dll MiniDump on WIN-DC01. Dump written to C:\\Windows\\Temp\\lsass.dmp then exfil via SMB. Added hash of dump file to threat intel.' },
-      { hunt:'TH-2025-091', date:'2025-11-03', analyst:'Alice Chen', text:'ProcDump blocked by EDR but attacker pivoted to Task Manager manual dump. Recommend monitoring \\AppData\\Local\\Temp for .dmp files >10MB.' },
-    ],
-    fps: [
-      'Windows Defender and CrowdStrike routinely open LSASS with 0x1410 access — filter by SourceImage.',
-      'Some vulnerability scanners and backup agents (Veeam, BackupExec) legitimately open LSASS. Baseline and exclude by hash.',
-    ],
-  },
-  'T1078.002': {
-    name: 'Valid Accounts: Domain Accounts',
-    tactic: 'Initial Access / Persistence / Privilege Escalation',
-    summary: 'Adversaries use compromised domain credentials to authenticate to systems and services, blending with legitimate user activity. Volt Typhoon heavily favours this technique to maintain persistence without dropping malware.',
-    evidence: [
-      { sev:'crit', icon:'🔴', label:'Critical', text:'Domain account authenticating from an unusual source host — IP not in user\'s normal subnet or geolocation anomaly.' },
-      { sev:'crit', icon:'🔴', label:'Critical', text:'Off-hours logon (Event 4624/4769) from a service account that normally only runs scheduled tasks.' },
-      { sev:'high', icon:'🟡', label:'High', text:'Single account performing lateral movement to ≥5 hosts within a 30-minute window (use 4769 TGS requests as proxy).' },
-      { sev:'info', icon:'🔵', label:'Hunting tip', text:'Cross-reference with VPN/proxy logs — Volt Typhoon frequently accesses domain accounts from SOHO-router-proxied IPs (AS numbers: small ISPs, residential blocks).' },
-    ],
-    queries: [
-      { label:'Off-hours domain logon anomaly', spl:`index=security EventCode=4624 Logon_Type=3
-| eval hour=tonumber(strftime(_time,"%H")), dow=strftime(_time,"%A")
-| where (hour < 6 OR hour > 21) AND dow!="Saturday" AND dow!="Sunday"
-| stats dc(host) as hosts_touched, values(host) as hosts by user, src_ip
-| where hosts_touched > 2
-| sort -hosts_touched` },
-      { label:'Single account TGS-REQ spike (lateral movement)', spl:`index=windows EventCode=4769 Ticket_Encryption_Type=0x17
-  NOT Service_Name IN ("krbtgt","*$")
-| bucket _time span=30m
-| stats dc(Service_Name) as spns, values(Service_Name) as services by Account_Name, Client_Address, _time
-| where spns > 8
-| sort -spns` },
-    ],
-    huntNotes: [
-      { hunt:'TH-2026-038', date:'2026-04-11', analyst:'Marcus Webb', text:'jsmith account used from 3 different source IPs overnight. One IP resolved to a compromised SOHO router in AS63949. Single-hop threshold set at 14 hosts before escalation.' },
-    ],
-    fps: [
-      'IT admin accounts legitimately log in after hours during maintenance windows — maintain a scheduled-maintenance allowlist.',
-      'Service accounts running scripts will show bulk TGS requests; exclude by SPN pattern (SCCM, BackupExec, SQL).',
-    ],
-  },
-  'T1570': {
-    name: 'Lateral Tool Transfer',
-    tactic: 'Lateral Movement',
-    summary: 'Adversaries transfer tools or malware to remote systems via SMB, WMI, RDP clipboard, or LOLBins. Often follows valid-account abuse to stage additional payloads.',
-    evidence: [
-      { sev:'crit', icon:'🔴', label:'Critical', text:'Executable written to <code>\\\\host\\ADMIN$\\Temp\\</code> or <code>\\\\host\\C$\\Windows\\Temp\\</code> by a user account (not a known deployment tool).' },
-      { sev:'high', icon:'🟡', label:'High', text:'SMB file write of <code>.exe</code>, <code>.dll</code>, or <code>.ps1</code> followed within 60s by a Service Control Manager event (Event 7045) on the target host.' },
-      { sev:'info', icon:'🔵', label:'Hunting tip', text:'Correlate Sysmon Event 11 (FileCreate) on target with Sysmon Event 3 (NetworkConnect) on source — timestamp delta <5s is a strong indicator.' },
-    ],
-    queries: [
-      { label:'SMB write to admin share → service install', spl:`index=windows EventCode=7045
-| eval install_time=_time
-| join host [search index=security EventCode=5145 Share_Name="\\\\*\\\\ADMIN$" Object_Type=File Accesses="WriteData*"
-  | eval write_time=_time | table host, write_time, Relative_Target_Name, Account_Name]
-| eval delta=install_time-write_time
-| where delta>=0 AND delta<120
-| table _time, host, Account_Name, Relative_Target_Name, Service_Name, delta` },
-    ],
-    huntNotes: [
-      { hunt:'TH-2026-038', date:'2026-04-12', analyst:'Marcus Webb', text:'Tool staged to ADMIN$ share on 14 hosts. File was a renamed copy of netcat (nc64.exe → svchost.exe). Hash: d41d8cd98f00b204e9800998ecf8427e.' },
-    ],
-    fps: [
-      'SCCM and Intune push executables to admin shares constantly — exclude by source account (svc-sccm, svc-intune).',
-      'Backup agents write to ADMIN$ as part of VSS operations — correlate with backup schedule.',
-    ],
-  },
-  'T1053.005': {
-    name: 'Scheduled Task/Job: Scheduled Task',
-    tactic: 'Execution / Persistence / Privilege Escalation',
-    summary: 'Adversaries create scheduled tasks to execute malicious code repeatedly or at specific times. A common persistence mechanism on Windows requiring only user-level privilege with the right API calls.',
-    evidence: [
-      { sev:'crit', icon:'🔴', label:'Critical', text:'Scheduled task created by <code>schtasks.exe /create</code> running from a non-standard parent (e.g. <code>powershell.exe</code>, <code>wscript.exe</code>, <code>mshta.exe</code>).' },
-      { sev:'high', icon:'🟡', label:'High', text:'Task XML written directly to <code>C:\\Windows\\System32\\Tasks\\</code> via a file-write API (bypasses schtasks.exe logging).' },
-      { sev:'info', icon:'🔵', label:'Hunting tip', text:'Event 4698 (task created) + 4702 (task updated) in the Security log. Correlate with the task\'s Action element — look for encoded PowerShell or paths outside <code>C:\\Windows\\System32</code>.' },
-    ],
-    queries: [
-      { label:'Suspicious scheduled task creation', spl:`index=windows EventCode=4698
-| spath input=Task_Content output=task_action path=Task.Actions.Exec.Command
-| where match(task_action,"powershell|cmd|wscript|mshta|regsvr32|rundll32")
-   OR match(task_action,"\\\\AppData|\\\\Temp|\\\\Users\\\\Public")
-| table _time, host, user, Task_Name, task_action` },
-    ],
-    huntNotes: [
-      { hunt:'TH-2025-091', date:'2025-11-04', analyst:'Alice Chen', text:'Task created under SYSTEM context using COM object ITaskService — bypassed schtasks.exe. No 4698 event fired; detected via Sysmon file-create in Tasks directory.' },
-    ],
-    fps: [
-      'SCCM ConfigMgr creates tasks named ConfigMgr_* — exclude by Task_Name pattern.',
-      'Software update agents (Chrome, Teams, Adobe) create tasks in user AppData — baseline by publisher signature.',
-    ],
-  },
-  'T1003': {
-    name: 'OS Credential Dumping',
-    tactic: 'Credential Access',
-    summary: 'Parent technique covering all credential dumping sub-techniques. See T1003.001 (LSASS) for the most common variant.',
-    evidence: [
-      { sev:'info', icon:'🔵', label:'Hunting tip', text:'Start with T1003.001 (LSASS) for Windows environments. Also check T1003.002 (SAM), T1003.003 (NTDS) for domain controller targeting.' },
-    ],
-    queries: [],
-    huntNotes: [],
-    fps: [],
-  },
-};
+// runbookData — see kb/runbooks.js
 
 // Fallback entry for TTPs not in the runbook
 function runbookFallback(ttpId) {
@@ -8578,162 +8271,11 @@ function runbookFallback(ttpId) {
 }
 
 /* ── Tradecraft Skills Repository ── */
-const skillsData = [
-  {
-    id:'SK-045', name:'VMware vCenter Lateral Movement',
-    cat:'lateral-movement', catLabel:'Lateral Movement',
-    author:'rmendez', version:'v1.2', updated:'2026-05-14',
-    ttps:['T1078.001','T1550.003'],
-    summary:'VMware vCenter SSO token abuse and vSphere API lateral movement. Covers service-to-service auth anomalies, management plane enumeration, and host-jump via vMotion. Particularly useful for environments with mixed ESXi/vCenter topologies where standard endpoint telemetry is sparse.',
-    patterns:[
-      'vCenter SSO authentication events from non-standard service accounts outside VI-Admins OU',
-      'vSphere API calls (vim.vm.guest.ProcessManager) outside approved maintenance windows',
-      'Host-to-host connections on port 902/903 not correlated to a scheduled vMotion task',
-      'PowerCLI execution on endpoints that are not in the VI-Admins or VMware-Ops groups',
-    ],
-    spl:`index=vcenter sourcetype=vmware:vcenter:event\n| search EventType=UserLoginSessionEvent\n| where NOT match(userName, "^svc-vi|^svc-vcenter|^vSphere")\n| stats count by userName, ipAddress, datacenter`,
-    exclusions:[
-      'Scheduled vMotion tasks — validate against CMDB change-mgmt window',
-      'svc-backup account during nightly backup window 01:00–04:00',
-      'VMware Tools update process (vmtoolsd.exe) on managed VMs',
-    ],
-    agents:['tradecraft','detection'],
-    attackPaths:[
-      { ttp:'T1550.001', name:'Use Alt Auth: App Access Token', likelihood:'high',   desc:'vSphere SSO tokens replayed to authenticate to additional VMs and management interfaces without re-authentication' },
-      { ttp:'T1021.004', name:'Remote Services: SSH',           likelihood:'medium', desc:'SSH to ESXi hosts directly using credentials harvested via vCenter API or management plane' },
-      { ttp:'T1059.006', name:'Command & Scripting: Python',    likelihood:'medium', desc:'PyVmomi library used to enumerate VM inventory, extract guest credentials, and pivot via vSphere API calls' },
-    ],
-  },
-  {
-    id:'SK-038', name:'Kerberoasting — Service Account FP Filter',
-    cat:'credential-access', catLabel:'Credential Access',
-    author:'jsmith', version:'v2.1', updated:'2026-04-29',
-    ttps:['T1558.003'],
-    summary:'Reduces false positives in Kerberoasting detection by excluding known-good SPN requesters — MSSQL, BackupExec, and scheduled task service accounts. Pre-loads CMDB-sourced SPN exclusion list and tunes the RC4 TGS threshold to org-specific baseline noise.',
-    patterns:[
-      'TGS-REQ for RC4 (0x17) tickets from interactive user sessions — not service accounts',
-      'Bulk SPN enumeration: >5 unique SPNs requested within 60s from the same source IP',
-      'TGS requests targeting accounts where pwdLastSet > 180 days (stale passwords)',
-      'Kerberos pre-auth disabled flag set on account — high-value targeting indicator',
-    ],
-    spl:`index=wineventlog EventCode=4769 TicketEncryptionType=0x17\n| where NOT match(ServiceName, "^krbtgt|^MSSQLSvc|^BackupExec|^WSMAN")\n| stats count by AccountName, ServiceName, IpAddress\n| where count > 3`,
-    exclusions:[
-      'BackupExec/BEService — high-volume SPN lookups expected during backup jobs',
-      'MSSQLSvc/* — SQL service account auth is noisy by design',
-      'WSMAN/* — WinRM service accounts in managed server OU',
-    ],
-    agents:['hypothesis','tradecraft','detection'],
-    attackPaths:[
-      { ttp:'T1078.002', name:'Valid Accounts: Domain Accounts', likelihood:'high',   desc:'Cracked service account passwords enable direct authentication to servers the account legitimately accesses' },
-      { ttp:'T1021.002', name:'Remote Services: SMB/Admin Shares', likelihood:'high', desc:'Service account credentials used for lateral movement to domain-joined hosts via SMB — particularly servers with SPN registrations' },
-      { ttp:'T1558.001', name:'Golden Ticket',                   likelihood:'medium', desc:'If krbtgt hash obtained via DCSync (reachable once domain admin creds are cracked), forged TGTs grant unrestricted domain access' },
-    ],
-  },
-  {
-    id:'SK-031', name:'Firewall Anomaly — East-West Lateral Spread',
-    cat:'lateral-movement', catLabel:'Lateral Movement',
-    author:'akowalski', version:'v1.0', updated:'2026-03-11',
-    ttps:['T1021.001','T1021.002','T1570'],
-    summary:'Identifies abnormal east-west firewall flows indicative of lateral movement — new RDP/SMB paths between previously unconnected segments, or port scans from workstation-class assets. Built on a 30-day flow baseline; flags net-new paths not seen in prior observation window.',
-    patterns:[
-      'New RDP (3389) accept flows between workstation subnets with no prior 30d history',
-      'SMB (445) accept from non-server sources within Corp-Workstations (10.10.x.x/16)',
-      'Port sweep across >5 hosts from a single workstation-class asset within 120s',
-      'ICMP echo sweep originating from a CMDB tier=3 (workstation) asset',
-    ],
-    spl:`index=firewall action=accept dest_port IN (445, 3389, 5985)\n| where src_zone == dest_zone AND src_zone="Corp-Workstations"\n| stats dc(dest_ip) as targets by src_ip\n| where targets > 3`,
-    exclusions:[
-      'IT Support VLAN (10.10.50.0/24) — helpdesk RDP is expected and baselined',
-      'SCCM server (10.0.5.20) — SMB to all workstations during patch cycles',
-    ],
-    agents:['tradecraft','dataeng'],
-    attackPaths:[
-      { ttp:'T1003.001', name:'LSASS Memory',                   likelihood:'high',   desc:'Credential access on newly reached host to harvest hashes for the next lateral hop — standard post-movement step' },
-      { ttp:'T1570',     name:'Lateral Tool Transfer',          likelihood:'high',   desc:'Attacker tooling deployed to compromised workstations via SMB admin shares once lateral path is established' },
-      { ttp:'T1049',     name:'System Network Connections Discovery', likelihood:'medium', desc:'Network enumeration from beachhead host to map additional targets and identify high-value systems to pivot toward' },
-    ],
-  },
-  {
-    id:'SK-029', name:'LSASS Credential Dumping — EDR Evasion Variants',
-    cat:'credential-access', catLabel:'Credential Access',
-    author:'rmendez', version:'v3.0', updated:'2026-05-01',
-    ttps:['T1003.001'],
-    summary:'Covers modern LSASS dump evasion techniques that bypass standard process-access rules — handle duplication via NtDuplicateObject, direct syscall stubs, and PPL bypass using BYOVD. Derived from red team debrief notes and CrowdStrike incident data across three engagements.',
-    patterns:[
-      'NtReadVirtualMemory calls to lsass.exe from non-AV/EDR processes (Sysmon EC10)',
-      'Shadow copy creation (vssadmin) immediately followed by an LSASS-sized file read',
-      'Handle duplication to lsass via NtDuplicateObject from an unsigned DLL',
-      'comsvcs.dll MiniDump invoked via wmic.exe or cmd.exe — fileless variant',
-    ],
-    spl:`index=sysmon EventCode=10 TargetImage="*lsass.exe"\n| where NOT match(SourceImage, "(?i)(defender|MsMpEng|crowdstrike|CSFalcon|carbon)")\n| table _time, SourceImage, GrantedAccess, CallTrace`,
-    exclusions:[
-      'CrowdStrike sensor (CSFalconService.exe) — legitimate LSASS inspection by EDR',
-      'Windows Defender (MsMpEng.exe) — AV scanning access is expected',
-    ],
-    agents:['tradecraft','detection','validation'],
-    attackPaths:[
-      { ttp:'T1550.002', name:'Pass-the-Hash',                  likelihood:'high',   desc:'NTLM hashes extracted from LSASS enable lateral movement to other Windows hosts without cracking the password' },
-      { ttp:'T1078.002', name:'Valid Accounts: Domain Accounts', likelihood:'high',   desc:'Clear-text credentials (if present in LSASS memory) enable direct domain authentication and privilege escalation' },
-      { ttp:'T1003.006', name:'DCSync',                         likelihood:'medium', desc:'Domain admin credentials obtained via LSASS give access to DCSync — extracts all domain hashes from AD replication' },
-    ],
-  },
-  {
-    id:'SK-022', name:'DNS Beaconing Pattern Recognition',
-    cat:'c2', catLabel:'Command & Control',
-    author:'jsmith', version:'v1.3', updated:'2026-02-18',
-    ttps:['T1071.004','T1568.002'],
-    summary:'Statistical approach to identifying C2 DNS beaconing using periodicity scoring, Shannon entropy on query names, and domain age gating. Tuned against org-specific resolver noise — reduces FP rate to <3% on known-good traffic. Catches JA3-agnostic C2 that evades TLS inspection.',
-    patterns:[
-      'Query interval coefficient of variation < 0.1 over 20+ requests (high periodicity)',
-      'NXDOMAIN rate > 40% from a single source within a 10-minute window',
-      'Shannon entropy of queried domain labels > 3.5 (DGA indicator)',
-      'Domain registered < 30 days with MX record present but no prior org traffic',
-    ],
-    spl:`index=dns\n| stats count, stdev(interval) as sd, avg(interval) as avg_i by src_ip, query\n| eval cv=sd/avg_i\n| where cv < 0.1 AND count > 20\n| sort - count`,
-    exclusions:[
-      'Windows Update / Microsoft CDN domains (*.windowsupdate.com, *.microsoft.com)',
-      'Known telemetry endpoints listed in org threat-intel exclusion feed',
-    ],
-    agents:['hypothesis','tradecraft'],
-    attackPaths:[
-      { ttp:'T1041',     name:'Exfiltration Over C2 Channel',   likelihood:'high',   desc:'Established DNS tunnel used for data exfiltration — low-bandwidth but highly covert; files chunked into query labels' },
-      { ttp:'T1105',     name:'Ingress Tool Transfer',          likelihood:'high',   desc:'Additional implant stages or tooling downloaded via DNS channel using TXT or A record responses as transport' },
-      { ttp:'T1071.001', name:'Application Layer Protocol: Web', likelihood:'medium', desc:'Pivot from DNS C2 to HTTP/S for higher-bandwidth operations once initial foothold is confirmed stable' },
-    ],
-  },
-  {
-    id:'SK-017', name:'PowerShell Obfuscation Fingerprinting',
-    cat:'execution', catLabel:'Execution',
-    author:'akowalski', version:'v2.2', updated:'2026-01-30',
-    ttps:['T1059.001','T1027'],
-    summary:'Identifies PowerShell obfuscation patterns including encoding stacking, backtick insertion, character substitution, and environment variable concatenation. Covers both classic Invoke-Obfuscation output and manual obfuscation seen in living-off-the-land intrusions.',
-    patterns:[
-      'CommandLine length > 500 chars with >30% special characters',
-      'Base64 payload nested inside -EncodedCommand (double-encoded)',
-      'Backtick insertion splitting execution keywords: i`e`x, `n`e`t, In`voke',
-      'String concatenation constructing Invoke-Expression or iex via Join/Format',
-    ],
-    spl:`index=sysmon EventCode=1 (Image="*powershell*" OR Image="*pwsh*")\n| eval cmd_len=len(CommandLine)\n| where cmd_len > 500 OR match(CommandLine, "(?i)i\`|iex|EncodedCommand.+EncodedCommand")\n| table _time, host, user, CommandLine`,
-    exclusions:[
-      'SCCM/ConfigMgr scripts — must be code-signed and originate from 10.0.5.20',
-      'Legitimate admin scripts under C:\\Windows\\CCM\\ or C:\\Program Files\\...',
-    ],
-    agents:['tradecraft','detection'],
-    attackPaths:[
-      { ttp:'T1055',     name:'Process Injection',              likelihood:'high',   desc:'Obfuscated PS commonly delivers shellcode injected into legitimate Windows processes — explorer.exe, svchost.exe' },
-      { ttp:'T1105',     name:'Ingress Tool Transfer',          likelihood:'medium', desc:'Obfuscated PS stages download additional payloads from C2 — second-stage implants, credential dumpers, lateral movement tools' },
-      { ttp:'T1003.001', name:'LSASS Memory',                   likelihood:'medium', desc:'Credential dumping typically follows once execution capability is established — obfuscated PS is often the delivery mechanism' },
-    ],
-  },
-];
+// skillsData — see kb/skills.js
 
 let activeSkillCat = 'all';
 
-// Skills authoring draft queue
-const skillDrafts = [
-  { id:'SK-007-draft', name:'Pass-the-Hash via SMB (wmiexec pattern)', cat:'lateral-movement', author:'rmendez', ts:'2026-05-19 14:32', status:'pending' },
-  { id:'SK-008-draft', name:'Living-off-the-Land Persistence via Scheduled Tasks', cat:'persistence', author:'alice', ts:'2026-05-20 09:17', status:'pending' },
-];
+// skillDrafts — see kb/skills.js
 let activeSkillTab = 'browse';
 
 function switchSkillTab(tab) {
@@ -8793,15 +8335,18 @@ function submitSkillDraft() {
 // ─────────────────────────────────────────────
 //  KNOWLEDGE BASE TAB
 // ─────────────────────────────────────────────
-let activeKbTab    = 'skills';
-let activeKbSkTab  = 'browse';
-let activeKbSkCat  = 'all';
+let activeKbTab      = 'skills';
+let activeKbSkTab    = 'browse';
+let activeKbSkCat    = 'all';
+let activeKbSkType   = 'all';
+let activeKbRbTactic = 'all';
 let kbEnvEditMode  = false;
 let kbEnvSnapshot  = null; // store original values for cancel
 
 function initKbTab() {
   renderKbSkillList(activeKbSkCat);
   renderKbDraftList();
+  renderKbRunbooks();
   renderKbEnvPane();
   renderKbIocPane();
 }
@@ -8809,12 +8354,13 @@ function initKbTab() {
 // ── KB sub-tab switch ──
 function switchKbTab(tab) {
   activeKbTab = tab;
-  ['skills','env','ioc'].forEach(k => {
+  ['skills','runbooks','env','ioc'].forEach(k => {
     const stab = document.getElementById('kb-stab-' + k);
     const pane = document.getElementById('kb-pane-' + k);
     if (stab) stab.classList.toggle('on', k === tab);
     if (pane) pane.classList.toggle('on', k === tab);
   });
+  if (tab === 'runbooks') renderKbRunbooks();
   if (tab === 'env') renderKbEnvPane();
   if (tab === 'ioc') renderKbIocPane();
 }
@@ -8838,13 +8384,94 @@ function filterKbSkills(cat, el) {
 function renderKbSkillList(cat) {
   const el = document.getElementById('kb-sk-list');
   if (!el || typeof skillsData === 'undefined') return;
-  const filtered = cat === 'all' ? skillsData : skillsData.filter(s => s.cat === cat);
+  let filtered = cat === 'all' ? skillsData : skillsData.filter(s => s.cat === cat);
+  if (activeKbSkType !== 'all') filtered = filtered.filter(s => s.skillType === activeKbSkType);
   if (!filtered.length) {
-    el.innerHTML = '<div style="text-align:center;padding:30px 0;font-size:12px;color:var(--muted);">No skills in this category yet.</div>';
+    el.innerHTML = '<div style="text-align:center;padding:30px 0;font-size:12px;color:var(--muted);">No skills match this filter.</div>';
     return;
   }
-  // Reuse the exact same card renderer as the modal
-  el.innerHTML = filtered.map(renderSkillCard).join('');
+  el.innerHTML = filtered.map(s => {
+    const typeTag = s.skillType === 'tactic'
+      ? `<span class="sk-type-tag sk-type-tactic">🧠 Tactic</span>`
+      : s.skillType === 'domain'
+      ? `<span class="sk-type-tag sk-type-domain">🏗️ Domain</span>` : '';
+    let card = renderSkillCard(s);
+    // Inject type tag after the skill ID span
+    card = card.replace(/<span class="sk-id">([^<]+)<\/span>/, `<span class="sk-id">$1</span>${typeTag}`);
+    return card;
+  }).join('');
+}
+
+// ── Skills type filter ──
+function filterKbSkType(type, el) {
+  activeKbSkType = type;
+  document.querySelectorAll('[data-sktype]').forEach(b => b.classList.toggle('on', b.dataset.sktype === type));
+  const hint = document.getElementById('kb-sk-type-hint');
+  if (hint) {
+    const labels = { all:'All skills — tactic-level (cross-org) and domain-specific (this environment)',
+      tactic:'🧠 Tactic skills — generic ATT&CK technique knowledge, applies across organisations',
+      domain:'🏗️ Domain skills — tuned to this environment\'s topology, tooling, and known-good baselines' };
+    hint.textContent = labels[type] || '';
+  }
+  renderKbSkillList(activeKbSkCat);
+}
+
+// ── TTP Runbooks ──
+function filterKbRunbooks(tactic, el) {
+  activeKbRbTactic = tactic;
+  document.querySelectorAll('[data-rbtactic]').forEach(p => p.classList.toggle('sk-cat-on', p.dataset.rbtactic === tactic));
+  renderKbRunbooks();
+}
+
+function renderKbRunbooks() {
+  const el = document.getElementById('kb-rb-list');
+  if (!el || typeof runbookData === 'undefined') return;
+  const sevColor = { crit:'var(--red)', high:'var(--yellow)', info:'var(--blue)' };
+  let entries = Object.entries(runbookData);
+  if (activeKbRbTactic !== 'all') {
+    entries = entries.filter(([, r]) => r.tactic && r.tactic.includes(activeKbRbTactic));
+  }
+  if (!entries.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px 0;font-size:12px;color:var(--muted);">No runbooks match this tactic filter.</div>';
+    return;
+  }
+  el.innerHTML = entries.map(([ttpId, r]) => {
+    const evHTML = (r.evidence||[]).map(e =>
+      `<div class="rb-kb-ev">
+        <div class="rb-kb-ev-dot" style="background:${sevColor[e.sev]||'var(--sub)'}"></div>
+        <div>${e.text.replace(/<code>/g,'<code style="font-size:10px;background:rgba(0,0,0,.3);padding:0 3px;border-radius:2px;color:#93c5fd;">').replace(/<\/code>/g,'</code>')}</div>
+      </div>`
+    ).join('');
+    const qHTML = (r.queries||[]).map(q =>
+      `<div class="rb-kb-query">
+        <div class="rb-kb-qlabel">${q.label}</div>
+        <div class="rb-kb-qspl">${q.spl.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      </div>`
+    ).join('');
+    const noteHTML = (r.huntNotes||[]).map(n =>
+      `<div class="rb-kb-hunt-note">
+        <b>${n.hunt}</b> · ${n.analyst} · ${n.date}<br>
+        <span style="margin-top:4px;display:block;">${n.text}</span>
+      </div>`
+    ).join('');
+    const fpHTML = (r.fps||[]).map(f => `<div class="rb-kb-fp-item">${f}</div>`).join('');
+    return `<div class="rb-kb-card" id="rbkb-${ttpId}">
+      <div class="rb-kb-head" onclick="this.closest('.rb-kb-card').classList.toggle('open')">
+        <span class="rb-kb-ttp-id">${ttpId}</span>
+        <span class="rb-kb-name">${r.name}</span>
+        <span class="rb-kb-tactic">${r.tactic||''}</span>
+        <span class="chip chip-indigo" style="font-size:9px;flex-shrink:0;">${(r.queries||[]).length} quer${(r.queries||[]).length===1?'y':'ies'}</span>
+        <span class="rb-kb-chev">▾</span>
+      </div>
+      <div class="rb-kb-body">
+        <p class="rb-kb-summary">${r.summary||''}</p>
+        ${evHTML ? `<div class="rb-kb-section">Evidence Indicators</div>${evHTML}` : ''}
+        ${qHTML  ? `<div class="rb-kb-section" style="margin-top:14px;">Hunting Queries</div>${qHTML}` : ''}
+        ${noteHTML ? `<div class="rb-kb-section" style="margin-top:14px;">Prior Hunt Notes — This Environment</div>${noteHTML}` : ''}
+        ${fpHTML  ? `<div class="rb-kb-section" style="margin-top:14px;">Known False Positives</div>${fpHTML}` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── KB Draft queue ──
