@@ -2666,14 +2666,8 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
       <!-- Per-tab description — updated by switchTradecraftTab() -->
       <div id="kb-tc-desc" class="info-bar" style="margin-bottom:14px;"></div>
 
-      <!-- Category filter — shared by Tactic + Domain tabs -->
-      <div class="sk-filter-bar" id="kb-tc-cat-bar" style="margin-bottom:12px;">
-        <span class="sk-cat-pill sk-cat-on" data-kbcat="all"      onclick="filterKbSkills('all',this)">All <span style="opacity:.6;">6</span></span>
-        <span class="sk-cat-pill" data-kbcat="credential-access"  onclick="filterKbSkills('credential-access',this)">Credential Access <span style="opacity:.6;">2</span></span>
-        <span class="sk-cat-pill" data-kbcat="lateral-movement"   onclick="filterKbSkills('lateral-movement',this)">Lateral Movement <span style="opacity:.6;">2</span></span>
-        <span class="sk-cat-pill" data-kbcat="c2"                 onclick="filterKbSkills('c2',this)">Command &amp; Control <span style="opacity:.6;">1</span></span>
-        <span class="sk-cat-pill" data-kbcat="execution"          onclick="filterKbSkills('execution',this)">Execution <span style="opacity:.6;">1</span></span>
-      </div>
+      <!-- Category filter — shared by Tactic + Domain tabs; populated by renderKbCatBar() -->
+      <div class="sk-filter-bar" id="kb-tc-cat-bar" style="margin-bottom:12px;"></div>
 
       <!-- Skills pane — re-rendered for Tactic or Domain tab -->
       <div id="kb-tc-pane-skills">
@@ -2682,13 +2676,8 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
       <!-- TTP Runbooks pane -->
       <div id="kb-tc-pane-runbooks" style="display:none;">
-        <div class="sk-filter-bar" id="rb-kb-tactic-filter" style="margin-bottom:12px;">
-          <span class="sk-cat-pill sk-cat-on" data-rbtactic="all"              onclick="filterKbRunbooks('all',this)">All</span>
-          <span class="sk-cat-pill" data-rbtactic="Credential Access"          onclick="filterKbRunbooks('Credential Access',this)">Credential Access</span>
-          <span class="sk-cat-pill" data-rbtactic="Lateral Movement"           onclick="filterKbRunbooks('Lateral Movement',this)">Lateral Movement</span>
-          <span class="sk-cat-pill" data-rbtactic="Execution"                  onclick="filterKbRunbooks('Execution',this)">Execution</span>
-          <span class="sk-cat-pill" data-rbtactic="Persistence"                onclick="filterKbRunbooks('Persistence',this)">Persistence</span>
-        </div>
+        <!-- Tactic filter — populated dynamically by renderKbRunbookTacticBar() -->
+        <div class="sk-filter-bar" id="rb-kb-tactic-filter" style="margin-bottom:12px;"></div>
         <div id="kb-rb-list"><!-- populated by renderKbRunbooks() --></div>
       </div>
 

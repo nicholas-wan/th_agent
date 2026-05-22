@@ -510,11 +510,25 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .sk-id { font-size:10px;font-weight:700;color:var(--teal);font-family:monospace;flex-shrink:0;min-width:44px; }
 .sk-name { font-size:12px;font-weight:600;color:var(--text);flex:1; }
 .sk-cat-badge { font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;flex-shrink:0; }
-.sk-cat-lateral-movement { background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3); }
-.sk-cat-credential-access { background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25); }
-.sk-cat-c2 { background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25); }
-.sk-cat-execution { background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25); }
-.sk-cat-defense-evasion { background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.25); }
+.sk-cat-lateral-movement   { background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.3);  }
+.sk-cat-credential-access  { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.25);  }
+.sk-cat-c2                 { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+.sk-cat-execution          { background:rgba(16,185,129,.12); color:#34d399; border:1px solid rgba(16,185,129,.25); }
+.sk-cat-defense-evasion    { background:rgba(139,92,246,.12); color:#a78bfa; border:1px solid rgba(139,92,246,.25); }
+.sk-cat-persistence        { background:rgba(20,184,166,.12); color:#2dd4bf; border:1px solid rgba(20,184,166,.25); }
+.sk-cat-discovery          { background:rgba(59,130,246,.12); color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
+.sk-cat-impact             { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.25); }
+.sk-cat-privilege-escalation { background:rgba(236,72,153,.12);color:#f472b6; border:1px solid rgba(236,72,153,.25); }
+/* Left-border accent on skill cards */
+.sk-border-lateral-movement   { border-left-color:#818cf8 !important; }
+.sk-border-credential-access  { border-left-color:#f87171 !important; }
+.sk-border-c2                 { border-left-color:#fbbf24 !important; }
+.sk-border-execution          { border-left-color:#34d399 !important; }
+.sk-border-defense-evasion    { border-left-color:#a78bfa !important; }
+.sk-border-persistence        { border-left-color:#2dd4bf !important; }
+.sk-border-discovery          { border-left-color:#60a5fa !important; }
+.sk-border-impact             { border-left-color:#fb923c !important; }
+.sk-border-privilege-escalation { border-left-color:#f472b6 !important; }
 .sk-chevron { font-size:9px;color:var(--muted);transition:transform .15s;flex-shrink:0; }
 .sk-card.open .sk-chevron { transform:rotate(180deg); }
 .sk-card-body { display:none;padding:12px 13px;flex-direction:column;gap:10px;background:var(--s1); }
