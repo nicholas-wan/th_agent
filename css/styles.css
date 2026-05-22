@@ -661,7 +661,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .adapt-stat { background: var(--s3); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 10px; }
 .adapt-stat b { display: block; font-size: 13px; font-weight: 700; color: var(--text); }
 
-/* live agent feed */
+/* live agent feed (compact sidebar version in Learn) */
 .feed-log { max-height: 270px; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
 .feed-entry { display: flex; gap: 6px; font-size: 10px; line-height: 1.55; animation: feed-in .18s ease; }
 @keyframes feed-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
@@ -674,6 +674,55 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .fe-agent { font-size: 9px; color: var(--muted); }
 .feed-sep { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; padding: 6px 0 2px; border-top: 1px solid var(--border); margin-top: 4px; display: flex; align-items: center; gap: 5px; }
 .feed-sep:first-child { border-top: none; padding-top: 0; }
+
+/* ── Agents reasoning tab ── */
+.agents-wrap { display:flex; flex:1; overflow:hidden; min-height:0; }
+.agents-main { flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+.agents-feed-header { padding:11px 18px; border-bottom:1px solid var(--border); background:var(--s2); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.agents-feed-log { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
+.agents-feed-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; padding:60px 20px; text-align:center; }
+.agents-side { width:290px; border-left:1px solid var(--border); flex-shrink:0; overflow-y:auto; padding:12px; display:flex; flex-direction:column; }
+.agents-side > .card { flex-shrink:0; margin-bottom:10px; }
+.agents-side > .card:last-child { margin-bottom:0; }
+
+/* Rich feed blocks (Agents tab) */
+.feed-block { background:var(--s1); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; animation:feed-in .22s ease; }
+.feed-block-head { display:flex; align-items:center; gap:9px; margin-bottom:9px; }
+.feed-block-avatar { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.feed-block-name { font-size:11px; font-weight:700; color:var(--text); }
+.feed-block-ts { font-size:9px; color:var(--muted); margin-left:auto; font-family:monospace; }
+.feed-block-badge { font-size:8px; font-weight:700; padding:2px 7px; border-radius:3px; text-transform:uppercase; letter-spacing:.4px; flex-shrink:0; }
+.fb-tool    { background:rgba(59,130,246,.15);  color:var(--blue); }
+.fb-reason  { background:rgba(99,102,241,.18);  color:#a5b4fc; }
+.fb-done    { background:rgba(16,185,129,.15);  color:var(--green); }
+.fb-warn    { background:rgba(239,68,68,.15);   color:var(--red); }
+.fb-runbook { background:rgba(20,184,166,.15);  color:var(--teal); }
+.fb-env     { background:rgba(99,102,241,.15);  color:var(--indigo); }
+.fb-rv      { background:rgba(139,92,246,.15);  color:#c4b5fd; }
+.fb-relay   { background:rgba(14,165,233,.15);  color:#38bdf8; }
+.feed-block-relay { border-color:rgba(14,165,233,.25); background:rgba(14,165,233,.04); }
+.feed-relay-arrow { font-size:13px; color:#38bdf8; margin:0 5px; flex-shrink:0; font-weight:700; }
+.feed-block-name-to { color:var(--sub); }
+.feed-block-msg  { font-size:11.5px; color:var(--sub); line-height:1.6; font-family:'Consolas','Fira Code',monospace; word-break:break-word; }
+.feed-block-detail { margin-top:9px; padding-top:9px; border-top:1px solid var(--border); font-size:11.5px; color:var(--sub); line-height:1.7; }
+.feed-block-sep { display:flex; align-items:center; gap:10px; padding:2px 0; }
+.feed-block-sep-line { flex:1; height:1px; background:var(--border); }
+.feed-block-sep-label { font-size:9px; color:var(--blue); font-weight:700; text-transform:uppercase; letter-spacing:.7px; white-space:nowrap; }
+
+/* Topology in Agents sidebar — larger */
+.agents-topo-svg-wrap { padding:18px 14px 12px; }
+.agents-topo-svg-wrap svg { width:100%; height:auto; display:block; }
+
+/* Agent legend rows */
+.agents-legend-row { display:flex; align-items:center; gap:7px; padding:4px 0; }
+.agents-legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.agents-legend-name { font-size:11px; color:var(--sub); flex:1; }
+.agents-legend-status { font-size:10px; color:var(--muted); font-family:monospace; }
+
+/* Pipeline progress steps */
+.agents-prog-step { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); padding:2px 0; transition:color .2s; }
+.aprog-dot { font-size:10px; width:14px; text-align:center; flex-shrink:0; }
+.aprog-label { flex:1; }
 
 /* hunt report document */
 .report-doc { font-size: 12px; line-height: 1.75; color: var(--sub); }
