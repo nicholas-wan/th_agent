@@ -743,10 +743,16 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .agents-topo-svg-wrap svg { width:100%; height:auto; display:block; }
 
 /* Agent legend rows */
-.agents-legend-row { display:flex; align-items:center; gap:7px; padding:4px 0; }
+.agents-legend-row { display:flex; flex-direction:column; padding:5px 0; border-bottom:1px solid var(--border); }
+.agents-legend-row:last-child { border-bottom:none; }
+.alr-main { display:flex; align-items:center; gap:7px; }
+.alr-model { padding-left:14px; margin-top:3px; }
 .agents-legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .agents-legend-name { font-size:11px; color:var(--sub); flex:1; }
 .agents-legend-status { font-size:10px; color:var(--muted); font-family:monospace; }
+.agent-model-select { background:var(--s3); border:1px solid var(--border); color:var(--sub); font-size:9px; border-radius:3px; padding:2px 4px; font-family:inherit; cursor:pointer; width:100%; }
+.agent-model-select:focus { outline:none; border-color:var(--border2); }
+.agent-model-select.overridden { border-color:rgba(139,92,246,.4); color:#a78bfa; }
 
 /* Pipeline progress steps */
 .agents-prog-step { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); padding:2px 0; transition:color .2s; }

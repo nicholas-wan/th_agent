@@ -1478,39 +1478,6 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
       <!-- Sidebar: topology + agent cards -->
       <div class="agents-side">
 
-        <!-- Model selection -->
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title">🧠 Model</span>
-            <div style="display:flex;align-items:center;gap:5px;margin-left:auto;">
-              <span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;"></span>
-              <span id="model-badge-label" style="font-size:10px;color:#a78bfa;font-weight:600;">Llama 3.1 70B</span>
-            </div>
-          </div>
-          <div style="padding:4px 0 2px;">
-            <div class="model-menu-item active-model" onclick="selectModel(this,'Llama 3.1 70B','Meta · 70B · Q4')">
-              <span style="font-size:14px;">🦙</span>
-              <div><div class="model-menu-name">Llama 3.1 70B</div><div class="model-menu-meta">Meta · 70B · Q4</div></div>
-            </div>
-            <div class="model-menu-item" onclick="selectModel(this,'Llama 3.1 8B','Meta · 8B · FP16 · Fast')">
-              <span style="font-size:14px;">🦙</span>
-              <div><div class="model-menu-name">Llama 3.1 8B</div><div class="model-menu-meta">Meta · 8B · FP16 · Fast</div></div>
-            </div>
-            <div class="model-menu-item" onclick="selectModel(this,'Mistral 7B','Mistral AI · 7B · Q5')">
-              <span style="font-size:14px;">🌬️</span>
-              <div><div class="model-menu-name">Mistral 7B</div><div class="model-menu-meta">Mistral AI · 7B · Q5</div></div>
-            </div>
-            <div class="model-menu-item" onclick="selectModel(this,'Mixtral 8x7B','Mistral AI · MoE · Q4')">
-              <span style="font-size:14px;">🌬️</span>
-              <div><div class="model-menu-name">Mixtral 8x7B</div><div class="model-menu-meta">Mistral AI · MoE · Q4</div></div>
-            </div>
-            <div class="model-menu-item" onclick="selectModel(this,'Phi-3 Medium','Microsoft · 14B · Q4')">
-              <span style="font-size:14px;">🔷</span>
-              <div><div class="model-menu-name">Phi-3 Medium</div><div class="model-menu-meta">Microsoft · 14B · Q4</div></div>
-            </div>
-          </div>
-        </div>
-
         <!-- Topology diagram -->
         <div class="card">
           <div class="card-head" style="padding:10px 14px;">
@@ -1558,39 +1525,145 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           </div>
         </div>
 
+        <!-- Model selection (collapsible) -->
+        <div class="card">
+          <div class="card-head" onclick="toggleModelCard()" style="cursor:pointer;user-select:none;">
+            <span class="card-title">🧠 Model</span>
+            <div style="display:flex;align-items:center;gap:5px;margin-left:auto;">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;"></span>
+              <span id="model-badge-label" style="font-size:10px;color:#a78bfa;font-weight:600;">Llama 3.1 70B</span>
+              <span id="model-card-chev" style="font-size:9px;color:var(--muted);margin-left:3px;">▾</span>
+            </div>
+          </div>
+          <div id="model-card-body" style="padding:4px 0 2px;">
+            <div class="model-menu-item active-model" onclick="selectModel(this,'Llama 3.1 70B','Meta · 70B · Q4')">
+              <span style="font-size:14px;">🦙</span>
+              <div><div class="model-menu-name">Llama 3.1 70B</div><div class="model-menu-meta">Meta · 70B · Q4</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Llama 3.1 8B','Meta · 8B · FP16 · Fast')">
+              <span style="font-size:14px;">🦙</span>
+              <div><div class="model-menu-name">Llama 3.1 8B</div><div class="model-menu-meta">Meta · 8B · FP16 · Fast</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Mistral 7B','Mistral AI · 7B · Q5')">
+              <span style="font-size:14px;">🌬️</span>
+              <div><div class="model-menu-name">Mistral 7B</div><div class="model-menu-meta">Mistral AI · 7B · Q5</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Mixtral 8x7B','Mistral AI · MoE · Q4')">
+              <span style="font-size:14px;">🌬️</span>
+              <div><div class="model-menu-name">Mixtral 8x7B</div><div class="model-menu-meta">Mistral AI · MoE · Q4</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Phi-3 Medium','Microsoft · 14B · Q4')">
+              <span style="font-size:14px;">🔷</span>
+              <div><div class="model-menu-name">Phi-3 Medium</div><div class="model-menu-meta">Microsoft · 14B · Q4</div></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Agent status legend -->
         <div class="card">
           <div class="card-head"><span class="card-title">🧑‍💻 Agent Status</span></div>
-          <div class="card-body" style="padding:8px 12px;display:flex;flex-direction:column;gap:5px;">
+          <div class="card-body" style="padding:6px 12px;display:flex;flex-direction:column;gap:0;">
             <div class="agents-legend-row" id="aleg-orch">
-              <div class="agents-legend-dot" style="background:#3b82f6;"></div>
-              <span class="agents-legend-name">🎛️ Orchestrator</span>
-              <span class="agents-legend-status" id="aleg-orch-s">idle</span>
+              <div class="alr-main">
+                <div class="agents-legend-dot" style="background:#3b82f6;"></div>
+                <span class="agents-legend-name">🎛️ Orchestrator</span>
+                <span class="agents-legend-status" id="aleg-orch-s">idle</span>
+              </div>
+              <div class="alr-model">
+                <select class="agent-model-select" id="amod-orch" onchange="setAgentModel('orch',this.value)">
+                  <option value="">↳ Global (Llama 70B)</option>
+                  <option value="Llama 3.1 70B">Llama 70B</option>
+                  <option value="Llama 3.1 8B">Llama 8B</option>
+                  <option value="Mistral 7B">Mistral 7B</option>
+                  <option value="Mixtral 8x7B">Mixtral 8×7</option>
+                  <option value="Phi-3 Medium">Phi-3</option>
+                </select>
+              </div>
             </div>
             <div class="agents-legend-row" id="aleg-hyp">
-              <div class="agents-legend-dot" style="background:#14b8a6;"></div>
-              <span class="agents-legend-name">💡 Hypothesis</span>
-              <span class="agents-legend-status" id="aleg-hyp-s">idle</span>
+              <div class="alr-main">
+                <div class="agents-legend-dot" style="background:#14b8a6;"></div>
+                <span class="agents-legend-name">💡 Hypothesis</span>
+                <span class="agents-legend-status" id="aleg-hyp-s">idle</span>
+              </div>
+              <div class="alr-model">
+                <select class="agent-model-select" id="amod-hyp" onchange="setAgentModel('hyp',this.value)">
+                  <option value="">↳ Global (Llama 70B)</option>
+                  <option value="Llama 3.1 70B">Llama 70B</option>
+                  <option value="Llama 3.1 8B">Llama 8B</option>
+                  <option value="Mistral 7B">Mistral 7B</option>
+                  <option value="Mixtral 8x7B">Mixtral 8×7</option>
+                  <option value="Phi-3 Medium">Phi-3</option>
+                </select>
+              </div>
             </div>
             <div class="agents-legend-row" id="aleg-data">
-              <div class="agents-legend-dot" style="background:#6366f1;"></div>
-              <span class="agents-legend-name">🗄️ Data Eng</span>
-              <span class="agents-legend-status" id="aleg-data-s">idle</span>
+              <div class="alr-main">
+                <div class="agents-legend-dot" style="background:#6366f1;"></div>
+                <span class="agents-legend-name">🗄️ Data Eng</span>
+                <span class="agents-legend-status" id="aleg-data-s">idle</span>
+              </div>
+              <div class="alr-model">
+                <select class="agent-model-select" id="amod-data" onchange="setAgentModel('data',this.value)">
+                  <option value="">↳ Global (Llama 70B)</option>
+                  <option value="Llama 3.1 70B">Llama 70B</option>
+                  <option value="Llama 3.1 8B">Llama 8B</option>
+                  <option value="Mistral 7B">Mistral 7B</option>
+                  <option value="Mixtral 8x7B">Mixtral 8×7</option>
+                  <option value="Phi-3 Medium">Phi-3</option>
+                </select>
+              </div>
             </div>
             <div class="agents-legend-row" id="aleg-ts">
-              <div class="agents-legend-dot" style="background:#f59e0b;"></div>
-              <span class="agents-legend-name">🧠 RAA Supervisor</span>
-              <span class="agents-legend-status" id="aleg-ts-s">idle</span>
+              <div class="alr-main">
+                <div class="agents-legend-dot" style="background:#f59e0b;"></div>
+                <span class="agents-legend-name">🧠 RAA Supervisor</span>
+                <span class="agents-legend-status" id="aleg-ts-s">idle</span>
+              </div>
+              <div class="alr-model">
+                <select class="agent-model-select" id="amod-ts" onchange="setAgentModel('ts',this.value)">
+                  <option value="">↳ Global (Llama 70B)</option>
+                  <option value="Llama 3.1 70B">Llama 70B</option>
+                  <option value="Llama 3.1 8B">Llama 8B</option>
+                  <option value="Mistral 7B">Mistral 7B</option>
+                  <option value="Mixtral 8x7B">Mixtral 8×7</option>
+                  <option value="Phi-3 Medium">Phi-3</option>
+                </select>
+              </div>
             </div>
             <div class="agents-legend-row" id="aleg-dl">
-              <div class="agents-legend-dot" style="background:#10b981;"></div>
-              <span class="agents-legend-name">⚙️ Detection Logic</span>
-              <span class="agents-legend-status" id="aleg-dl-s">idle</span>
+              <div class="alr-main">
+                <div class="agents-legend-dot" style="background:#10b981;"></div>
+                <span class="agents-legend-name">⚙️ Detection Logic</span>
+                <span class="agents-legend-status" id="aleg-dl-s">idle</span>
+              </div>
+              <div class="alr-model">
+                <select class="agent-model-select" id="amod-dl" onchange="setAgentModel('dl',this.value)">
+                  <option value="">↳ Global (Llama 70B)</option>
+                  <option value="Llama 3.1 70B">Llama 70B</option>
+                  <option value="Llama 3.1 8B">Llama 8B</option>
+                  <option value="Mistral 7B">Mistral 7B</option>
+                  <option value="Mixtral 8x7B">Mixtral 8×7</option>
+                  <option value="Phi-3 Medium">Phi-3</option>
+                </select>
+              </div>
             </div>
             <div class="agents-legend-row" id="aleg-rv">
-              <div class="agents-legend-dot" style="background:#8b5cf6;"></div>
-              <span class="agents-legend-name">✅ Rule Validation</span>
-              <span class="agents-legend-status" id="aleg-rv-s">idle</span>
+              <div class="alr-main">
+                <div class="agents-legend-dot" style="background:#8b5cf6;"></div>
+                <span class="agents-legend-name">✅ Rule Validation</span>
+                <span class="agents-legend-status" id="aleg-rv-s">idle</span>
+              </div>
+              <div class="alr-model">
+                <select class="agent-model-select" id="amod-rv" onchange="setAgentModel('rv',this.value)">
+                  <option value="">↳ Global (Llama 70B)</option>
+                  <option value="Llama 3.1 70B">Llama 70B</option>
+                  <option value="Llama 3.1 8B">Llama 8B</option>
+                  <option value="Mistral 7B">Mistral 7B</option>
+                  <option value="Mixtral 8x7B">Mixtral 8×7</option>
+                  <option value="Phi-3 Medium">Phi-3</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>

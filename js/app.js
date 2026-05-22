@@ -447,11 +447,34 @@ function avatarHTML(uid, size) {
   return `<div class="user-av" style="${sz}background:${u.bg};color:${u.color};">${u.initials}</div>`;
 }
 
+/* ── Model card ─────────────────────────────────────────────── */
+let agentModels = { orch:'', hyp:'', data:'', ts:'', dl:'', rv:'' };
+
+function toggleModelCard() {
+  const body = document.getElementById('model-card-body');
+  const chev = document.getElementById('model-card-chev');
+  if (!body) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  if (chev) chev.textContent = collapsed ? '▾' : '▸';
+}
+
+function setAgentModel(agent, val) {
+  agentModels[agent] = val;
+  const sel = document.getElementById('amod-' + agent);
+  if (sel) sel.classList.toggle('overridden', val !== '');
+}
+
 function selectModel(el, name, meta) {
   document.querySelectorAll('.model-menu-item').forEach(i => i.classList.remove('active-model'));
   el.classList.add('active-model');
   const lbl = document.getElementById('model-badge-label');
   if (lbl) lbl.textContent = name;
+  // Update the "Global" placeholder text in every agent override select
+  const shortName = name.replace('Llama ', 'Llama ').replace('Mixtral ', 'Mixtral ');
+  document.querySelectorAll('.agent-model-select option[value=""]').forEach(opt => {
+    opt.textContent = `↳ Global (${shortName})`;
+  });
 }
 
 function toggleUserMenu() {
