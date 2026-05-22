@@ -9,9 +9,10 @@ js/app.js           4,900+ lines  All application logic
 kb/
   skills.md           ~170 lines  Editable Markdown — source of truth for skillsData[]
   runbooks.md         ~200 lines  Editable Markdown — source of truth for runbookData{}
+  environment.md      ~290 lines  Editable Markdown — source of truth for envData{} + crownJewels{}
   skills.js            ~50 lines  skillsData[] (empty; populated at runtime) + skillDrafts[]
   runbooks.js          ~35 lines  runbookData{} (empty; populated at runtime)
-  environment.js       216 lines  envData{} + crownJewels{}
+  environment.js       ~25 lines  envData{} + crownJewels{} (empty shells; populated at runtime)
   iocs.js               30 lines  iocRepository[]
   gate-decisions.js     55 lines  gateDecisionLog{}
 ```
@@ -43,7 +44,7 @@ No build step. Open `index.html` directly in a browser — all files must be ser
 | Add a TTP runbook | `kb/runbooks.md` | Copy any `## T…` section, paste before last `---`, fill fields |
 | Add / edit a skill | `kb/skills.md` | Copy any `## SK-…` section, paste before last `---`, fill fields |
 | Add an IOC | `kb/iocs.js` | Append to `iocRepository` array |
-| Edit environment / network segments | `kb/environment.js` | Edit `envData` or `crownJewels` directly |
+| Edit environment / network segments | `kb/environment.md` | Copy any `## Segment:` or `## Asset:` section, fill fields |
 | Add a gate decision log entry | `kb/gate-decisions.js` | Append to the hunt's array |
 
 **Efficient read pattern:**
@@ -306,3 +307,4 @@ Runs in two phases: **Gather** (parallel tool calls) → **Synthesize** (generat
 - ❌ Declaring data variables in `js/app.js` that live in `kb/*.js` — they're already globals from the earlier `<script src>` tags
 - ❌ `const` redeclarations — `kb/*.js` files use `const`; never redeclare same variable in `js/app.js`
 - ❌ Adding skill/runbook data to `kb/skills.js` or `kb/runbooks.js` — those arrays/objects are now empty shells populated from `.md` files at runtime; add content to `kb/skills.md` / `kb/runbooks.md` instead
+- ❌ Editing `kb/environment.js` directly — that file is an empty shell; all environment data lives in `kb/environment.md`

@@ -4084,7 +4084,7 @@ let kbEnvSnapshot  = null; // store original values for cancel
 // ── Markdown source cache & load flag ──
 let _kbMdLoaded    = false;
 let _activeKbMdTab = 'skills';
-const _kbMdCache   = { skills: null, runbooks: null };
+const _kbMdCache   = { skills: null, runbooks: null, env: null };
 
 // ── Markdown parsers ──────────────────────────────────────────────────────
 
@@ -4241,6 +4241,143 @@ function _parseMdRunbooks(text) {
   return result;
 }
 
+function _parseMdEnvironment(text) {
+  const norm = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const env = { domain:{}, stats:[], anomalies:[], segments:[], assets:[], accounts:[], topology:'', infrastructure:[] };
+  const cj  = { assets:[], accounts:[] };
+
+  for (const sec of norm.split(/\n---\n/)) {
+    const lines = sec.trim().split('\n');
+    const head  = lines.find(l => l.startsWith('## '));
+    if (!head) continue;
+
+    // Aggregate all > meta lines into one flat key-value map
+    const meta = {};
+    for (const ln of lines) {
+      if (!ln.startsWith('> ')) continue;
+      for (const part of ln.slice(2).split(' | ')) {
+        const i = part.indexOf(':'); if (i < 0) continue;
+        meta[part.slice(0,i).trim()] = part.slice(i+1).trim();
+      }
+    }
+
+    const smap = _extractMdSections(lines);
+
+    // Body text: lines after ## heading and > meta lines, before first ###
+    const body = (() => {
+      let pastH = false; const b = [];
+      for (const ln of lines) {
+        if (ln.startsWith('## ')) { pastH = true; continue; }
+        if (!pastH || ln.startsWith('> ')) continue;
+        if (ln.startsWith('### ')) break;
+        if (ln.trim()) b.push(ln.trim());
+      }
+      return b.join(' ');
+    })();
+
+    if (head === '## Domain') {
+      env.domain = {
+        name: meta['name']||'', netbios: meta['netbios']||'', forest: meta['forest']||'',
+        functionalLevel: meta['level']||'', adfsUrl: meta['adfs']||'', adSync: meta['ad-sync']||'',
+        dcs:    (smap['Domain Controllers']||[]).filter(l=>l.startsWith('- ')).map(l=>l.slice(2)),
+        sites:  (smap['Sites']||[]).filter(l=>l.startsWith('- ')).map(l=>l.slice(2)),
+        trusts: (smap['Trusts']||[]).filter(l=>l.startsWith('- ')).map(l=>l.slice(2)),
+      };
+
+    } else if (head === '## Stats') {
+      // Each > line is a separate stat item
+      for (const ln of lines) {
+        if (!ln.startsWith('> ')) continue;
+        const m = {};
+        for (const part of ln.slice(2).split(' | ')) {
+          const i = part.indexOf(':'); if (i<0) continue;
+          m[part.slice(0,i).trim()] = part.slice(i+1).trim();
+        }
+        if (m['label']) env.stats.push({ label:m['label'], value:m['value']||'', note:m['note']||'', color:m['color']||'blue' });
+      }
+
+    } else if (head === '## Anomalies') {
+      env.anomalies = lines.filter(l=>l.startsWith('- ')).map(l => {
+        const r = l.slice(2), pi = r.indexOf(' | ');
+        return { sev: pi>=0 ? r.slice(0,pi).trim() : 'info', text: pi>=0 ? r.slice(pi+3) : r };
+      });
+
+    } else if (head.startsWith('## Segment: ')) {
+      env.segments.push({
+        id: meta['id']||'', name: head.slice('## Segment: '.length).trim(),
+        icon: meta['icon']||'', sensitivity: meta['sensitivity']||'',
+        cidr: meta['cidr']||'', vlan: parseInt(meta['vlan'])||0,
+        gateway: meta['gateway']||'', hosts: parseInt(meta['hosts'])||0,
+        desc: body,
+        tags: (smap['Tags']||[]).filter(l=>l.startsWith('- ')).map(l=>l.slice(2)),
+        acls: (smap['ACLs']||[]).filter(l=>l.startsWith('- ')).map(l=>l.slice(2)),
+      });
+
+    } else if (head.startsWith('## Asset: ')) {
+      env.assets.push({
+        hostname: head.slice('## Asset: '.length).trim(),
+        ip: meta['ip']||'', role: meta['role']||'', os: meta['os']||'',
+        segment: meta['segment']||'', owner: meta['owner']||'',
+        lastSeen: meta['last-seen']||'', status: meta['status']||'online',
+        details: {
+          fqdn: meta['fqdn']||'', mac: meta['mac']||'', cpu: meta['cpu']||'',
+          ram: meta['ram']||'', disk: meta['disk']||'', uptime: meta['uptime']||'',
+          sysmon: meta['sysmon']||'', edr: meta['edr']||'', patch: meta['patch']||'',
+          criticality: meta['criticality']||'', notes: body,
+        },
+      });
+
+    } else if (head.startsWith('## Account: ')) {
+      let normal = '', anomaly = null;
+      for (const ln of lines) {
+        if (ln.startsWith('Normal: '))  normal  = ln.slice(8).trim();
+        if (ln.startsWith('Anomaly: ')) anomaly = ln.slice(9).trim();
+      }
+      env.accounts.push({
+        name: head.slice('## Account: '.length).trim(),
+        type: meta['type']||'', status: meta['status']||'active',
+        groups: meta['groups'] ? meta['groups'].split(',').map(g=>g.trim()) : [],
+        normal, anomaly,
+        lastLogon: meta['last-logon']||'', pwdAge: meta['pwd-age']||'', mfa: meta['mfa']||'',
+      });
+
+    } else if (head === '## Topology') {
+      env.topology = _extractCodeBlock(lines) || body;
+
+    } else if (head === '## Infrastructure') {
+      env.infrastructure = lines.filter(l=>l.startsWith('- ')).map(l => {
+        const p = l.slice(2).split(' | ');
+        return { icon:p[0]?.trim()||'', name:p[1]?.trim()||'', role:p[2]?.trim()||'', ip:p[3]?.trim()||'', crit:p[4]?.trim()||'' };
+      });
+
+    } else if (head.startsWith('## Crown Jewel: ')) {
+      let role='', blast='';
+      for (const ln of lines) {
+        if (ln.startsWith('Role: '))  role  = ln.slice(6).trim();
+        if (ln.startsWith('Blast: ')) blast = ln.slice(7).trim();
+      }
+      cj.assets.push({
+        tier: parseInt(meta['tier'])||0, icon: meta['icon']||'',
+        name: head.slice('## Crown Jewel: '.length).trim(),
+        role, ip: meta['ip']||'', segment: meta['segment']||'',
+        blast, exposure: meta['exposure']||'', ttp: meta['ttp']||null,
+      });
+
+    } else if (head.startsWith('## Crown Account: ')) {
+      let desc='';
+      for (const ln of lines) {
+        if (ln.startsWith('Desc: ')) desc = ln.slice(6).trim();
+      }
+      cj.accounts.push({
+        icon: meta['icon']||'', name: head.slice('## Crown Account: '.length).trim(),
+        type: meta['type']||'', group: meta['group']||'',
+        desc, exposure: meta['exposure']||'', ttp: meta['ttp']||null,
+      });
+    }
+  }
+  return { env, cj };
+}
+
 // ── KB init (async — fetches .md files once) ─────────────────────────────
 
 async function initKbTab() {
@@ -4261,10 +4398,13 @@ async function initKbTab() {
   if (!_kbMdLoaded) {
     _kbMdLoaded = true; // prevent re-entrancy
     try {
-      const [sr, rr] = await Promise.all([fetch('kb/skills.md'), fetch('kb/runbooks.md')]);
-      if (!sr.ok || !rr.ok) throw new Error('fetch response not ok');
+      const [sr, rr, er] = await Promise.all([
+        fetch('kb/skills.md'), fetch('kb/runbooks.md'), fetch('kb/environment.md'),
+      ]);
+      if (!sr.ok || !rr.ok || !er.ok) throw new Error('fetch response not ok');
       _kbMdCache.skills   = await sr.text();
       _kbMdCache.runbooks = await rr.text();
+      _kbMdCache.env      = await er.text();
 
       // Populate globals (const arrays/objects can be mutated in-place)
       const parsedSkills = _parseMdSkills(_kbMdCache.skills);
@@ -4274,10 +4414,17 @@ async function initKbTab() {
       Object.keys(runbookData).forEach(k => delete runbookData[k]);
       Object.assign(runbookData, parsedRunbooks);
 
+      const { env: parsedEnv, cj: parsedCj } = _parseMdEnvironment(_kbMdCache.env);
+      Object.keys(envData).forEach(k => delete envData[k]);
+      Object.assign(envData, parsedEnv);
+      Object.keys(crownJewels).forEach(k => delete crownJewels[k]);
+      Object.assign(crownJewels, parsedCj);
+
       // Re-render with freshly parsed markdown data
       renderKbSkillList(activeKbSkCat);
       renderKbDraftList();
       renderKbRunbooks();
+      renderKbEnvPane();
     } catch(e) {
       // fetch unavailable or failed — keep using inline JS data (already rendered)
       console.info('KB markdown fetch skipped (using inline data):', e.message);
@@ -4529,6 +4676,10 @@ function closeKbMarkdown() {
   document.getElementById('kb-md-overlay').classList.remove('open');
   const modal = document.querySelector('.kb-md-modal');
   if (modal) modal.classList.remove('kb-md-single');
+}
+
+function openEnvSource() {
+  _showMdModal('kb/environment.md', _kbMdCache.env || '(environment.md not yet loaded — open this tab to fetch it)');
 }
 
 function switchKbMdTab(which) {

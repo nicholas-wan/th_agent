@@ -2761,6 +2761,7 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
       <!-- Edit bar -->
       <div class="kb-edit-bar">
         <span class="kb-edit-hint" id="kb-env-hint">Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.</span>
+        <button class="btn btn-outline btn-sm" onclick="openEnvSource()">📄 View Source</button>
         <button class="btn btn-outline btn-sm" id="kb-env-edit-btn" onclick="toggleKbEnvEdit()">✏️ Edit</button>
         <button class="btn btn-primary btn-sm" id="kb-env-save-btn" style="display:none;" onclick="saveKbEnvChanges()">✓ Save Changes</button>
         <button class="btn btn-outline btn-sm" id="kb-env-cancel-btn" style="display:none;" onclick="cancelKbEnvEdit()">Cancel</button>
