@@ -1158,13 +1158,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .user-menu-label { font-size:12px; font-weight:600; color:var(--text); }
 .user-menu-role { font-size:10px; color:var(--muted); margin-top:1px; }
 /* llm model picker */
-.model-badge { display:flex; align-items:center; gap:5px; background:rgba(139,92,246,.08); border:1px solid rgba(139,92,246,.25); border-radius:5px; padding:3px 9px; cursor:pointer; position:relative; user-select:none; transition:border-color .12s; }
-.model-badge:hover { border-color:rgba(139,92,246,.6); }
-.model-badge-label { font-size:11px; font-weight:600; color:#a78bfa; }
-.model-dot { width:5px; height:5px; border-radius:50%; background:var(--green); display:inline-block; }
-.model-menu { position:absolute; top:calc(100% + 7px); right:0; background:var(--s2); border:1px solid var(--border2); border-radius:var(--radius); min-width:230px; z-index:200; box-shadow:0 8px 32px rgba(0,0,0,.5); display:none; flex-direction:column; overflow:hidden; }
-.model-menu.open { display:flex; }
-.model-menu-hdr { padding:8px 12px 7px; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid var(--border); }
+/* model selector lives in Agents sidebar — only item styles needed */
 .model-menu-item { display:flex; align-items:center; gap:10px; padding:9px 13px; cursor:pointer; transition:background .1s; }
 .model-menu-item:hover { background:var(--s3); }
 .model-menu-item.active-model { background:rgba(139,92,246,.1); }
@@ -1286,7 +1280,6 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   .topbar-sep       { display: none !important; }
   .topbar-username  { display: none !important; }
   .topbar-chevron   { display: none !important; }
-  .model-badge-label { display: none !important; }
   #run-pipeline-btn { display: none !important; }
   .topbar-end { gap: 8px; }
   /* grids */

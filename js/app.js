@@ -447,23 +447,15 @@ function avatarHTML(uid, size) {
   return `<div class="user-av" style="${sz}background:${u.bg};color:${u.color};">${u.initials}</div>`;
 }
 
-function toggleModelMenu() {
-  const menu = document.getElementById('model-menu');
-  const isOpen = menu.classList.toggle('open');
-  if (isOpen) document.getElementById('user-menu').classList.remove('open');
-}
-
 function selectModel(el, name, meta) {
   document.querySelectorAll('.model-menu-item').forEach(i => i.classList.remove('active-model'));
   el.classList.add('active-model');
-  document.getElementById('model-badge-label').textContent = name;
-  document.getElementById('model-menu').classList.remove('open');
+  const lbl = document.getElementById('model-badge-label');
+  if (lbl) lbl.textContent = name;
 }
 
 function toggleUserMenu() {
-  const menu = document.getElementById('user-menu');
-  const isOpen = menu.classList.toggle('open');
-  if (isOpen) document.getElementById('model-menu').classList.remove('open');
+  document.getElementById('user-menu').classList.toggle('open');
 }
 
 function switchUser(uid, e) {
@@ -498,10 +490,6 @@ document.addEventListener('click', e => {
   const wrap = document.getElementById('user-menu-wrap');
   if (wrap && !wrap.contains(e.target)) {
     document.getElementById('user-menu').classList.remove('open');
-  }
-  const modelWrap = document.getElementById('model-menu-wrap');
-  if (modelWrap && !modelWrap.contains(e.target)) {
-    document.getElementById('model-menu').classList.remove('open');
   }
 });
 

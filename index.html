@@ -30,41 +30,6 @@
     <div class="nav-tab" onclick="goTab('kb',this);initKbTab()">📚 Knowledge Base</div>
   </nav>
   <div class="topbar-end">
-    <div class="splunk-badge" style="display:flex;align-items:center;gap:5px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:5px;padding:3px 9px;cursor:pointer;" onclick="openHunt('TH-2026-041')" title="MCP-connected tools">
-      <span style="font-size:11px;">🔌</span>
-      <span style="font-size:11px;font-weight:600;color:#fb923c;">Splunk</span>
-      <span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;"></span>
-    </div>
-    <div style="position:relative;" id="model-menu-wrap">
-      <div class="model-badge" id="model-badge" onclick="toggleModelMenu()">
-        <span style="font-size:11px;">🧠</span>
-        <span class="model-badge-label" id="model-badge-label">Llama 3.1 70B</span>
-        <span class="model-dot"></span>
-      </div>
-      <div class="model-menu" id="model-menu">
-        <div class="model-menu-hdr">On-Prem LLM Model</div>
-        <div class="model-menu-item active-model" onclick="selectModel(this,'Llama 3.1 70B','Meta · 70B · Q4')">
-          <span style="font-size:16px;">🦙</span>
-          <div><div class="model-menu-name">Llama 3.1 70B</div><div class="model-menu-meta">Meta · 70B · Q4</div></div>
-        </div>
-        <div class="model-menu-item" onclick="selectModel(this,'Llama 3.1 8B','Meta · 8B · FP16 · Fast')">
-          <span style="font-size:16px;">🦙</span>
-          <div><div class="model-menu-name">Llama 3.1 8B</div><div class="model-menu-meta">Meta · 8B · FP16 · Fast</div></div>
-        </div>
-        <div class="model-menu-item" onclick="selectModel(this,'Mistral 7B','Mistral AI · 7B · Q5')">
-          <span style="font-size:16px;">🌬️</span>
-          <div><div class="model-menu-name">Mistral 7B</div><div class="model-menu-meta">Mistral AI · 7B · Q5</div></div>
-        </div>
-        <div class="model-menu-item" onclick="selectModel(this,'Mixtral 8x7B','Mistral AI · MoE · Q4')">
-          <span style="font-size:16px;">🌬️</span>
-          <div><div class="model-menu-name">Mixtral 8x7B</div><div class="model-menu-meta">Mistral AI · MoE · Q4</div></div>
-        </div>
-        <div class="model-menu-item" onclick="selectModel(this,'Phi-3 Medium','Microsoft · 14B · Q4')">
-          <span style="font-size:16px;">🔷</span>
-          <div><div class="model-menu-name">Phi-3 Medium</div><div class="model-menu-meta">Microsoft · 14B · Q4</div></div>
-        </div>
-      </div>
-    </div>
     <div style="position:relative;" id="user-menu-wrap">
       <div class="user-btn" id="user-btn" onclick="toggleUserMenu()">
         <div class="user-av" id="topbar-av" style="background:rgba(59,130,246,.22);color:#3b82f6;">AC</div>
@@ -1512,6 +1477,39 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
       <!-- Sidebar: topology + agent cards -->
       <div class="agents-side">
+
+        <!-- Model selection -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">🧠 Model</span>
+            <div style="display:flex;align-items:center;gap:5px;margin-left:auto;">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;"></span>
+              <span id="model-badge-label" style="font-size:10px;color:#a78bfa;font-weight:600;">Llama 3.1 70B</span>
+            </div>
+          </div>
+          <div style="padding:4px 0 2px;">
+            <div class="model-menu-item active-model" onclick="selectModel(this,'Llama 3.1 70B','Meta · 70B · Q4')">
+              <span style="font-size:14px;">🦙</span>
+              <div><div class="model-menu-name">Llama 3.1 70B</div><div class="model-menu-meta">Meta · 70B · Q4</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Llama 3.1 8B','Meta · 8B · FP16 · Fast')">
+              <span style="font-size:14px;">🦙</span>
+              <div><div class="model-menu-name">Llama 3.1 8B</div><div class="model-menu-meta">Meta · 8B · FP16 · Fast</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Mistral 7B','Mistral AI · 7B · Q5')">
+              <span style="font-size:14px;">🌬️</span>
+              <div><div class="model-menu-name">Mistral 7B</div><div class="model-menu-meta">Mistral AI · 7B · Q5</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Mixtral 8x7B','Mistral AI · MoE · Q4')">
+              <span style="font-size:14px;">🌬️</span>
+              <div><div class="model-menu-name">Mixtral 8x7B</div><div class="model-menu-meta">Mistral AI · MoE · Q4</div></div>
+            </div>
+            <div class="model-menu-item" onclick="selectModel(this,'Phi-3 Medium','Microsoft · 14B · Q4')">
+              <span style="font-size:14px;">🔷</span>
+              <div><div class="model-menu-name">Phi-3 Medium</div><div class="model-menu-meta">Microsoft · 14B · Q4</div></div>
+            </div>
+          </div>
+        </div>
 
         <!-- Topology diagram -->
         <div class="card">
