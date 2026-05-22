@@ -3,116 +3,94 @@
 ## File Structure
 
 ```
-index.html          3,200+ lines  HTML structure only — no inline CSS or JS
-css/styles.css      1,560+ lines  All styles
-js/app.js           4,900+ lines  All application logic
+index.html               3,330+ lines  HTML only — no inline CSS or JS
+css/styles.css           1,560+ lines  All styles
+js/app.js                1,842 lines   Core: nav, hunt open, chat, pivot, TTP form, init
+js/agents.js               ~200 lines  agentData{} drawer content
+js/observe.js              ~190 lines  Hunt Observe stage functions
+js/report.js               ~130 lines  Hunt Report modal functions
+js/pipeline.js             ~395 lines  LOCK pipeline feed — steps, pills, topology, play
+js/check.js                ~615 lines  Check stage — rules, queries, RAA, velocityData, findingComments
+js/keep.js                 ~760 lines  Keep stage — findings, timeline, TTP selector, notes
+js/kb-tab.js             1,630 lines   KB tab — skills, runbooks, env pane, RV modal
 kb/
-  skills.md           ~170 lines  Editable Markdown — source of truth for skillsData[]
-  runbooks.md         ~200 lines  Editable Markdown — source of truth for runbookData{}
-  environment.md      ~290 lines  Editable Markdown — source of truth for envData{} + crownJewels{}
-  skills.js            ~50 lines  skillsData[] (empty; populated at runtime) + skillDrafts[]
-  runbooks.js          ~35 lines  runbookData{} (empty; populated at runtime)
-  environment.js       ~25 lines  envData{} + crownJewels{} (empty shells; populated at runtime)
-  iocs.js               30 lines  iocRepository[]
-  gate-decisions.js     55 lines  gateDecisionLog{}
+  skills.md               ~170 lines  Source of truth for skillsData[]
+  runbooks.md           ~1,150 lines  Source of truth for runbookData{}
+  environment.md          ~290 lines  Source of truth for envData{} + crownJewels{}
+  skills-fallback.js               skillsData[] + skillDrafts[] (local-dev fallback)
+  runbooks-fallback.js             runbookData{} (local-dev fallback)
+  environment-fallback.js          envData{} + crownJewels{} (local-dev fallback)
+  iocs.js                          iocRepository[]
+  gate-decisions.js                gateDecisionLog{}
 ```
 
-**Script load order in index.html:**
-```html
-<link rel="stylesheet" href="css/styles.css">   ← in <head>
-...HTML body...
-<script src="kb/gate-decisions.js"></script>    ← data first
-<script src="kb/iocs.js"></script>
-<script src="kb/environment.js"></script>
-<script src="kb/runbooks.js"></script>
-<script src="kb/skills.js"></script>
-<script src="js/app.js"></script>               ← logic last
+**Script load order:**
 ```
-
-No build step. Open `index.html` directly in a browser — all files must be served (not `file://`), use any static server or VS Code Live Server.
+kb/gate-decisions.js  kb/iocs.js  kb/skills-fallback.js  kb/runbooks-fallback.js  kb/environment-fallback.js
+js/app.js  js/agents.js  js/observe.js  js/report.js  js/pipeline.js
+js/check.js   ← declares velocityData, findingComments
+js/keep.js    ← uses velocityData, findingComments
+js/kb-tab.js
+```
+Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP serving overwrites from `.md` files at runtime via `initKbTab()`. No build step — use any static server (not `file://`).
 
 ---
 
-## Where to Make Edits
+## Where to Edit
 
-| Task | File | How to find the right place |
+| Task | File | How |
 |---|---|---|
-| Change a colour / spacing / layout | `css/styles.css` | Grep for the class name |
-| Add a new CSS class | `css/styles.css` | Append near related classes |
-| Fix / add a JS function | `js/app.js` | Grep for the function name |
-| Edit HTML layout / add a tab pane | `index.html` | Grep for the surrounding element ID |
-| Add a TTP runbook | `kb/runbooks.md` | Copy any `## T…` section, paste before last `---`, fill fields |
-| Add / edit a skill | `kb/skills.md` | Copy any `## SK-…` section, paste before last `---`, fill fields |
-| Add an IOC | `kb/iocs.js` | Append to `iocRepository` array |
-| Edit environment / network segments | `kb/environment.md` | Copy any `## Segment:` or `## Asset:` section, fill fields |
-| Add a gate decision log entry | `kb/gate-decisions.js` | Append to the hunt's array |
+| Style / layout | `css/styles.css` | Grep class name |
+| JS function | grep across `js/*.js` | Grep function name → Read offset |
+| HTML structure | `index.html` | Grep `#region PANE: <name>` |
+| Add TTP runbook | `kb/runbooks.md` | Copy any `## T…` block, fill fields |
+| Add skill | `kb/skills.md` | Copy any `## SK-…` block, fill fields |
+| Add IOC | `kb/iocs.js` | Append to `iocRepository[]` |
+| Edit environment | `kb/environment.md` | Copy `## Segment:` or `## Asset:` block |
+| Gate decision log | `kb/gate-decisions.js` | Append to hunt's array |
 
-**Efficient read pattern:**
-1. Grep for the exact line number: `Grep("functionName", path="js/app.js", output_mode="content")`
-2. Read only that section: `Read(file, offset=N-5, limit=40)`
-3. Edit with a precise match string
+**`index.html` region map:**
+```
+#region PANE: Hunts            hunt list cards
+#region PANE: Hunt Detail      L/O/C/K pipeline + Keep stage
+#region MODALS: Hunt           report-overlay + history-overlay
+#region PANE: Agents           observe pane (agent dashboard)
+#region PANE: Coverage         coverage tab
+#region PANE: Knowledge Base   KB tab + launch modal
+#region MODALS: Tools          rv-overlay · ec-overlay · rb-overlay · sk-overlay · kb-md-overlay
+```
 
 ---
 
 ## CSS Variables
-
 ```
---bg #080d18   --s1 #0f1623   --s2 #141d2e   --s3 #1a2338
---border #1f2d47   --border2 #263550
---blue #3b82f6   --indigo #6366f1   --green #10b981
---yellow #f59e0b   --red #ef4444   --orange #f97316   --teal #14b8a6
---text #e2e8f0   --sub #94a3b8   --muted #4e6180
---radius 8px   --radius-sm 5px
+--bg #080d18  --s1 #0f1623  --s2 #141d2e  --s3 #1a2338
+--border #1f2d47  --border2 #263550
+--blue #3b82f6  --indigo #6366f1  --green #10b981
+--yellow #f59e0b  --red #ef4444  --orange #f97316  --teal #14b8a6
+--text #e2e8f0  --sub #94a3b8  --muted #4e6180
+--radius 8px  --radius-sm 5px
 ```
 
 ---
 
-## LOCK Pipeline
+## Key Data Globals
 
-| Stage | ID | Role |
+| Variable | File | Notes |
 |---|---|---|
-| Locate / Learn | L | CTI ingestion → TTP extraction → hypotheses |
-| Observe | O | Live agent dashboard, data sources, tools |
-| Check | C | SPL rule testing, inline rule test |
-| Keep | K | Findings, timeline, evidence locker, hunt report |
-
-**Pipeline stages in L tab:** Stage 1 (CTI/TTP extraction) → Stage 2 (Hypotheses) → Stage 3 (Tradecraft) → Stage 4 (Detection Logic)
-
----
-
-## Navigation Tabs
-
-Tabs: **Hunts · Agents · Coverage · 📚 Knowledge Base**
-
-`goTab(name, el)` in `js/app.js` — generic tab switcher, works for all main tabs.
-KB tab additionally calls `initKbTab()` on first open.
+| `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'tactic'\|'domain'` |
+| `runbookData{}` | `kb/runbooks-fallback.js` | Keyed by TTP ID e.g. `'T1003.001'` |
+| `envData{}` / `crownJewels{}` | `kb/environment-fallback.js` | Segments, assets, accounts |
+| `iocRepository[]` | `kb/iocs.js` | All IOCs |
+| `gateDecisionLog{}` | `kb/gate-decisions.js` | Keyed by short hunt ID e.g. `'041'` |
+| `agentData{}` | `js/agents.js` | Drawer content keyed by agent key |
+| `keepData{}` | `js/keep.js` | Findings, timeline, evidence per hunt |
+| `velocityData{}` | `js/check.js` | MTTD, FP rate, sparklines per hunt |
+| `findingComments{}` | `js/check.js` | Threaded comments per finding |
 
 ---
 
-## Data Objects (all in kb/*.js, loaded as globals)
-
-| Variable | File | Description |
-|---|---|---|
-| `skillsData[]` | `kb/skills.js` | Hunting skills; each has `skillType: 'tactic'\|'domain'` |
-| `skillDrafts[]` | `kb/skills.js` | Pending analyst submissions |
-| `runbookData{}` | `kb/runbooks.js` | Keyed by TTP ID (e.g. `'T1003.001'`) |
-| `envData{}` | `kb/environment.js` | Domain, segments, assets, accounts, topology |
-| `crownJewels{}` | `kb/environment.js` | Tier-0/1 assets + critical accounts |
-| `iocRepository[]` | `kb/iocs.js` | All IOCs across hunts |
-| `gateDecisionLog{}` | `kb/gate-decisions.js` | Keyed by short hunt ID (e.g. `'041'`) |
-
-**App-state data (in `js/app.js`, not extracted):**
-- `keepData{}` — hunt findings, timeline, evidence per hunt ID
-- `agentData{}` — agent drawer content keyed by agent key
-- `feedSteps{}` / `feedAgents{}` — pipeline animation data
-- `velocityData{}` — MTTD, FP rate, sparklines per hunt
-- `findingComments{}` — threaded comments per finding per hunt
-- `evidenceItems[]` — evidence locker items
-- `ttpInfo{}` — TTP display names + tactic labels
-
----
-
-## Agents (always in this order)
+## Agents (fixed order)
 
 | # | Icon | Name | Key | Color |
 |---|---|---|---|---|
@@ -123,188 +101,55 @@ KB tab additionally calls `initKbTab()` on first open.
 | 5 | ⚙️ | Detection Logic Agent | `detection` | green |
 | 6 | ✅ | Rule Validation Agent | `validation` | purple |
 
-**Topology:** Orchestrator spawns all others. Hypothesis Agent runs first, completes before the rest of the pipeline.
+Orchestrator spawns all. Hypothesis runs first, completes before rest of pipeline. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
 
-**Agent drawer:** `agentData` keyed by agent id → `{ title, sub, body }`. Open with `openAgentDrawer(key, row)`.
-
-**Pipeline sidebar pills:** `ap-{key}` IDs. Animated by `updateAgentPills(stepIndex)`.
-
-**When adding a new agent:** update `agentData`, Observe pane rows, Pipeline sidebar pills, apick grid, `feedAgents`, `updateAgentPills` steps, and agent feed timeline — all in `js/app.js` / `index.html`.
+**Adding a new agent:** update `agentData` (agents.js), Observe pane rows, pipeline sidebar pills, apick grid, `feedAgents`, `updateAgentPills` steps, and feed timeline.
 
 ---
 
-## Knowledge Base Tab
+## Tools Available (sidebar)
 
-**3 sub-tabs:** 📚 Tradecraft | 🏗️ Environment | 🔍 IOC Repository
-
-```js
-switchKbTab(tab)          // 'tradecraft' | 'env' | 'ioc'
-initKbTab()               // called on first KB tab open; renders all panes
-```
-
-**Tradecraft pane** — 4 inner tabs via `switchTradecraftTab(tab)`:
-
-| Inner tab | Key | Content |
-|---|---|---|
-| 🎯 Tactic Skills | `tactic` | Cross-org ATT&CK technique skills, category-filtered |
-| 🏢 Domain Skills | `domain` | Org-specific skills tuned to this environment |
-| 📖 TTP Runbooks | `runbooks` | Per-technique hunt guides, tactic-filtered |
-| ✏️ Propose Edit | `author` | Skill authoring form + draft review queue |
-
-- State: `activeTradecraftTab` — `'tactic'` (default) | `'domain'` | `'runbooks'` | `'author'`
-- Category filter bar `#kb-tc-cat-bar` — visible for tactic/domain, hidden for runbooks/author
-- `renderKbSkillList(cat)` — reads `activeTradecraftTab` to know which type to show
-- `filterKbSkills(cat, el)` — updates `activeKbSkCat`, re-renders active skills tab
-- `filterKbRunbooks(tactic, el)` — updates `activeKbRbTactic`, re-renders runbooks
-- `renderKbRunbooks()` — collapsible `.rb-kb-card` per TTP; evidence dots, SPL, hunt notes, FPs
-
-**Environment pane:**
-- Edit mode: `toggleKbEnvEdit()`, `saveKbEnvChanges()`, `cancelKbEnvEdit()`
-- Renders `envData` sections via `renderKbEnvPane()`
-
-**IOC Repository pane:**
-- Filters: `activeIocTypeFilter`, `activeIocStatusFilter`
-- Render: `renderKbIocPane()`
-- Export: `exportKbIoc()` — CSV blob download
-
----
-
-## Tools Available (sidebar card)
-
-Card title is always **"Tools Available"** — never "MCP Connected Tools".
-Tool card subtitles show version only (e.g. `v2.1`) — never "MCP Server · vX.Y".
+Card title = **"Tools Available"**. Subtitles = version only (e.g. `v2.1`).
 
 | Icon | Name | CSS prefix | Color |
 |---|---|---|---|
-| 🟠 | Splunk Enterprise Security | inline style | orange `rgba(249,115,22,…)` |
-| 📚 | Tradecraft (skills + runbooks) | `kb-tool-` | teal `rgba(20,184,166,…)` |
-| 🏗️ | Environment Context | `ec-tool-` | indigo `rgba(99,102,241,…)` |
-| ✅ | Rule Validation | `rv-tool-` | purple `rgba(139,92,246,…)` |
-| 🗂️ | Past Hunts | `ph-tool-` | blue `rgba(59,130,246,…)` |
-| 🛡️ | Coverage Checker | `cc-tool-` | amber `rgba(245,158,11,…)` |
+| 🟠 | Splunk Enterprise Security | inline | orange |
+| 📚 | Tradecraft | `kb-tool-` | teal |
+| 🏗️ | Environment Context | `ec-tool-` | indigo |
+| ✅ | Rule Validation | `rv-tool-` | purple |
+| 🗂️ | Past Hunts | `ph-tool-` | blue |
+| 🛡️ | Coverage Checker | `cc-tool-` | amber |
 
-**Tool card pattern:** `{prefix}-card` + `{prefix}-head` + `{prefix}-body` + `{prefix}-row` — CSS in `css/styles.css`, HTML in `index.html`.
-Both the Learn sidebar and Observe "Tools Available" panel show the same tools — keep them in sync.
-
-**When adding a new tool card:** add CSS class pairs to `css/styles.css`, add HTML to both Learn sidebar AND Observe panel in `index.html`, bump the active count chip in both.
+Learn sidebar and Observe panel both show these — keep in sync. Adding a tool: add CSS pairs, HTML in both panels, bump count chip.
 
 ---
 
-## Key Component Patterns
+## LOCK Pipeline Stages
 
-### Cards
-```html
-<div class="card">
-  <div class="card-head"><span class="card-title">…</span></div>
-  <div class="card-body">…</div>
-</div>
-```
+| Stage | ID | Role |
+|---|---|---|
+| Locate / Learn | L | CTI → TTP extraction → hypotheses |
+| Observe | O | Agent dashboard, data sources, tools |
+| Check | C | SPL rule testing |
+| Keep | K | Findings, timeline, evidence, hunt report |
 
-### Chips
-`.chip chip-green` / `chip-blue` / `chip-red` / `chip-yellow` / `chip-indigo` / `chip-gray`
-
-### Agent Gate
-```html
-<div class="agent-gate">
-  <div class="agent-gate-who">…icon + name + chip…</div>
-  <div class="agent-gate-reasoning">…</div>
-  <div class="agent-gate-prompt">…</div>
-  <div class="agent-gate-actions">…buttons…</div>
-  <div class="agent-gate-modify-panel" id="gate-N-modify">…</div>
-</div>
-```
-
-### Info Bar
-```html
-<div class="info-bar"><span class="ib-icon">📌</span><span>…</span></div>
-```
-
-### Modals (overlay pattern)
-```js
-document.getElementById('overlay-id').classList.add('open')    // open
-document.getElementById('overlay-id').classList.remove('open') // close
-```
-Existing modal IDs: `history-overlay`, `report-overlay`, `rb-overlay`, `ec-overlay`, `rv-overlay`
+L tab stages: CTI/TTP extraction → Hypotheses → Tradecraft → Detection Logic.
 
 ---
 
-## Keep Stage
+## Modals
 
-- `activeKeepHunt` — current hunt id string (e.g. `'TH-2026-041'`)
-- `activeKeepTTP` — current TTP filter (`'all'` or `'T1234.001'`)
-- `keepData[id]` — `{ title, findings[], timeline[], … }` — in `js/app.js`
-- `extractTTP(meta)` — regex `/T\d{4}(?:\.\d{3})?/` on finding.meta string
-- TTP selector pills: `.tsp` / `.tsp.tsp-on` / `.tsp.tsp-all`
-- `renderKeepHunt(id)`, `renderKeepFindings(d)`, `renderKeepTimeline(d)`, `renderHuntReport(id)`
-
-**Gate Decision Log card** (in Keep): `renderGateDecisionLog(huntId)` — reads from `gateDecisionLog` in `kb/gate-decisions.js`
-
-**Hunt Velocity card:** `renderVelocityCard(huntId)` — reads from `velocityData` in `js/app.js`
-
-**Finding Comments:** `findingComments[activeKeepHunt][findingIndex][]` — inline threaded notes rendered inside `renderKeepFindings(d)`
-
----
-
-## Hypothesis Agent — Branch Logic
-
-Runs in two phases: **Gather** (parallel tool calls) → **Synthesize** (generate hypotheses).
-
-**Gather phase tools:** Technique Runbook × N TTPs · Past Hunts × N TTPs · Coverage Checker × N TTPs · Environment Context (once)
-
-**Branch decisions** (per TTP, after `search_hunts()`):
-| Branch | Icon | CSS label | Trigger |
-|---|---|---|---|
-| Confirmed findings | 🎯 | `hbl-confirmed` (red) | Prior hunt had confirmed hits |
-| Clean prior run | ❄️ | `hbl-clean` (blue) | Prior hunt ran, zero findings |
-| FPs in prior run | 🔔 | `hbl-fp` (yellow) | Prior hunt had high FP rate |
-| Rule deployed | 🔒 | `hbl-rule` (green) | Existing rule covers TTP |
-
-**CSS classes (in `css/styles.css`):** `.hyp-recall` `.hyp-recall-head` `.hyp-recall-env` `.hyp-branch-row` `.hyp-branch-top` `.hyp-branch-label` `.hyp-branch-body` `.hyp-branch-action` + label variants `hbl-confirmed/clean/fp/rule`
-
----
-
-## Data Conventions
-
-- Event rates always in **ev/hr** (never ev/min)
-- Data source cards: no gap chips, no partial badges
-- Severities: `c` = critical, `h` = high, `m` = medium, `l` = low
-- Colors: critical→red, high→orange, medium→yellow, low→green
-
----
-
-## Features Built
-
-1. Evidence Locker — FAB + slide-in drawer (`openEvidenceLocker`, `addEvidence`, `removeEvidence`)
-2. Hunt Report Modal — TTP-filterable, pulls live `evidenceItems`
-3. Inline Rule Test — mock SPL execution with 1.4s delay
-4. Hunt History Modal — 3-run comparison table + diff items
-5. TTP selector in Keep — filters findings, timeline, report
-6. Knowledge Base tool tile — merged Runbook + Tradecraft Skills tile (`openSkillsRepo`, navigates to KB tab)
-7. Environment Context — tool card + modal (`ec-overlay`) with Crown Jewels sub-tab
-8. Rule Validation — tool card + modal (`rv-overlay`)
-9. Past Hunts — tool card (`ph-tool-*`)
-10. Coverage Checker — tool card (`cc-tool-*`) with tactic-level gap scoring bars
-11. Hypothesis Agent — pipeline sidebar, Observe pane, agentData drawer, apick grid, feedSteps, branch logic
-12. Swimlane timeline toggle — List / Swimlane view in Keep timeline card
-13. Agent topology diagram — animated SVG in Observe pane sidebar
-14. Finding comments — inline threaded notes on Keep findings
-15. Hunt velocity metrics — MTTD / FP rate / sparklines sidebar card in Keep
-16. Skills Repository authoring — Propose Edit form + draft queue
-17. Knowledge Base main tab — Tradecraft (skills + runbooks) + Environment (editable) + IOC Repository
-18. Gate Decision Log — per-hunt analyst decisions in Keep
-19. Skills type grouping — `skillType: 'tactic'` vs `'domain'` rendered as labelled sections in Tradecraft pane
-20. Markdown-backed Knowledge Base — `kb/skills.md` + `kb/runbooks.md` are the source of truth; parsed async by `_parseMdSkills` / `_parseMdRunbooks` on first KB tab open; "📄 View Source" button opens raw Markdown in `kb-md-overlay` modal
+Open/close: `el.classList.add/remove('open')`. IDs: `history-overlay` `report-overlay` `rb-overlay` `ec-overlay` `rv-overlay`
 
 ---
 
 ## Rules / Don'ts
 
 - ❌ "MCP Connected Tools" → ✅ "Tools Available"
-- ❌ "MCP Server · vX.Y" in tool subtitles → ✅ just "vX.Y"
-- ❌ Event rates in ev/min → ✅ ev/hr
+- ❌ "MCP Server · vX.Y" subtitles → ✅ version only
+- ❌ ev/min → ✅ ev/hr
 - ❌ Gap chips or partial badges on data sources
-- ❌ Inline `<style>` or `<script>` blocks in `index.html` — CSS goes in `css/styles.css`, JS goes in `js/app.js`
-- ❌ Declaring data variables in `js/app.js` that live in `kb/*.js` — they're already globals from the earlier `<script src>` tags
-- ❌ `const` redeclarations — `kb/*.js` files use `const`; never redeclare same variable in `js/app.js`
-- ❌ Adding skill/runbook data to `kb/skills.js` or `kb/runbooks.js` — those arrays/objects are now empty shells populated from `.md` files at runtime; add content to `kb/skills.md` / `kb/runbooks.md` instead
-- ❌ Editing `kb/environment.js` directly — that file is an empty shell; all environment data lives in `kb/environment.md`
+- ❌ Inline `<style>` or `<script>` in `index.html`
+- ❌ Redeclare globals from `kb/*.js` in `app.js`
+- ❌ Edit `kb/*-fallback.js` for data — edit the `.md` files instead
+- ❌ Edit `kb/skills.js` / `kb/runbooks.js` / `kb/environment.js` — legacy empty shells

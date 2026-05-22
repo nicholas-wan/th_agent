@@ -95,6 +95,7 @@
   </div>
 </header>
 
+<!-- #region PANE: Hunts -->
 <!-- ═══════ HUNTS PANE ═══════ -->
 <div id="pane-hunts" class="tab-pane on">
   <div class="hunts-wrap">
@@ -208,6 +209,8 @@
   </div>
 </div>
 
+<!-- #endregion -->
+<!-- #region PANE: Hunt Detail -->
 <!-- ═══════ HUNT DETAIL PANE ═══════ -->
 <div id="pane-hunt-detail" class="tab-pane" style="flex-direction:column;">
 
@@ -1619,6 +1622,8 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
 </div><!-- /pane-hunt-detail -->
 
+<!-- #endregion -->
+<!-- #region MODALS: Hunt (report + history) -->
 <!-- ═══════ HUNT REPORT MODAL ═══════ -->
 <div class="report-overlay" id="report-overlay" onclick="if(event.target===this)closeReportModal()">
   <div class="report-modal">
@@ -1793,6 +1798,8 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
   </div>
 </div>
 
+<!-- #endregion -->
+<!-- #region PANE: Agents (Observe) -->
 <!-- ═══════ OBSERVE PANE ═══════ -->
 <div id="pane-observe" class="tab-pane">
   <div class="observe-wrap">
@@ -2336,6 +2343,8 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
   </div>
 </div>
 
+<!-- #endregion -->
+<!-- #region PANE: Coverage -->
 <!-- ═══════ COVERAGE PANE ═══════ -->
 <div id="pane-coverage" class="tab-pane">
   <div class="cov-wrap">
@@ -2641,6 +2650,8 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
   </div><!-- /cov-wrap -->
 </div>
 
+<!-- #endregion -->
+<!-- #region PANE: Knowledge Base -->
 <!-- ═══════ KNOWLEDGE BASE PANE ═══════ -->
 <div id="pane-kb" class="tab-pane" style="flex-direction:column;">
 
@@ -2996,8 +3007,19 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 <!-- ── KB data files — edit files in kb/ to add TTPs, skills, IOCs ── -->
 <script src="kb/gate-decisions.js"></script>
 <script src="kb/iocs.js"></script>
+<script src="kb/skills-fallback.js"></script>
+<script src="kb/runbooks-fallback.js"></script>
+<script src="kb/environment-fallback.js"></script>
 <script src="js/app.js"></script>
+<script src="js/agents.js"></script>
+<script src="js/observe.js"></script>
+<script src="js/report.js"></script>
+<script src="js/pipeline.js"></script>
+<script src="js/check.js"></script>
+<script src="js/keep.js"></script>
+<script src="js/kb-tab.js"></script>
 
+<!-- #region MODALS: Tools (rv · ec · rb · sk · kb-md) -->
 <!-- ── Rule Validation Modal ── -->
 <div class="rv-overlay" id="rv-overlay" onclick="if(event.target===this)closeRuleValidation()">
   <div class="rv-modal">
@@ -3316,5 +3338,6 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
   </div>
 </div>
 
+<!-- #endregion -->
 </body>
 </html>
