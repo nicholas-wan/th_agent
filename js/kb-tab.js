@@ -364,6 +364,11 @@ async function initKbTab() {
 // ── KB sub-tab switch ──
 function switchKbTab(tab) {
   activeKbTab = tab;
+  // If searching, exit search mode first
+  const sr = document.getElementById('kb-search-results');
+  const sb = document.getElementById('kb-subtab-bar');
+  if (sr) sr.classList.remove('active');
+  if (sb) sb.style.display = '';
   ['tradecraft','env','ioc'].forEach(k => {
     const stab = document.getElementById('kb-stab-' + k);
     const pane = document.getElementById('kb-pane-' + k);
@@ -373,6 +378,122 @@ function switchKbTab(tab) {
   if (tab === 'tradecraft') { renderKbSkillList(activeKbSkCat); renderKbRunbooks(); }
   if (tab === 'env') renderKbEnvPane();
   if (tab === 'ioc') renderKbIocPane();
+}
+
+// ── Global KB search ──
+let kbSearchQuery = '';
+
+function kbSearch(val) {
+  kbSearchQuery = val.trim().toLowerCase();
+  const clearBtn = document.getElementById('kb-search-clear');
+  if (clearBtn) clearBtn.style.display = kbSearchQuery ? '' : 'none';
+  const sr = document.getElementById('kb-search-results');
+  const sb = document.getElementById('kb-subtab-bar');
+  if (!kbSearchQuery) {
+    if (sr) sr.classList.remove('active');
+    if (sb) sb.style.display = '';
+    // restore panes
+    ['tradecraft','env','ioc'].forEach(k => {
+      const pane = document.getElementById('kb-pane-' + k);
+      if (pane) pane.classList.toggle('on', k === activeKbTab);
+    });
+    return;
+  }
+  // hide normal panes + subtab bar, show results
+  if (sb) sb.style.display = 'none';
+  ['tradecraft','env','ioc'].forEach(k => {
+    const pane = document.getElementById('kb-pane-' + k);
+    if (pane) pane.classList.remove('on');
+  });
+  if (sr) {
+    sr.classList.add('active');
+    sr.innerHTML = _kbSearchRender(kbSearchQuery);
+  }
+}
+
+function clearKbSearch() {
+  kbSearchQuery = '';
+  const input = document.getElementById('kb-global-search');
+  if (input) input.value = '';
+  kbSearch('');
+  switchKbTab(activeKbTab);
+}
+
+function _kbSearchRender(q) {
+  const skills   = (typeof skillsData   !== 'undefined' ? skillsData   : [])
+    .filter(s => s.name.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q) || s.ttps.some(t => t.toLowerCase().includes(q)));
+  const runbooks = Object.entries(typeof runbookData !== 'undefined' ? runbookData : {})
+    .filter(([id, r]) => id.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || (r.summary||'').toLowerCase().includes(q));
+  const iocs     = (typeof iocRepository !== 'undefined' ? iocRepository : [])
+    .filter(r => r.value.toLowerCase().includes(q) || r.hunt.toLowerCase().includes(q) || (r.ttp||'').toLowerCase().includes(q) || (r.note||'').toLowerCase().includes(q));
+
+  const total = skills.length + runbooks.length + iocs.length;
+  if (!total) return `<div class="kb-search-empty">No results for "<b>${q}</b>"</div>`;
+
+  let html = `<div class="kb-search-meta">${total} result${total===1?'':'s'} for "<b>${q}</b>"</div>`;
+
+  if (skills.length) {
+    html += `<div class="kb-search-group-head">🎯 Skills <span>${skills.length}</span></div>`;
+    html += skills.map(s => {
+      const ttps = s.ttps.slice(0,3).join(', ') + (s.ttps.length > 3 ? '…' : '');
+      const dest = s.skillType === 'domain' ? 'domain' : 'tactic';
+      return `<div class="kb-search-row" onclick="clearKbSearch();switchKbTab('tradecraft');switchTradecraftTab('${dest}');setTimeout(()=>{const c=document.querySelector('[data-skillid=&quot;${s.id}&quot;]');if(c){c.classList.add('open');c.scrollIntoView({behavior:'smooth',block:'start'});}},120)">
+        <span class="kb-sr-badge kb-sr-skill">${s.skillType==='domain'?'Domain':'Tactic'}</span>
+        <span class="kb-sr-name">${s.name}</span>
+        <span class="kb-sr-meta">${ttps}</span>
+        <span class="kb-sr-action">Open →</span>
+      </div>`;
+    }).join('');
+  }
+
+  if (runbooks.length) {
+    html += `<div class="kb-search-group-head">📖 Runbooks <span>${runbooks.length}</span></div>`;
+    html += runbooks.map(([id, r]) => `<div class="kb-search-row" onclick="clearKbSearch();jumpToRunbook('${id}',null)">
+        <span class="kb-sr-badge kb-sr-runbook">${r.tactic||'ATT&CK'}</span>
+        <span class="kb-sr-name"><b>${id}</b> — ${r.name}</span>
+        <span class="kb-sr-meta">${(r.summary||'').slice(0,70)}…</span>
+        <span class="kb-sr-action">Open →</span>
+      </div>`).join('');
+  }
+
+  if (iocs.length) {
+    html += `<div class="kb-search-group-head">🔍 IOCs <span>${iocs.length}</span></div>`;
+    html += iocs.map(r => `<div class="kb-search-row" onclick="clearKbSearch();switchKbTab('ioc')">
+        <span class="kb-sr-badge kb-sr-ioc">${r.type}</span>
+        <span class="kb-sr-name">${r.value}</span>
+        <span class="kb-sr-meta">${r.hunt} · ${r.ttp||'—'}</span>
+        <span class="kb-sr-action">Show →</span>
+      </div>`).join('');
+  }
+  return html;
+}
+
+// ── Cross-link navigation ──
+function jumpToRunbook(ttpId, evt) {
+  if (evt && evt.stopPropagation) evt.stopPropagation();
+  switchKbTab('tradecraft');
+  switchTradecraftTab('runbooks');
+  setTimeout(() => {
+    const card = document.getElementById('rbkb-' + ttpId);
+    if (card) { card.classList.add('open'); card.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  }, 80);
+}
+
+function jumpToSkill(skillId, evt) {
+  if (evt && evt.stopPropagation) evt.stopPropagation();
+  const sk = typeof skillsData !== 'undefined' ? skillsData.find(s => s.id === skillId) : null;
+  switchKbTab('tradecraft');
+  switchTradecraftTab(sk?.skillType === 'domain' ? 'domain' : 'tactic');
+  setTimeout(() => {
+    const card = document.querySelector(`[data-skillid="${skillId}"]`);
+    if (card) { card.classList.add('open'); card.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  }, 100);
+}
+
+// ── IOC → hunt navigation ──
+function goToHuntKeep(huntId) {
+  openHunt(huntId);
+  setTimeout(() => goSubTab('keep', document.getElementById('subtab-keep')), 60);
 }
 
 // ── Tradecraft inner tab switch ──
@@ -857,6 +978,14 @@ function renderKbRunbooks() {
       </div>`
     ).join('');
     const fpHTML = (r.fps||[]).map(f => `<div class="rb-kb-fp-item">${f}</div>`).join('');
+    // Related skills that reference this TTP
+    const relSkills = (typeof skillsData !== 'undefined' ? skillsData : []).filter(s => s.ttps.includes(ttpId));
+    const relSkillsHTML = relSkills.length
+      ? `<div class="rb-kb-section" style="margin-top:14px;">Related Skills</div>
+         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+           ${relSkills.map(s=>`<button class="kb-rb-skill-link" onclick="jumpToSkill('${s.id}',event)">${s.id} — ${s.name}</button>`).join('')}
+         </div>`
+      : '';
     return `<div class="rb-kb-card" id="rbkb-${ttpId}">
       <div class="rb-kb-head" onclick="this.closest('.rb-kb-card').classList.toggle('open')">
         <span class="rb-kb-ttp-id">${ttpId}</span>
@@ -872,6 +1001,7 @@ function renderKbRunbooks() {
         ${qHTML  ? `<div class="rb-kb-section" style="margin-top:14px;">Hunting Queries</div>${qHTML}` : ''}
         ${noteHTML ? `<div class="rb-kb-section" style="margin-top:14px;">Prior Hunt Notes — This Environment</div>${noteHTML}` : ''}
         ${fpHTML  ? `<div class="rb-kb-section" style="margin-top:14px;">Known False Positives</div>${fpHTML}` : ''}
+        ${relSkillsHTML}
       </div>
     </div>`;
   }).join('');
@@ -1104,7 +1234,7 @@ function renderKbIocPane() {
     return `<tr>
       <td style="padding-left:24px;"><span class="ioc-type ${typeClass[r.type]||''}">${r.type}</span></td>
       <td><span class="ioc-val">${r.value}</span></td>
-      <td><span style="font-size:10px;color:var(--blue);font-weight:600;">${r.hunt}</span></td>
+      <td><button class="ioc-hunt-link" onclick="goToHuntKeep('${r.hunt}')">${r.hunt}</button></td>
       <td><span style="font-size:10px;color:var(--sub);">${r.ttp||'—'}</span></td>
       <td><span style="font-size:11px;font-weight:600;color:${sevColor[r.sev]||'var(--sub)'};">${sevLabel[r.sev]||r.sev}</span></td>
       <td><span class="ioc-status ioc-s-${r.status}">${statusIco[r.status]||''} ${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span></td>
@@ -1188,11 +1318,13 @@ function renderSkillCard(sk) {
   const agentColor = {orchestrator:'blue',hypothesis:'teal',dataeng:'indigo',tradecraft:'yellow',detection:'green',validation:'purple'};
   const agentIcon  = {orchestrator:'🎛️',hypothesis:'💡',dataeng:'🗄️',tradecraft:'🧠',detection:'⚙️',validation:'✅'};
   const ttpChips = sk.ttps.map(t=>`<span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;">${t}</span>`).join('');
+  const rbLinks  = sk.ttps.filter(t => typeof runbookData !== 'undefined' && runbookData[t])
+    .map(t=>`<button class="kb-rb-link" onclick="jumpToRunbook('${t}',event)">📖 ${t}</button>`).join('');
   const agentChips = sk.agents.map(a=>`<span class="chip chip-${agentColor[a]||'gray'}" style="font-size:10px;">${agentIcon[a]||''} ${a}</span>`).join('');
   const patterns = sk.patterns.map(p=>`<li>${p}</li>`).join('');
   const excl = sk.exclusions.map(e=>`<li>${e}</li>`).join('');
   return `
-  <div class="sk-card sk-border-${sk.cat}" onclick="toggleSkillCard(this)">
+  <div class="sk-card sk-border-${sk.cat}" data-skillid="${sk.id}" onclick="toggleSkillCard(this)">
     <div class="sk-card-head">
       <span class="sk-id">${sk.id}</span>
       <span class="sk-name">${sk.name}</span>
@@ -1208,6 +1340,7 @@ function renderSkillCard(sk) {
         <span style="display:flex;gap:3px;flex-wrap:wrap;">${ttpChips}</span>
       </div>
       <p class="sk-summary">${sk.summary}</p>
+      ${rbLinks ? `<div class="sk-section-lbl">Runbooks</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">${rbLinks}</div>` : ''}
       <div class="sk-section-lbl">Behavioral Patterns</div>
       <ul class="sk-patterns">${patterns}</ul>
       <div class="sk-section-lbl">SPL Template</div>

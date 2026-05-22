@@ -2650,8 +2650,18 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 <!-- ═══════ KNOWLEDGE BASE PANE ═══════ -->
 <div id="pane-kb" class="tab-pane" style="flex-direction:column;">
 
+  <!-- KB global search -->
+  <div class="kb-search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="kb-global-search" placeholder="Search skills, runbooks, IOCs…" oninput="kbSearch(this.value)" autocomplete="off">
+    <button class="kb-search-clear" id="kb-search-clear" onclick="clearKbSearch()" style="display:none;">✕</button>
+  </div>
+
+  <!-- Search results pane (shown when searching) -->
+  <div class="kb-search-results" id="kb-search-results"></div>
+
   <!-- Sub-tab bar -->
-  <div class="kb-subtab-bar">
+  <div class="kb-subtab-bar" id="kb-subtab-bar">
     <div class="kb-stab on" id="kb-stab-tradecraft" onclick="switchKbTab('tradecraft')">📚 Tradecraft</div>
     <div class="kb-stab"    id="kb-stab-env"        onclick="switchKbTab('env')">🏗️ Environment</div>
     <div class="kb-stab"    id="kb-stab-ioc"        onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
