@@ -387,6 +387,14 @@ function feedAddEntry(e) {
   feedAddBlock(e);
   _setAgentLegendStatus(agent, type === 'done' ? 'idle' : 'active');
   if (to) _setAgentLegendStatus(to, 'active');
+  // Pulse topology nodes and connecting line
+  pulseTopoNode(agent);
+  if (to) {
+    setTimeout(() => pulseTopoNode(to), 180);
+    pulseTopoLine(agent === 'orch' ? to : agent);
+  } else {
+    pulseTopoLine(agent);
+  }
 }
 
 // ── Big agents reasoning feed ──
@@ -402,7 +410,7 @@ function feedAddBlock(e) {
   const ts    = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
   const badge = feedBadgeLabels[type] || type.toUpperCase();
   const detailHtml = detail
-    ? `<div class="feed-block-detail">${detail.replace(/\n/g,'<br>')}</div>`
+    ? `<button class="feed-block-toggle" onclick="toggleFeedDetail(this)">▼ details</button><div class="feed-block-detail" style="display:none;">${detail.replace(/\n/g,'<br>')}</div>`
     : '';
 
   let headHtml;
@@ -476,6 +484,37 @@ function _setAgentProgStep(step, state) {
   else { el.style.color = 'var(--muted)'; if (dot) dot.textContent = '○'; }
 }
 
+function toggleFeedDetail(btn) {
+  const detail = btn.nextElementSibling;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : '';
+  btn.textContent = isOpen ? '▼ details' : '▲ hide';
+}
+
+// ── Topology node / line pulse ──
+const _topoLineMap = {
+  'hyp':'topo-l-hyp','data':'topo-l-data','ts':'topo-l-ts','dl':'topo-l-dl','rv':'topo-l-rv'
+};
+function pulseTopoNode(agent) {
+  const el = document.getElementById('topo-c-' + agent);
+  if (!el) return;
+  el.classList.remove('topo-node-lit');
+  void el.getBoundingClientRect();
+  el.classList.add('topo-node-lit');
+  setTimeout(() => el.classList.remove('topo-node-lit'), 1400);
+}
+function pulseTopoLine(agent) {
+  // pulse the line between orch and this agent (lines radiate from orch)
+  const lineId = _topoLineMap[agent];
+  if (!lineId) return;
+  const el = document.getElementById(lineId);
+  if (!el) return;
+  el.classList.remove('topo-line-lit');
+  void el.getBoundingClientRect();
+  el.classList.add('topo-line-lit');
+  setTimeout(() => el.classList.remove('topo-line-lit'), 1000);
+}
+
 function playFeedStep(step) {
   const card = document.getElementById('learn-feed-card');
   if (card) card.style.display = '';
@@ -493,7 +532,7 @@ function playFeedStep(step) {
   feedAddSep(feedStepLabels[step] || 'Step ' + step);
   let delay = 0;
   entries.forEach(e => {
-    delay += 380 + Math.random() * 320;
+    delay += 500 + Math.random() * 400;
     feedTimers.push(setTimeout(() => feedAddEntry(e), delay));
   });
   // mark idle after last entry
@@ -741,11 +780,12 @@ function runPipeline() {
   };
 
   // Advance through each stage with delays
+  // Spaced to let each step's feed entries stream before the next fires
   const steps = [
-    { delay: 1400, step: 1, stage: 'stage-1' },
-    { delay: 3000, step: 2, stage: 'stage-2' },
-    { delay: 4800, step: 3, stage: 'stage-3' },
-    { delay: 6600, step: 4, stage: 'stage-4' },
+    { delay:  6000, step: 1, stage: 'stage-1' },
+    { delay: 14000, step: 2, stage: 'stage-2' },
+    { delay: 23000, step: 3, stage: 'stage-3' },
+    { delay: 34000, step: 4, stage: 'stage-4' },
   ];
 
   steps.forEach(({ delay, step, stage }) => {
@@ -759,7 +799,7 @@ function runPipeline() {
   setTimeout(() => {
     btn.disabled = false;
     btn.textContent = '▶ Run Pipeline';
-  }, 7800);
+  }, 50000);
 }
 
 // ── Coverage rule filter ──

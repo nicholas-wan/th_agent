@@ -703,6 +703,16 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .feed-block-relay { border-color:rgba(14,165,233,.25); background:rgba(14,165,233,.04); }
 .feed-relay-arrow { font-size:13px; color:#38bdf8; margin:0 5px; flex-shrink:0; font-weight:700; }
 .feed-block-name-to { color:var(--sub); }
+.feed-block-toggle { background:none; border:none; color:var(--blue); font-size:10px; cursor:pointer; padding:5px 0 0; margin:0; opacity:.6; display:block; font-family:inherit; transition:opacity .15s; }
+.feed-block-toggle:hover { opacity:1; }
+/* Topology node glow on message */
+@keyframes topo-node-glow { 0%{stroke-width:1.5} 25%{stroke-width:4} 60%{stroke-width:2.5} 100%{stroke-width:1.5} }
+@keyframes topo-orch-glow  { 0%{stroke-width:2}   25%{stroke-width:5} 60%{stroke-width:3}   100%{stroke-width:2}   }
+.topo-node-lit { animation:topo-node-glow 1.3s ease-out forwards; }
+#topo-c-orch.topo-node-lit { animation:topo-orch-glow 1.3s ease-out forwards; }
+/* Topology line pulse on relay */
+@keyframes topo-line-pulse { 0%{stroke:#263550;stroke-width:1.5} 30%{stroke:#38bdf8;stroke-width:2.5} 100%{stroke:#263550;stroke-width:1.5} }
+.topo-line-lit { animation:topo-line-pulse 1s ease-out forwards; }
 .feed-block-msg  { font-size:11.5px; color:var(--sub); line-height:1.6; font-family:'Consolas','Fira Code',monospace; word-break:break-word; }
 .feed-block-detail { margin-top:9px; padding-top:9px; border-top:1px solid var(--border); font-size:11.5px; color:var(--sub); line-height:1.7; }
 .feed-block-sep { display:flex; align-items:center; gap:10px; padding:2px 0; }
