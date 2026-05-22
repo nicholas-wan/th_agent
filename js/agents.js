@@ -153,17 +153,6 @@ const agentData = {
       </div>
     </div>` },
 
-  validation: { title:'Rule Validation Agent', sub:'Detection Rule QA & Testing · Testing', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Receives draft detection rules from the Detection Logic Agent and runs a multi-stage validation pipeline: syntactic checks, back-testing against historical labelled event data, false-positive rate estimation, and a coverage gap analysis against the active MITRE technique list. Only rules passing all gates are approved for SIEM deployment.</div></div>
-    <div class="ds"><div class="ds-head">Validation Gates</div>
-      <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--sub);">
-        <div>① Syntax check &amp; schema validation</div>
-        <div>② Back-test against 30-day labelled dataset</div>
-        <div>③ FP rate threshold &lt; 5%</div>
-        <div>④ MITRE coverage gap analysis</div>
-        <div>⑤ Orchestrator approval → SIEM push</div>
-      </div>
-    </div>` }
 };
 
 function openAgentDrawer(key, row) {

@@ -448,7 +448,7 @@ function avatarHTML(uid, size) {
 }
 
 /* ── Model card ─────────────────────────────────────────────── */
-let agentModels = { orch:'', hyp:'', data:'', ts:'', dl:'', rv:'' };
+let agentModels = { orch:'', hyp:'', data:'', ts:'', dl:'' };
 
 function toggleModelCard() {
   const body = document.getElementById('model-card-body');

@@ -41,7 +41,6 @@ const feedAgents = {
   data: { icon:'🗄️', name:'Data Eng' },
   ts:   { icon:'🧠', name:'Tradecraft' },
   dl:   { icon:'⚙️',  name:'Detection Logic' },
-  rv:   { icon:'✅', name:'Rule Validation' },
 };
 const feedPfx = { tool:'→', reason:'↳', done:'✓', warn:'⚠', runbook:'📖', env:'🏗️', rv:'✅', relay:'↗' };
 const feedAgentColors = {
@@ -50,7 +49,6 @@ const feedAgentColors = {
   data: { bg:'rgba(99,102,241,.18)', border:'#6366f1' },
   ts:   { bg:'rgba(245,158,11,.18)', border:'#f59e0b' },
   dl:   { bg:'rgba(16,185,129,.18)', border:'#10b981' },
-  rv:   { bg:'rgba(139,92,246,.18)', border:'#8b5cf6' },
 };
 const feedBadgeLabels = { tool:'TOOL CALL', reason:'REASONING', done:'COMPLETE', warn:'WARNING', runbook:'RUNBOOK', env:'ENV CTX', rv:'RULE VALID', relay:'MSG' };
 
@@ -279,7 +277,7 @@ function clearAgentsFeed() {
   if (dot) dot.style.opacity = '0.3';
   if (statusEl) statusEl.textContent = 'Waiting for pipeline…';
   // Reset legend
-  ['orch','hyp','data','ts','dl','rv'].forEach(a => _setAgentLegendStatus(a, 'idle'));
+  ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'idle'));
   // Reset pipeline steps
   for (let i = 0; i < 5; i++) _setAgentProgStep(i, 'pending');
   // Reset filter to All
@@ -313,7 +311,7 @@ function toggleFeedDetail(btn) {
 
 // ── Topology node / line pulse ──
 const _topoLineMap = {
-  'hyp':'topo-l-hyp','data':'topo-l-data','ts':'topo-l-ts','dl':'topo-l-dl','rv':'topo-l-rv'
+  'hyp':'topo-l-hyp','data':'topo-l-data','ts':'topo-l-ts','dl':'topo-l-dl'
 };
 function pulseTopoNode(agent) {
   const el = document.getElementById('topo-c-' + agent);
@@ -360,7 +358,7 @@ function playFeedStep(step) {
     if (agStatus) agStatus.textContent = 'idle · last: ' + (feedStepLabels[step] || 'Step ' + step);
     _setAgentProgStep(step, 'done');
     // Reset active agent statuses to idle
-    ['orch','hyp','data','ts','dl','rv'].forEach(a => _setAgentLegendStatus(a, 'idle'));
+    ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'idle'));
   }, delay + 600));
 }
 

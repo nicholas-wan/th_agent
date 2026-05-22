@@ -99,9 +99,10 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 | 3 | 🗄️ | Data Engineering Agent | `dataeng` | indigo |
 | 4 | 🧠 | RAA Supervisor Agent | `tradecraft` | yellow |
 | 5 | ⚙️ | Detection Logic Agent | `detection` | green |
-| 6 | ✅ | Rule Validation Agent | `validation` | purple |
 
 Orchestrator spawns all. Hypothesis runs first, completes before rest of pipeline. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
+
+> ✅ **Rule Validation** is a **tool** (not an agent) — listed in Tools Available (`rv-tool-` CSS prefix, `rv-overlay` modal). Never add it to agent lists, topology, feed filter pills, or `agentModels`.
 
 **Adding a new agent:** update `agentData` (agents.js), Observe pane rows, pipeline sidebar pills, apick grid, `feedAgents`, `updateAgentPills` steps, and feed timeline.
 
