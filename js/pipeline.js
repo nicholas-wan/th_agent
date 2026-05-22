@@ -169,34 +169,14 @@ const feedStepLabels = ['Select Intel','TTP Extraction','Hypotheses','Tradecraft
 let feedTimers = [];
 
 function feedAddSep(label) {
-  const feed = document.getElementById('agent-feed');
-  if (feed) {
-    const el = document.createElement('div');
-    el.className = 'feed-sep';
-    el.innerHTML = `<span style="color:var(--blue);font-size:8px;">●</span>${label}`;
-    feed.appendChild(el);
-    feed.scrollTop = feed.scrollHeight;
-  }
   feedAddBlockSep(label);
 }
 
 function feedAddEntry(e) {
-  const { type, agent, msg, detail, to } = e;
-  const feed = document.getElementById('agent-feed');
-  if (feed) {
-    const ag = feedAgents[agent] || {};
-    const toAg = to ? feedAgents[to] : null;
-    const el = document.createElement('div');
-    el.className = `feed-entry fe-${type}`;
-    const toLabel = toAg ? ` → ${toAg.icon} ${toAg.name}` : '';
-    el.innerHTML = `<span class="fe-prefix">${feedPfx[type] || '→'}</span><div class="fe-body"><span class="fe-agent">${ag.icon} ${ag.name}${toLabel} · </span>${msg}</div>`;
-    feed.appendChild(el);
-    feed.scrollTop = feed.scrollHeight;
-  }
+  const { type, agent, to } = e;
   feedAddBlock(e);
   _setAgentLegendStatus(agent, type === 'done' ? 'idle' : 'active');
   if (to) _setAgentLegendStatus(to, 'active');
-  // Pulse topology nodes and connecting line
   pulseTopoNode(agent);
   if (to) {
     setTimeout(() => pulseTopoNode(to), 180);
@@ -207,6 +187,9 @@ function feedAddEntry(e) {
 }
 
 // ── Big agents reasoning feed ──
+let activeFeedFilter = 'all';
+let _stepStartTime   = 0;
+
 function feedAddBlock(e) {
   const { type, agent, msg, detail, to } = e;
   const feed = document.getElementById('agents-reasoning-feed');
@@ -217,6 +200,7 @@ function feedAddBlock(e) {
   const col   = feedAgentColors[agent] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
   const now   = new Date();
   const ts    = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const elapsed = _stepStartTime ? ` +${((Date.now() - _stepStartTime) / 1000).toFixed(1)}s` : '';
   const badge = feedBadgeLabels[type] || type.toUpperCase();
   const detailHtml = detail
     ? `<button class="feed-block-toggle" onclick="toggleFeedDetail(this)">▼ details</button><div class="feed-block-detail" style="display:none;">${detail.replace(/\n/g,'<br>')}</div>`
@@ -233,20 +217,43 @@ function feedAddBlock(e) {
       <div class="feed-block-avatar" style="background:${toCol.bg};border:1px solid ${toCol.border};">${toAg.icon}</div>
       <span class="feed-block-name feed-block-name-to">${toAg.name}</span>
       <span class="feed-block-badge fb-relay">${badge}</span>
-      <span class="feed-block-ts">${ts}</span>`;
+      <span class="feed-block-ts">${ts}<span class="feed-block-elapsed">${elapsed}</span></span>`;
   } else {
     headHtml = `
       <div class="feed-block-avatar" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div>
       <span class="feed-block-name">${ag.name}</span>
       <span class="feed-block-badge fb-${type}">${badge}</span>
-      <span class="feed-block-ts">${ts}</span>`;
+      <span class="feed-block-ts">${ts}<span class="feed-block-elapsed">${elapsed}</span></span>`;
   }
 
   const el = document.createElement('div');
   el.className = type === 'relay' ? 'feed-block feed-block-relay' : 'feed-block';
+  el.dataset.agent = agent;
+  el.dataset.to    = to || '';
+  // apply current filter
+  if (activeFeedFilter !== 'all' && el.dataset.agent !== activeFeedFilter && el.dataset.to !== activeFeedFilter) {
+    el.style.display = 'none';
+  }
   el.innerHTML = `<div class="feed-block-head">${headHtml}</div><div class="feed-block-msg">${msg}</div>${detailHtml}`;
   feed.appendChild(el);
   feed.scrollTop = feed.scrollHeight;
+}
+
+function setFeedFilter(agent, btn) {
+  activeFeedFilter = agent;
+  document.querySelectorAll('.ffp').forEach(b => b.classList.remove('ffp-on'));
+  if (btn) btn.classList.add('ffp-on');
+  const feed = document.getElementById('agents-reasoning-feed');
+  if (!feed) return;
+  feed.querySelectorAll('.feed-block, .feed-block-relay').forEach(block => {
+    if (agent === 'all') {
+      block.style.display = '';
+    } else {
+      block.style.display = (block.dataset.agent === agent || block.dataset.to === agent) ? '' : 'none';
+    }
+  });
+  // always show separators when filtering (context anchors)
+  feed.querySelectorAll('.feed-block-sep').forEach(sep => { sep.style.display = ''; });
 }
 
 function feedAddBlockSep(label) {
@@ -275,6 +282,10 @@ function clearAgentsFeed() {
   ['orch','hyp','data','ts','dl','rv'].forEach(a => _setAgentLegendStatus(a, 'idle'));
   // Reset pipeline steps
   for (let i = 0; i < 5; i++) _setAgentProgStep(i, 'pending');
+  // Reset filter to All
+  _stepStartTime = 0;
+  activeFeedFilter = 'all';
+  setFeedFilter('all', document.querySelector('.ffp'));
 }
 
 function _setAgentLegendStatus(agent, status) {
@@ -325,10 +336,9 @@ function pulseTopoLine(agent) {
 }
 
 function playFeedStep(step) {
-  const card = document.getElementById('learn-feed-card');
-  if (card) card.style.display = '';
   feedTimers.forEach(clearTimeout);
   feedTimers = [];
+  _stepStartTime = Date.now();
   const entries = feedSteps[step] || [];
 
   // Drive agents-feed header
@@ -346,8 +356,6 @@ function playFeedStep(step) {
   });
   // mark idle after last entry
   feedTimers.push(setTimeout(() => {
-    const s = document.getElementById('feed-status');
-    if (s) s.textContent = 'idle';
     if (dot) dot.style.opacity = '0.4';
     if (agStatus) agStatus.textContent = 'idle · last: ' + (feedStepLabels[step] || 'Step ' + step);
     _setAgentProgStep(step, 'done');

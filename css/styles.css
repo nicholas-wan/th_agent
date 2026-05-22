@@ -693,6 +693,11 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .agents-wrap { display:flex; flex:1; overflow:hidden; min-height:0; }
 .agents-main { flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
 .agents-feed-header { padding:11px 18px; border-bottom:1px solid var(--border); background:var(--s2); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.feed-filter-bar { display:flex; align-items:center; gap:5px; padding:7px 18px; background:var(--s2); border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; }
+.ffp { font-size:10px; padding:3px 10px; border-radius:12px; border:1px solid var(--border2); background:var(--s3); color:var(--sub); cursor:pointer; white-space:nowrap; transition:all .15s; font-family:inherit; }
+.ffp:hover { border-color:var(--blue); color:var(--text); }
+.ffp.ffp-on { background:rgba(59,130,246,.15); border-color:var(--blue); color:var(--blue); font-weight:600; }
+.feed-block-elapsed { color:var(--blue); opacity:.6; margin-left:5px; font-size:9px; }
 .agents-feed-log { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
 .agents-feed-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; padding:60px 20px; text-align:center; }
 .agents-side { width:290px; border-left:1px solid var(--border); flex-shrink:0; overflow-y:auto; padding:12px; display:flex; flex-direction:column; }

@@ -874,20 +874,6 @@ index=wineventlog EventCode=<span class="str">4769</span>
           </div>
         </div>
 
-        <!-- Live Agent Feed -->
-        <div class="card" id="learn-feed-card" style="display:none;">
-          <div class="card-head">
-            <span class="card-title">⚡ Live Activity</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <div class="live-dot" id="feed-dot"></div>
-              <span style="font-size:10px;color:var(--sub);" id="feed-status">streaming</span>
-            </div>
-          </div>
-          <div class="card-body" style="padding:0;">
-            <div class="feed-log" id="agent-feed"></div>
-          </div>
-        </div>
-
         <!-- Tools Available -->
         <div class="card">
           <div class="card-head">
@@ -1505,6 +1491,15 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
           <span style="font-size:12px;font-weight:600;color:var(--text);">Agent Reasoning Stream</span>
           <span style="font-size:10px;color:var(--muted);margin-left:auto;" id="agents-feed-status">Waiting for pipeline…</span>
           <button onclick="clearAgentsFeed()" style="font-size:10px;padding:3px 10px;background:var(--s3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--sub);cursor:pointer;margin-left:10px;">Clear</button>
+        </div>
+        <div class="feed-filter-bar" id="feed-filter-bar">
+          <button class="ffp ffp-on" onclick="setFeedFilter('all',this)">All</button>
+          <button class="ffp" onclick="setFeedFilter('orch',this)">🎛️ Orch</button>
+          <button class="ffp" onclick="setFeedFilter('hyp',this)">💡 Hypothesis</button>
+          <button class="ffp" onclick="setFeedFilter('data',this)">🗄️ Data Eng</button>
+          <button class="ffp" onclick="setFeedFilter('ts',this)">🧠 RAA</button>
+          <button class="ffp" onclick="setFeedFilter('dl',this)">⚙️ Detection</button>
+          <button class="ffp" onclick="setFeedFilter('rv',this)">✅ Validation</button>
         </div>
         <div id="agents-reasoning-feed" class="agents-feed-log">
           <div class="agents-feed-empty" id="agents-feed-empty">
