@@ -3875,15 +3875,208 @@ let activeKbRbTactic    = 'all';
 let kbEnvEditMode  = false;
 let kbEnvSnapshot  = null; // store original values for cancel
 
-function initKbTab() {
+// ── Markdown source cache & load flag ──
+let _kbMdLoaded    = false;
+let _activeKbMdTab = 'skills';
+const _kbMdCache   = { skills: null, runbooks: null };
+
+// ── Markdown parsers ──────────────────────────────────────────────────────
+
+function _extractMdSections(lines) {
+  const map = {};
+  let cur = null;
+  for (const ln of lines) {
+    if (ln.startsWith('### ')) { cur = ln.slice(4).trim(); map[cur] = []; }
+    else if (cur !== null)     { map[cur].push(ln); }
+  }
+  return map;
+}
+
+function _extractCodeBlock(lines) {
+  let inside = false;
+  const out = [];
+  for (const ln of lines) {
+    if (ln.startsWith('```')) { if (inside) break; inside = true; continue; }
+    if (inside) out.push(ln);
+  }
+  return out.join('\n');
+}
+
+function _parseMdSkills(text) {
+  const skills = [];
+  // Normalise Windows (CRLF) and old Mac (CR) line endings to LF
+  const norm = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (const sec of norm.split(/\n---\n/)) {
+    const lines = sec.trim().split('\n');
+    const headLine = lines.find(l => /^## SK-\d+/.test(l));
+    if (!headLine) continue;
+    const hm = headLine.match(/^## (SK-\d+)\s*[—–-]+\s*(.+)/);
+    if (!hm) continue;
+    const id   = hm[1];
+    const name = hm[2].trim();
+
+    // Parse > key: val | key: val metadata lines
+    const meta = {};
+    for (const ln of lines) {
+      if (!ln.startsWith('> ')) continue;
+      for (const part of ln.slice(2).split(' | ')) {
+        const i = part.indexOf(':');
+        if (i < 0) continue;
+        meta[part.slice(0, i).trim()] = part.slice(i + 1).trim();
+      }
+    }
+
+    // Summary: non-empty lines between heading and first ###, excluding > meta
+    const summaryLines = [];
+    let pastHead = false;
+    for (const ln of lines) {
+      if (ln.startsWith('## ')) { pastHead = true; continue; }
+      if (!pastHead || ln.startsWith('> ')) continue;
+      if (ln.startsWith('### ')) break;
+      if (ln.trim()) summaryLines.push(ln.trim());
+    }
+
+    const smap = _extractMdSections(lines);
+    const patterns    = (smap['Patterns']     || []).filter(l => l.startsWith('- ')).map(l => l.slice(2));
+    const exclusions  = (smap['Exclusions']   || []).filter(l => l.startsWith('- ')).map(l => l.slice(2));
+    const attackPaths = (smap['Attack Paths'] || []).filter(l => l.startsWith('- ')).map(l => {
+      const p = l.slice(2).split(' | ');
+      return { ttp: p[0]?.trim()||'', name: p[1]?.trim()||'', likelihood: p[2]?.trim()||'medium', desc: p.slice(3).join(' | ').trim() };
+    });
+    const ttps   = meta['ttps']   ? meta['ttps'].split(',').map(t => t.trim())   : [];
+    const agents = meta['agents'] ? meta['agents'].split(',').map(a => a.trim()) : [];
+
+    skills.push({
+      id, name,
+      skillType:  meta['type']           || 'tactic',
+      cat:        meta['category']       || '',
+      catLabel:   meta['category-label'] || '',
+      author:     meta['author']         || '',
+      version:    meta['version']        || '',
+      updated:    meta['updated']        || '',
+      ttps, summary: summaryLines.join(' '),
+      patterns, spl: _extractCodeBlock(smap['SPL'] || []),
+      exclusions, agents, attackPaths,
+    });
+  }
+  return skills;
+}
+
+function _parseMdRunbooks(text) {
+  const result = {};
+  // Normalise Windows (CRLF) and old Mac (CR) line endings to LF
+  const norm = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (const sec of norm.split(/\n---\n/)) {
+    const lines = sec.trim().split('\n');
+    const headLine = lines.find(l => /^## T\d{4}/.test(l));
+    if (!headLine) continue;
+    const hm = headLine.match(/^## (T\d{4}(?:\.\d{3})?)\s*[—–-]+\s*(.+)/);
+    if (!hm) continue;
+    const ttpId = hm[1];
+    const name  = hm[2].trim();
+
+    const meta = {};
+    for (const ln of lines) {
+      if (!ln.startsWith('> ')) continue;
+      for (const part of ln.slice(2).split(' | ')) {
+        const i = part.indexOf(':');
+        if (i < 0) continue;
+        meta[part.slice(0, i).trim()] = part.slice(i + 1).trim();
+      }
+    }
+
+    const summaryLines = [];
+    let pastHead = false;
+    for (const ln of lines) {
+      if (ln.startsWith('## ')) { pastHead = true; continue; }
+      if (!pastHead || ln.startsWith('> ')) continue;
+      if (ln.startsWith('### ')) break;
+      if (ln.trim()) summaryLines.push(ln.trim());
+    }
+
+    const smap = _extractMdSections(lines);
+
+    // Evidence: "- sev | text" — backtick inline code → <code>
+    const evidence = (smap['Evidence'] || []).filter(l => l.startsWith('- ')).map(l => {
+      const rest    = l.slice(2);
+      const pipeIdx = rest.indexOf(' | ');
+      const sev     = pipeIdx >= 0 ? rest.slice(0, pipeIdx).trim() : 'info';
+      let   txt     = pipeIdx >= 0 ? rest.slice(pipeIdx + 3) : rest;
+      txt = txt.replace(/`([^`]+)`/g, '<code>$1</code>');
+      return { sev, text: txt };
+    });
+
+    // Queries: #### Label\n```spl\n...\n```
+    const queries = [];
+    const qLines = smap['Queries'] || [];
+    let curLabel = null, inCode = false, codeLines = [];
+    for (const ln of qLines) {
+      if (ln.startsWith('#### ')) {
+        if (curLabel !== null && codeLines.length) queries.push({ label: curLabel, spl: codeLines.join('\n') });
+        curLabel = ln.slice(5).trim(); inCode = false; codeLines = [];
+      } else if (ln.startsWith('```')) {
+        inCode = !inCode;
+      } else if (inCode) {
+        codeLines.push(ln);
+      }
+    }
+    if (curLabel !== null && codeLines.length) queries.push({ label: curLabel, spl: codeLines.join('\n') });
+
+    // Hunt Notes: "- hunt | date | analyst | text..."
+    const huntNotes = (smap['Hunt Notes'] || []).filter(l => l.startsWith('- ')).map(l => {
+      const p = l.slice(2).split(' | ');
+      return { hunt: p[0]?.trim()||'', date: p[1]?.trim()||'', analyst: p[2]?.trim()||'', text: p.slice(3).join(' | ').trim() };
+    });
+
+    const fps = (smap['False Positives'] || []).filter(l => l.startsWith('- ')).map(l => l.slice(2));
+
+    result[ttpId] = { name, tactic: meta['tactic'] || '', summary: summaryLines.join(' '), evidence, queries, huntNotes, fps };
+  }
+  return result;
+}
+
+// ── KB init (async — fetches .md files once) ─────────────────────────────
+
+async function initKbTab() {
   // Seed the per-tab description for the default active tab
   const desc = document.getElementById('kb-tc-desc');
   if (desc) desc.innerHTML = _tcDesc[activeTradecraftTab] || '';
+
+  // Render immediately using inline JS data (always available, works on file://)
   renderKbSkillList(activeKbSkCat);
   renderKbDraftList();
   renderKbRunbooks();
   renderKbEnvPane();
   renderKbIocPane();
+
+  // Fetch .md files in the background as an optional enhancement.
+  // If successful, parsed data overrides the inline JS objects and re-renders.
+  // If fetch fails (file:// protocol, CORS, etc.) the inline data is used as-is.
+  if (!_kbMdLoaded) {
+    _kbMdLoaded = true; // prevent re-entrancy
+    try {
+      const [sr, rr] = await Promise.all([fetch('kb/skills.md'), fetch('kb/runbooks.md')]);
+      if (!sr.ok || !rr.ok) throw new Error('fetch response not ok');
+      _kbMdCache.skills   = await sr.text();
+      _kbMdCache.runbooks = await rr.text();
+
+      // Populate globals (const arrays/objects can be mutated in-place)
+      const parsedSkills = _parseMdSkills(_kbMdCache.skills);
+      skillsData.splice(0, skillsData.length, ...parsedSkills);
+
+      const parsedRunbooks = _parseMdRunbooks(_kbMdCache.runbooks);
+      Object.keys(runbookData).forEach(k => delete runbookData[k]);
+      Object.assign(runbookData, parsedRunbooks);
+
+      // Re-render with freshly parsed markdown data
+      renderKbSkillList(activeKbSkCat);
+      renderKbDraftList();
+      renderKbRunbooks();
+    } catch(e) {
+      // fetch unavailable or failed — keep using inline JS data (already rendered)
+      console.info('KB markdown fetch skipped (using inline data):', e.message);
+    }
+  }
 }
 
 // ── KB sub-tab switch ──
@@ -3928,6 +4121,228 @@ function switchTradecraftTab(tab) {
   if (isSkills)           renderKbSkillList(activeKbSkCat);
   if (tab === 'runbooks') renderKbRunbooks();
   if (tab === 'author')   renderKbDraftList();
+}
+
+// ── KB Markdown Source Viewer ─────────────────────────────────────────────
+
+// Generate skills.md text from the live skillsData array (fallback when fetch unavailable)
+function _genSkillsMd() {
+  const lines = [
+    '# Tradecraft Skills Repository',
+    '',
+    'Analyst-authored hunting skills. Each skill is a reusable detection pattern with SPL, exclusions, and downstream attack-path context.',
+    '',
+    '`skillType` values:',
+    '- `tactic` — Generic MITRE ATT&CK technique knowledge, applies cross-org',
+    '- `domain` — Environment/org-specific: tuned to THIS network\'s topology, tooling, naming conventions, and known-good baselines',
+    '',
+    'To add a new skill, copy any section below, paste it before the last `---`, and fill in the fields.',
+    '',
+  ];
+  skillsData.forEach(sk => {
+    lines.push('---', '');
+    lines.push(`## ${sk.id} — ${sk.name}`, '');
+    const ttps = Array.isArray(sk.ttps) ? sk.ttps.join(', ') : sk.ttps;
+    const agents = Array.isArray(sk.agents) ? sk.agents.join(', ') : (sk.agents || '');
+    lines.push(`> type: ${sk.skillType} | category: ${sk.cat} | category-label: ${sk.catLabel} | ttps: ${ttps}`);
+    lines.push(`> author: ${sk.author} | version: ${sk.version} | updated: ${sk.updated} | agents: ${agents}`, '');
+    lines.push(sk.summary || '', '');
+    if (sk.patterns && sk.patterns.length) {
+      lines.push('### Patterns');
+      sk.patterns.forEach(p => lines.push('- ' + p));
+      lines.push('');
+    }
+    if (sk.spl) {
+      lines.push('### SPL');
+      lines.push('```spl');
+      lines.push(sk.spl);
+      lines.push('```', '');
+    }
+    if (sk.exclusions && sk.exclusions.length) {
+      lines.push('### Exclusions');
+      sk.exclusions.forEach(e => lines.push('- ' + e));
+      lines.push('');
+    }
+    if (sk.attackPaths && sk.attackPaths.length) {
+      lines.push('### Attack Paths');
+      sk.attackPaths.forEach(a => lines.push(`- ${a.ttp} | ${a.name} | ${a.likelihood} | ${a.desc}`));
+      lines.push('');
+    }
+  });
+  lines.push('---');
+  return lines.join('\n');
+}
+
+// Generate runbooks.md text from the live runbookData object (fallback when fetch unavailable)
+function _genRunbooksMd() {
+  const sevLabel = { crit:'crit', high:'high', info:'info' };
+  const lines = [
+    '# TTP Runbooks',
+    '',
+    'Per-technique hunt guides — one entry per MITRE ATT&CK technique.',
+    '',
+    'Evidence severity levels: `crit` · `high` · `info`',
+    '',
+  ];
+  Object.entries(runbookData).forEach(([id, rb]) => {
+    lines.push('---', '');
+    lines.push(`## ${id} — ${rb.name}`, '');
+    lines.push(`> tactic: ${rb.tactic}`, '');
+    lines.push(rb.summary || '', '');
+    if (rb.evidence && rb.evidence.length) {
+      lines.push('### Evidence');
+      rb.evidence.forEach(ev => {
+        // Strip HTML tags for display in raw markdown
+        const txt = ev.text.replace(/<code>(.*?)<\/code>/g, '`$1`').replace(/<[^>]+>/g, '');
+        lines.push(`- ${ev.sev} | ${txt}`);
+      });
+      lines.push('');
+    }
+    if (rb.queries && rb.queries.length) {
+      lines.push('### Queries', '');
+      rb.queries.forEach(q => {
+        lines.push(`#### ${q.label}`);
+        lines.push('```spl');
+        lines.push(q.spl);
+        lines.push('```', '');
+      });
+    }
+    if (rb.huntNotes && rb.huntNotes.length) {
+      lines.push('### Hunt Notes');
+      rb.huntNotes.forEach(n => lines.push(`- ${n.hunt} | ${n.date} | ${n.analyst} | ${n.text}`));
+      lines.push('');
+    }
+    if (rb.fps && rb.fps.length) {
+      lines.push('### False Positives');
+      rb.fps.forEach(f => lines.push('- ' + f));
+      lines.push('');
+    }
+  });
+  lines.push('---');
+  return lines.join('\n');
+}
+
+// Show the markdown modal with arbitrary filename + content (single-item mode, no tabs)
+function _showMdModal(filename, content) {
+  const modal = document.querySelector('.kb-md-modal');
+  const pre   = document.getElementById('kb-md-content');
+  const name  = document.getElementById('kb-md-filename');
+  if (modal) modal.classList.add('kb-md-single');
+  if (name)  name.textContent = filename;
+  if (pre)   pre.textContent  = content;
+  document.getElementById('kb-md-overlay').classList.add('open');
+}
+
+// Generate markdown for a single skill (uses cached .md section if available)
+function _genOneSkillMd(sk) {
+  if (_kbMdCache.skills) {
+    const norm = _kbMdCache.skills.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    const parts = norm.split(/\n---\n/);
+    const section = parts.find(p => { const m = p.match(/^## (SK-\d+)/m); return m && m[1] === sk.id; });
+    if (section) return section.trim();
+  }
+  const ttps   = Array.isArray(sk.ttps)   ? sk.ttps.join(', ')   : sk.ttps;
+  const agents = Array.isArray(sk.agents) ? sk.agents.join(', ') : (sk.agents || '');
+  const lines  = [
+    `## ${sk.id} — ${sk.name}`, '',
+    `> type: ${sk.skillType} | category: ${sk.cat} | category-label: ${sk.catLabel} | ttps: ${ttps}`,
+    `> author: ${sk.author} | version: ${sk.version} | updated: ${sk.updated} | agents: ${agents}`, '',
+    sk.summary || '', '',
+  ];
+  if (sk.patterns?.length) { lines.push('### Patterns'); sk.patterns.forEach(p => lines.push('- '+p)); lines.push(''); }
+  if (sk.spl)               { lines.push('### SPL','```spl',sk.spl,'```',''); }
+  if (sk.exclusions?.length){ lines.push('### Exclusions'); sk.exclusions.forEach(e => lines.push('- '+e)); lines.push(''); }
+  if (sk.attackPaths?.length){ lines.push('### Attack Paths'); sk.attackPaths.forEach(a => lines.push(`- ${a.ttp} | ${a.name} | ${a.likelihood} | ${a.desc}`)); lines.push(''); }
+  return lines.join('\n');
+}
+
+// Open view-source modal for a single skill card
+function openSkillSource(id, evt) {
+  if (evt) evt.stopPropagation();
+  const sk = skillsData.find(s => s.id === id);
+  if (!sk) return;
+  _showMdModal(`kb/skills.md  ·  ${id}`, _genOneSkillMd(sk));
+}
+
+// Generate markdown for a single runbook (uses cached .md section if available)
+function _genOneRunbookMd(ttpId, rb) {
+  if (_kbMdCache.runbooks) {
+    const norm = _kbMdCache.runbooks.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    const parts = norm.split(/\n---\n/);
+    const section = parts.find(p => { const m = p.match(/^## (T\d{4}(?:\.\d{3})?)/m); return m && m[1] === ttpId; });
+    if (section) return section.trim();
+  }
+  const lines = [
+    `## ${ttpId} — ${rb.name}`, '',
+    `> tactic: ${rb.tactic}`, '',
+    rb.summary || '', '',
+  ];
+  if (rb.evidence?.length) {
+    lines.push('### Evidence');
+    rb.evidence.forEach(ev => {
+      const txt = ev.text.replace(/<code>(.*?)<\/code>/g,'`$1`').replace(/<[^>]+>/g,'');
+      lines.push(`- ${ev.sev} | ${txt}`);
+    });
+    lines.push('');
+  }
+  if (rb.queries?.length) {
+    lines.push('### Queries','');
+    rb.queries.forEach(q => { lines.push(`#### ${q.label}`,'```spl',q.spl,'```',''); });
+  }
+  if (rb.huntNotes?.length) {
+    lines.push('### Hunt Notes');
+    rb.huntNotes.forEach(n => lines.push(`- ${n.hunt} | ${n.date} | ${n.analyst} | ${n.text}`));
+    lines.push('');
+  }
+  if (rb.fps?.length) {
+    lines.push('### False Positives');
+    rb.fps.forEach(f => lines.push('- '+f));
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+// Open view-source modal for a single runbook card
+function openRunbookSource(ttpId, evt) {
+  if (evt) evt.stopPropagation();
+  const rb = runbookData[ttpId];
+  if (!rb) return;
+  _showMdModal(`kb/runbooks.md  ·  ${ttpId}`, _genOneRunbookMd(ttpId, rb));
+}
+
+function openKbMarkdown() {
+  // Full-file view — show both tabs, clear single-item mode
+  const modal = document.querySelector('.kb-md-modal');
+  if (modal) modal.classList.remove('kb-md-single');
+  const which = (activeTradecraftTab === 'runbooks') ? 'runbooks' : 'skills';
+  _setKbMdTab(which);
+  document.getElementById('kb-md-overlay').classList.add('open');
+}
+
+function closeKbMarkdown() {
+  document.getElementById('kb-md-overlay').classList.remove('open');
+  const modal = document.querySelector('.kb-md-modal');
+  if (modal) modal.classList.remove('kb-md-single');
+}
+
+function switchKbMdTab(which) {
+  _setKbMdTab(which);
+}
+
+function _setKbMdTab(which) {
+  _activeKbMdTab = which;
+  ['skills','runbooks'].forEach(k => {
+    const t = document.getElementById('kb-md-tab-' + k);
+    if (t) t.classList.toggle('on', k === which);
+  });
+  const pre  = document.getElementById('kb-md-content');
+  const name = document.getElementById('kb-md-filename');
+  const fname = which === 'runbooks' ? 'kb/runbooks.md' : 'kb/skills.md';
+  if (name) name.textContent = fname;
+  // Use fetched .md content if available, otherwise generate from inline JS data
+  const content = _kbMdCache[which] ||
+    (which === 'skills' ? _genSkillsMd() : _genRunbooksMd());
+  if (pre) pre.textContent = content;
 }
 
 // ── KB Skills — filter ──
@@ -3997,6 +4412,7 @@ function renderKbRunbooks() {
         <span class="rb-kb-name">${r.name}</span>
         <span class="rb-kb-tactic">${r.tactic||''}</span>
         <span class="chip chip-indigo" style="font-size:9px;flex-shrink:0;">${(r.queries||[]).length} quer${(r.queries||[]).length===1?'y':'ies'}</span>
+        <button class="kb-vs-btn" onclick="openRunbookSource('${ttpId}',event)" title="View raw Markdown for this runbook">📄 .md</button>
         <span class="rb-kb-chev">▾</span>
       </div>
       <div class="rb-kb-body">
@@ -4331,7 +4747,8 @@ function renderSkillCard(sk) {
       <span class="sk-name">${sk.name}</span>
       <span class="sk-cat-badge sk-cat-${sk.cat}">${sk.catLabel}</span>
       <span class="chip chip-gray" style="font-size:9px;margin-left:4px;">${sk.version}</span>
-      <span class="sk-chevron" style="margin-left:6px;">▼</span>
+      <button class="kb-vs-btn" onclick="openSkillSource('${sk.id}',event)" title="View raw Markdown for this skill">📄 .md</button>
+      <span class="sk-chevron" style="margin-left:2px;">▼</span>
     </div>
     <div class="sk-card-body">
       <div class="sk-meta-row">

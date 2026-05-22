@@ -3181,5 +3181,26 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
     </div>
   </div>
 </div>
+<!-- ── KB Markdown Source Viewer ── -->
+<div class="kb-md-overlay" id="kb-md-overlay" onclick="if(event.target===this)closeKbMarkdown()">
+  <div class="kb-md-modal">
+    <div class="kb-md-modal-head">
+      <div class="kb-md-modal-icon">📄</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;color:var(--text);">Knowledge Base Source</div>
+        <div style="font-size:11px;color:var(--sub);"><span id="kb-md-filename">kb/skills.md</span> — edit this file to update the knowledge base</div>
+      </div>
+      <button class="kb-md-close" onclick="closeKbMarkdown()">✕</button>
+    </div>
+    <div class="kb-md-tabs">
+      <div class="kb-md-tab on" id="kb-md-tab-skills"   onclick="switchKbMdTab('skills')">📚 skills.md</div>
+      <div class="kb-md-tab"    id="kb-md-tab-runbooks" onclick="switchKbMdTab('runbooks')">📖 runbooks.md</div>
+    </div>
+    <div class="kb-md-body">
+      <pre id="kb-md-content" class="kb-md-pre"></pre>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

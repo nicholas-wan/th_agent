@@ -4,27 +4,9 @@
 // One entry per MITRE ATT&CK technique. Agents load these at hunt time via
 // get_runbook(ttp_id). Also rendered in Knowledge Base → TTP Runbooks tab.
 //
-// To add a new runbook, copy the template below and fill it in:
-//
-// 'T1234.001': {
-//   name: 'Technique Name',
-//   tactic: 'Tactic Name',         // or 'Tactic A / Tactic B' for multi-tactic
-//   summary: 'One-paragraph description of the technique and adversary use.',
-//   evidence: [
-//     { sev:'crit', text:'What a critical indicator looks like, with <code>code</code> if needed.' },
-//     { sev:'high', text:'High-severity indicator.' },
-//     { sev:'info', text:'Hunting tip or context note.' },
-//   ],
-//   queries: [
-//     { label:'Query label shown in UI', spl:`index=... | ...` },
-//   ],
-//   huntNotes: [
-//     { hunt:'TH-2026-XXX', date:'YYYY-MM-DD', analyst:'Name', text:'Free-text note from a prior hunt.' },
-//   ],
-//   fps: [
-//     'Known false positive pattern and how to exclude it.',
-//   ],
-// },
+// SOURCE OF TRUTH: kb/runbooks.md — edit that file to add or modify runbooks.
+// This file is the inline fallback used when fetch() is unavailable (file://).
+// At runtime, initKbTab() fetches runbooks.md and overwrites runbookData in-place.
 // ════════════════════════════════════════════════════════════════════════════
 
 const runbookData = {
@@ -40,15 +22,21 @@ const runbookData = {
       { sev:'info', text:'Check Sysmon Event ID 10 (ProcessAccess) for <code>TargetImage = lsass.exe</code> with <code>GrantedAccess != 0x1410</code> (standard AV pattern).' },
     ],
     queries: [
-      { label:'Sysmon Event 10 — suspicious LSASS handle', spl:`index=sysmon EventCode=10 TargetImage="*lsass.exe"
+      {
+        label: 'Sysmon Event 10 — suspicious LSASS handle',
+        spl: `index=sysmon EventCode=10 TargetImage="*lsass.exe"
   NOT SourceImage IN ("*\\\\MsMpEng.exe","*\\\\CylanceSvc.exe","*\\\\SentinelAgent.exe")
 | eval suspicious=if(match(GrantedAccess,"0x1fffff|0x1410ff|0x143a"),1,0)
 | where suspicious=1
 | stats count by SourceImage, GrantedAccess, host, _time
-| sort -count` },
-      { label:'comsvcs.dll MiniDump LOLBin', spl:`index=windows EventCode=4688
+| sort -count`,
+      },
+      {
+        label: 'comsvcs.dll MiniDump LOLBin',
+        spl: `index=windows EventCode=4688
   CommandLine="*comsvcs*" CommandLine="*MiniDump*"
-| table _time, host, user, CommandLine` },
+| table _time, host, user, CommandLine`,
+      },
     ],
     huntNotes: [
       { hunt:'TH-2026-038', date:'2026-04-12', analyst:'Marcus Webb', text:'Confirmed rundll32.exe comsvcs.dll MiniDump on WIN-DC01. Dump written to C:\\Windows\\Temp\\lsass.dmp then exfil via SMB. Added hash of dump file to threat intel.' },
@@ -71,18 +59,24 @@ const runbookData = {
       { sev:'info', text:'Cross-reference with VPN/proxy logs — Volt Typhoon frequently accesses domain accounts from SOHO-router-proxied IPs (AS numbers: small ISPs, residential blocks).' },
     ],
     queries: [
-      { label:'Off-hours domain logon anomaly', spl:`index=security EventCode=4624 Logon_Type=3
+      {
+        label: 'Off-hours domain logon anomaly',
+        spl: `index=security EventCode=4624 Logon_Type=3
 | eval hour=tonumber(strftime(_time,"%H")), dow=strftime(_time,"%A")
 | where (hour < 6 OR hour > 21) AND dow!="Saturday" AND dow!="Sunday"
 | stats dc(host) as hosts_touched, values(host) as hosts by user, src_ip
 | where hosts_touched > 2
-| sort -hosts_touched` },
-      { label:'Single account TGS-REQ spike (lateral movement)', spl:`index=windows EventCode=4769 Ticket_Encryption_Type=0x17
+| sort -hosts_touched`,
+      },
+      {
+        label: 'Single account TGS-REQ spike (lateral movement)',
+        spl: `index=windows EventCode=4769 Ticket_Encryption_Type=0x17
   NOT Service_Name IN ("krbtgt","*$")
 | bucket _time span=30m
 | stats dc(Service_Name) as spns, values(Service_Name) as services by Account_Name, Client_Address, _time
 | where spns > 8
-| sort -spns` },
+| sort -spns`,
+      },
     ],
     huntNotes: [
       { hunt:'TH-2026-038', date:'2026-04-11', analyst:'Marcus Webb', text:'jsmith account used from 3 different source IPs overnight. One IP resolved to a compromised SOHO router in AS63949. Single-hop threshold set at 14 hosts before escalation.' },
@@ -103,13 +97,16 @@ const runbookData = {
       { sev:'info', text:'Correlate Sysmon Event 11 (FileCreate) on target with Sysmon Event 3 (NetworkConnect) on source — timestamp delta <5s is a strong indicator.' },
     ],
     queries: [
-      { label:'SMB write to admin share → service install', spl:`index=windows EventCode=7045
+      {
+        label: 'SMB write to admin share → service install',
+        spl: `index=windows EventCode=7045
 | eval install_time=_time
 | join host [search index=security EventCode=5145 Share_Name="\\\\*\\\\ADMIN$" Object_Type=File Accesses="WriteData*"
   | eval write_time=_time | table host, write_time, Relative_Target_Name, Account_Name]
 | eval delta=install_time-write_time
 | where delta>=0 AND delta<120
-| table _time, host, Account_Name, Relative_Target_Name, Service_Name, delta` },
+| table _time, host, Account_Name, Relative_Target_Name, Service_Name, delta`,
+      },
     ],
     huntNotes: [
       { hunt:'TH-2026-038', date:'2026-04-12', analyst:'Marcus Webb', text:'Tool staged to ADMIN$ share on 14 hosts. File was a renamed copy of netcat (nc64.exe → svchost.exe). Hash: d41d8cd98f00b204e9800998ecf8427e.' },
@@ -130,11 +127,14 @@ const runbookData = {
       { sev:'info', text:'Event 4698 (task created) + 4702 (task updated) in the Security log. Correlate with the task\'s Action element — look for encoded PowerShell or paths outside <code>C:\\Windows\\System32</code>.' },
     ],
     queries: [
-      { label:'Suspicious scheduled task creation', spl:`index=windows EventCode=4698
+      {
+        label: 'Suspicious scheduled task creation',
+        spl: `index=windows EventCode=4698
 | spath input=Task_Content output=task_action path=Task.Actions.Exec.Command
 | where match(task_action,"powershell|cmd|wscript|mshta|regsvr32|rundll32")
    OR match(task_action,"\\\\AppData|\\\\Temp|\\\\Users\\\\Public")
-| table _time, host, user, Task_Name, task_action` },
+| table _time, host, user, Task_Name, task_action`,
+      },
     ],
     huntNotes: [
       { hunt:'TH-2025-091', date:'2025-11-04', analyst:'Alice Chen', text:'Task created under SYSTEM context using COM object ITaskService — bypassed schtasks.exe. No 4698 event fired; detected via Sysmon file-create in Tasks directory.' },
@@ -156,6 +156,4 @@ const runbookData = {
     huntNotes: [],
     fps: [],
   },
-
-  // ── Add new runbooks below this line ──────────────────────────────────────
 };

@@ -3,15 +3,17 @@
 ## File Structure
 
 ```
-index.html          3,244 lines  HTML structure only — no inline CSS or JS
-css/styles.css      1,530 lines  All styles
-js/app.js           4,759 lines  All application logic
+index.html          3,200+ lines  HTML structure only — no inline CSS or JS
+css/styles.css      1,560+ lines  All styles
+js/app.js           4,900+ lines  All application logic
 kb/
-  skills.js           200 lines  skillsData[] + skillDrafts[]
-  runbooks.js         161 lines  runbookData{} — one entry per TTP
-  environment.js      216 lines  envData{} + crownJewels{}
-  iocs.js              30 lines  iocRepository[]
-  gate-decisions.js    55 lines  gateDecisionLog{}
+  skills.md           ~170 lines  Editable Markdown — source of truth for skillsData[]
+  runbooks.md         ~200 lines  Editable Markdown — source of truth for runbookData{}
+  skills.js            ~50 lines  skillsData[] (empty; populated at runtime) + skillDrafts[]
+  runbooks.js          ~35 lines  runbookData{} (empty; populated at runtime)
+  environment.js       216 lines  envData{} + crownJewels{}
+  iocs.js               30 lines  iocRepository[]
+  gate-decisions.js     55 lines  gateDecisionLog{}
 ```
 
 **Script load order in index.html:**
@@ -38,8 +40,8 @@ No build step. Open `index.html` directly in a browser — all files must be ser
 | Add a new CSS class | `css/styles.css` | Append near related classes |
 | Fix / add a JS function | `js/app.js` | Grep for the function name |
 | Edit HTML layout / add a tab pane | `index.html` | Grep for the surrounding element ID |
-| Add a TTP runbook | `kb/runbooks.js` | Copy template at top of file |
-| Add / edit a skill | `kb/skills.js` | Append before `// ── Add new skills ──` comment |
+| Add a TTP runbook | `kb/runbooks.md` | Copy any `## T…` section, paste before last `---`, fill fields |
+| Add / edit a skill | `kb/skills.md` | Copy any `## SK-…` section, paste before last `---`, fill fields |
 | Add an IOC | `kb/iocs.js` | Append to `iocRepository` array |
 | Edit environment / network segments | `kb/environment.js` | Edit `envData` or `crownJewels` directly |
 | Add a gate decision log entry | `kb/gate-decisions.js` | Append to the hunt's array |
@@ -290,6 +292,7 @@ Runs in two phases: **Gather** (parallel tool calls) → **Synthesize** (generat
 17. Knowledge Base main tab — Tradecraft (skills + runbooks) + Environment (editable) + IOC Repository
 18. Gate Decision Log — per-hunt analyst decisions in Keep
 19. Skills type grouping — `skillType: 'tactic'` vs `'domain'` rendered as labelled sections in Tradecraft pane
+20. Markdown-backed Knowledge Base — `kb/skills.md` + `kb/runbooks.md` are the source of truth; parsed async by `_parseMdSkills` / `_parseMdRunbooks` on first KB tab open; "📄 View Source" button opens raw Markdown in `kb-md-overlay` modal
 
 ---
 
@@ -302,3 +305,4 @@ Runs in two phases: **Gather** (parallel tool calls) → **Synthesize** (generat
 - ❌ Inline `<style>` or `<script>` blocks in `index.html` — CSS goes in `css/styles.css`, JS goes in `js/app.js`
 - ❌ Declaring data variables in `js/app.js` that live in `kb/*.js` — they're already globals from the earlier `<script src>` tags
 - ❌ `const` redeclarations — `kb/*.js` files use `const`; never redeclare same variable in `js/app.js`
+- ❌ Adding skill/runbook data to `kb/skills.js` or `kb/runbooks.js` — those arrays/objects are now empty shells populated from `.md` files at runtime; add content to `kb/skills.md` / `kb/runbooks.md` instead
