@@ -1,5 +1,5 @@
 ﻿/* ════════════════════════════════════════════════════════════════════════
-   HuntForge ATHF — Application Logic
+   PrimeTH ATHF — Application Logic
    Edit this file to change behaviour. Loaded by index.html via <script src>.
    KB data (skills, runbooks, env, IOCs, gate decisions) live in kb/*.js
    ════════════════════════════════════════════════════════════════════════ */

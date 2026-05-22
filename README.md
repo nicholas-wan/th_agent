@@ -1,4 +1,4 @@
-# HuntForge ATHF — Project Skills & Context
+# PrimeTH ATHF — Project Skills & Context
 
 ## File Structure
 
