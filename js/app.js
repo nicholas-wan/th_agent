@@ -713,9 +713,6 @@ function selHyp(el) {
 // ── Run Pipeline simulation ──
 function runPipeline() {
   const btn = document.getElementById('run-pipeline-btn');
-  // Navigate to hunt-detail pane, Learn sub-tab
-  openHunt('TH-2026-041');
-  goSubTab('learn', document.getElementById('subtab-learn'));
 
   // Disable button during run
   btn.disabled = true;
