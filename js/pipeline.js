@@ -166,75 +166,175 @@ const feedSteps = {
 const feedStepLabels = ['Select Intel','TTP Extraction','Hypotheses','Tradecraft','Detection Logic'];
 let feedTimers = [];
 
+// ── Realism helpers ──────────────────────────────────────────
+let _totalTokens = 0;
+let _typewriteCancelToken = 0;
+const _tokensPerType = { reason:165, tool:55, relay:40, done:85, warn:65, env:25, runbook:45 };
+const _entryDelayBase = { reason:1100, tool:750, relay:550, done:650, warn:850, env:350, runbook:500 };
+const _thinkDelayBase = { reason:900, tool:480, relay:250, done:200, warn:680, env:180, runbook:280 };
+
+function _addThinking(agent) {
+  const feed = document.getElementById('agents-reasoning-feed');
+  if (!feed) return null;
+  const empty = document.getElementById('agents-feed-empty');
+  if (empty) empty.remove();
+  const ag  = feedAgents[agent] || { icon:'🤖', name:'Agent' };
+  const col = feedAgentColors[agent] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
+  const el  = document.createElement('div');
+  el.className  = 'feed-thinking';
+  el.dataset.agent = agent;
+  el.innerHTML  = `<div class="feed-thinking-av" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div><div class="feed-thinking-dots"><span></span><span></span><span></span></div>`;
+  feed.appendChild(el);
+  feed.scrollTop = feed.scrollHeight;
+  return el;
+}
+
+function _typewrite(el, text, speed) {
+  const tok = ++_typewriteCancelToken;
+  let i = 0;
+  const tick = () => {
+    if (_typewriteCancelToken !== tok) return;
+    if (i < text.length) {
+      el.textContent += text[i++];
+      const d = i < 10 ? speed * 3 : speed;
+      feedTimers.push(setTimeout(tick, d));
+    }
+  };
+  tick();
+}
+
+const _microState = {
+  tool:    'querying…',
+  reason:  'reasoning…',
+  done:    'done',
+  warn:    '⚠ flagging',
+  env:     'env lookup…',
+  runbook: 'loading…',
+};
+
+// Relative-timestamp updater (runs every 20s)
+setInterval(() => {
+  document.querySelectorAll('.feed-block[data-ts], .feed-block-relay[data-ts]').forEach(block => {
+    const age = Math.floor((Date.now() - parseInt(block.dataset.ts, 10)) / 1000);
+    if (age < 15) return;
+    const tsEl = block.querySelector('.feed-ts-text');
+    if (tsEl) tsEl.textContent = age < 60 ? `${age}s ago ` : age < 3600 ? `${Math.floor(age/60)}m ago ` : `${Math.floor(age/3600)}h ago `;
+  });
+}, 20000);
+
 function feedAddSep(label) {
   feedAddBlockSep(label);
 }
 
 function feedAddEntry(e) {
   const { type, agent, to } = e;
-  feedAddBlock(e);
-  _setAgentLegendStatus(agent, type === 'done' ? 'idle' : 'active');
-  if (to) _setAgentLegendStatus(to, 'active');
+
+  // Micro-state label
+  const label = to ? `→ ${feedAgents[to]?.name || to}` : (_microState[type] || 'active');
+  _setAgentLegendStatus(agent, label);
+  if (to) _setAgentLegendStatus(to, 'receiving…');
+
   pulseTopoNode(agent);
   if (to) {
-    setTimeout(() => pulseTopoNode(to), 180);
+    setTimeout(() => pulseTopoNode(to), 200);
     pulseTopoLine(agent === 'orch' ? to : agent);
   } else {
     pulseTopoLine(agent);
   }
+
+  // Thinking indicator then stream the block
+  const thinkEl  = _addThinking(agent);
+  const thinkMs  = (_thinkDelayBase[type] || 300) + Math.random() * 350;
+  feedTimers.push(setTimeout(() => {
+    if (thinkEl && thinkEl.parentNode) thinkEl.remove();
+    feedAddBlock(e, true);
+    if (type === 'done') _setAgentLegendStatus(agent, 'idle');
+  }, thinkMs));
 }
 
 // ── Big agents reasoning feed ──
 let activeFeedFilter = 'all';
 let _stepStartTime   = 0;
 
-function feedAddBlock(e) {
+function feedAddBlock(e, doStream = false) {
   const { type, agent, msg, detail, to } = e;
   const feed = document.getElementById('agents-reasoning-feed');
   if (!feed) return;
   const empty = document.getElementById('agents-feed-empty');
   if (empty) empty.remove();
-  const ag    = feedAgents[agent] || { icon:'🤖', name:'Agent' };
-  const col   = feedAgentColors[agent] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
-  const now   = new Date();
-  const ts    = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  const ag      = feedAgents[agent] || { icon:'🤖', name:'Agent' };
+  const col     = feedAgentColors[agent] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
+  const now     = new Date();
+  const tsStr   = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
   const elapsed = _stepStartTime ? ` +${((Date.now() - _stepStartTime) / 1000).toFixed(1)}s` : '';
-  const badge = feedBadgeLabels[type] || type.toUpperCase();
-  const detailHtml = detail
-    ? `<button class="feed-block-toggle" onclick="toggleFeedDetail(this)">▼ details</button><div class="feed-block-detail" style="display:none;">${detail.replace(/\n/g,'<br>')}</div>`
-    : '';
+  const badge   = feedBadgeLabels[type] || type.toUpperCase();
+  const tsMark  = `<span class="feed-block-ts"><span class="feed-ts-text">${tsStr} </span><span class="feed-block-elapsed">${elapsed}</span></span>`;
 
   let headHtml;
   if (type === 'relay' && to) {
     const toAg  = feedAgents[to] || { icon:'🤖', name:'Agent' };
     const toCol = feedAgentColors[to] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
-    headHtml = `
-      <div class="feed-block-avatar" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div>
+    headHtml = `<div class="feed-block-avatar" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div>
       <span class="feed-block-name">${ag.name}</span>
       <span class="feed-relay-arrow">→</span>
       <div class="feed-block-avatar" style="background:${toCol.bg};border:1px solid ${toCol.border};">${toAg.icon}</div>
       <span class="feed-block-name feed-block-name-to">${toAg.name}</span>
-      <span class="feed-block-badge fb-relay">${badge}</span>
-      <span class="feed-block-ts">${ts}<span class="feed-block-elapsed">${elapsed}</span></span>`;
+      <span class="feed-block-badge fb-relay">${badge}</span>${tsMark}`;
   } else {
-    headHtml = `
-      <div class="feed-block-avatar" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div>
+    headHtml = `<div class="feed-block-avatar" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div>
       <span class="feed-block-name">${ag.name}</span>
-      <span class="feed-block-badge fb-${type}">${badge}</span>
-      <span class="feed-block-ts">${ts}<span class="feed-block-elapsed">${elapsed}</span></span>`;
+      <span class="feed-block-badge fb-${type}">${badge}</span>${tsMark}`;
   }
 
   const el = document.createElement('div');
-  el.className = type === 'relay' ? 'feed-block feed-block-relay' : 'feed-block';
+  el.className     = type === 'relay' ? 'feed-block feed-block-relay' : 'feed-block';
   el.dataset.agent = agent;
   el.dataset.to    = to || '';
-  // apply current filter
+  el.dataset.ts    = Date.now();
+
   if (activeFeedFilter !== 'all' && el.dataset.agent !== activeFeedFilter && el.dataset.to !== activeFeedFilter) {
     el.style.display = 'none';
   }
-  el.innerHTML = `<div class="feed-block-head">${headHtml}</div><div class="feed-block-msg">${msg}</div>${detailHtml}`;
+
+  el.innerHTML = `<div class="feed-block-head">${headHtml}</div>`;
+
+  // Message element — streamed or instant
+  const msgEl = document.createElement('div');
+  msgEl.className = 'feed-block-msg';
+  el.appendChild(msgEl);
+
+  // Detail (hidden until toggled)
+  if (detail) {
+    const btn = document.createElement('button');
+    btn.className = 'feed-block-toggle';
+    btn.textContent = '▼ details';
+    btn.setAttribute('onclick', 'toggleFeedDetail(this)');
+    el.appendChild(btn);
+    const div = document.createElement('div');
+    div.className = 'feed-block-detail';
+    div.style.display = 'none';
+    div.innerHTML = detail.replace(/\n/g, '<br>');
+    el.appendChild(div);
+  }
+
   feed.appendChild(el);
   feed.scrollTop = feed.scrollHeight;
+
+  if (doStream) {
+    const speed = type === 'reason' ? 16 : type === 'warn' ? 20 : 12;
+    _typewrite(msgEl, msg, speed);
+  } else {
+    msgEl.textContent = msg;
+  }
+
+  // Token counter
+  _totalTokens += (_tokensPerType[type] || 50) + Math.floor(Math.random() * 15);
+  const tokEl = document.getElementById('feed-token-count');
+  if (tokEl) {
+    tokEl.style.display = '';
+    tokEl.textContent = `~${_totalTokens.toLocaleString()} tok`;
+  }
 }
 
 function setFeedFilter(agent, btn) {
@@ -265,6 +365,8 @@ function feedAddBlockSep(label) {
 }
 
 function clearAgentsFeed() {
+  // Cancel any in-flight typewriters
+  _typewriteCancelToken++;
   const feed = document.getElementById('agents-reasoning-feed');
   if (!feed) return;
   feed.innerHTML = `<div class="agents-feed-empty" id="agents-feed-empty">
@@ -272,10 +374,13 @@ function clearAgentsFeed() {
     <div style="font-size:13px;font-weight:600;color:var(--sub);margin-bottom:7px;">No reasoning activity yet</div>
     <div style="font-size:11px;color:var(--muted);max-width:280px;line-height:1.6;">Step through the LOCK pipeline tabs to watch agents reason, collaborate, and make decisions in real time.</div>
   </div>`;
-  const dot = document.getElementById('agents-feed-dot');
+  const dot     = document.getElementById('agents-feed-dot');
   const statusEl = document.getElementById('agents-feed-status');
+  const tokEl   = document.getElementById('feed-token-count');
   if (dot) dot.style.opacity = '0.3';
   if (statusEl) statusEl.textContent = 'Waiting for pipeline…';
+  if (tokEl) { tokEl.style.display = 'none'; tokEl.textContent = '~0 tok'; }
+  _totalTokens = 0;
   // Reset legend
   ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'idle'));
   // Reset pipeline steps
@@ -290,7 +395,14 @@ function _setAgentLegendStatus(agent, status) {
   const el = document.getElementById('aleg-' + agent + '-s');
   if (!el) return;
   el.textContent = status;
-  el.style.color = status === 'active' ? 'var(--green)' : status === 'done' ? 'var(--blue)' : 'var(--muted)';
+  el.style.color = status === 'idle'         ? 'var(--muted)'
+                 : status === 'done'         ? 'var(--blue)'
+                 : status === 'reasoning…'   ? '#a5b4fc'
+                 : status === 'querying…'    ? 'var(--blue)'
+                 : status === 'receiving…'   ? 'var(--teal)'
+                 : status.startsWith('→')    ? 'var(--teal)'
+                 : status.startsWith('⚠')   ? 'var(--red)'
+                 : 'var(--green)';
 }
 
 function _setAgentProgStep(step, state) {
@@ -349,7 +461,7 @@ function playFeedStep(step) {
   feedAddSep(feedStepLabels[step] || 'Step ' + step);
   let delay = 0;
   entries.forEach(e => {
-    delay += 500 + Math.random() * 400;
+    delay += (_entryDelayBase[e.type] || 650) + Math.random() * 380;
     feedTimers.push(setTimeout(() => feedAddEntry(e), delay));
   });
   // mark idle after last entry
