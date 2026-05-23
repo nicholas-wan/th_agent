@@ -694,7 +694,7 @@
               <span style="color:var(--border2);">·</span>
               <span style="color:var(--muted);">T1021.006 skipped — no telemetry</span>
             </div>
-            <div class="info-bar"><span class="ib-icon">📌</span><span>TTPs are deferred to RAA only when RAA analytics returned <b>confirmed hits</b>. T1570, T1078.002, and T1003.001 had active hits — no new rule needed. <b>T1558.003 (Kerberoasting)</b> had RAA partial coverage but <b>0 hits</b> — RAA checked but found nothing, so a targeted EventCode 4769 rule is generated. Click <b>Run in Check →</b> to execute the 3 new rules against live data.</span></div>
+            <div class="info-bar"><span class="ib-icon">📌</span><span>TTPs are deferred to RAA only when RAA analytics returned <b>confirmed hits</b>. T1570, T1078.002, and T1003.001 had active hits — no new rule needed. <b>T1558.003 (Kerberoasting)</b> had RAA partial coverage but <b>0 hits</b> — a targeted EventCode 4769 rule is generated. Click <b>Run in Check →</b> to execute and test the 3 new rules with results.</span></div>
 
             <div style="display:flex;flex-direction:column;gap:10px;">
               <!-- Rule 1 -->
@@ -705,17 +705,18 @@
                   <span style="font-size:11px;color:var(--muted);">Scheduled Task Creation via schtasks.exe</span>
                 </div>
                 <div class="context-annotation"><span class="ca-label">⚙ Context applied</span><span>SCCM ConfigMgr_* task name exclusion pre-loaded from TH-2025-091 · scoped to index=sysmon on Corp domain · msiexec/setup parent excluded as env baseline</span></div>
-                <div class="code-block"><span class="cm">| Gap fill: T1053.005 Scheduled Task · DetectionLogicAgent</span>
-index=sysmon EventCode=<span class="str">1</span> Image=<span class="str">"*\\schtasks.exe"</span>
-    CommandLine=<span class="str">"*/create*"</span>
-<span class="kw">| rex</span> field=CommandLine <span class="str">"\/tn\s+(?&lt;task_name&gt;\S+)"</span>
-<span class="kw">| rex</span> field=CommandLine <span class="str">"\/tr\s+(?&lt;task_cmd&gt;.+?)(\s+\/|$)"</span>
-<span class="kw">| where</span> NOT match(ParentImage,<span class="str">"(msiexec|setup|install)"</span>)
-<span class="kw">| stats</span> count <span class="kw">by</span> _time, host, User, task_name, task_cmd, ParentImage
-<span class="kw">| eval</span> risk=<span class="kw">if</span>(match(task_cmd,<span class="str">"(powershell|cmd|wscript|cscript|rundll32)"</span>),<span class="str">"HIGH"</span>,<span class="str">"MED"</span>)
-<span class="kw">| table</span> _time, host, User, task_name, task_cmd, ParentImage, risk</div>
-                <button class="rule-test-btn" onclick="runRuleTest(this,'rule-1')">▶ Run Test</button>
-                <div class="rule-test-panel" id="test-panel-rule-1"></div>
+                <div class="feed-spl">
+                  <div class="feed-spl-head"><span class="feed-spl-label">SPL · T1053.005</span><button class="spl-copy" onclick="_copySplFromPre(this)">copy</button></div>
+                  <pre class="feed-spl-pre"><span class="cm">| Gap fill: T1053.005 Scheduled Task · DetectionLogicAgent</span>
+index=sysmon EventCode=<span class="spl-kw">1</span> Image=<span class="spl-val">"*\\schtasks.exe"</span>
+    CommandLine=<span class="spl-val">"*/create*"</span>
+<span class="spl-pipe">|</span> <span class="spl-cmd">rex</span> field=CommandLine <span class="spl-val">"\/tn\s+(?&lt;task_name&gt;\S+)"</span>
+<span class="spl-pipe">|</span> <span class="spl-cmd">rex</span> field=CommandLine <span class="spl-val">"\/tr\s+(?&lt;task_cmd&gt;.+?)(\s+\/|$)"</span>
+<span class="spl-pipe">|</span> <span class="spl-kw">where</span> NOT match(<span class="spl-fld">ParentImage</span>,<span class="spl-val">"(msiexec|setup|install)"</span>)
+<span class="spl-pipe">|</span> <span class="spl-cmd">stats</span> <span class="spl-cmd">count</span> <span class="spl-kw">by</span> _time, host, User, task_name, task_cmd, ParentImage
+<span class="spl-pipe">|</span> <span class="spl-cmd">eval</span> <span class="spl-fld">risk</span>=if(match(task_cmd,<span class="spl-val">"(powershell|cmd|wscript|cscript|rundll32)"</span>),<span class="spl-val">"HIGH"</span>,<span class="spl-val">"MED"</span>)
+<span class="spl-pipe">|</span> <span class="spl-cmd">table</span> _time, host, User, task_name, task_cmd, ParentImage, risk</pre>
+                </div>
               </div>
 
               <!-- Rule 2 -->
@@ -726,15 +727,16 @@ index=sysmon EventCode=<span class="str">1</span> Image=<span class="str">"*\\sc
                   <span style="font-size:11px;color:var(--muted);">Registry Run Key Persistence</span>
                 </div>
                 <div class="context-annotation"><span class="ca-label">⚙ Context applied</span><span>OneDrive, Teams, Chrome excluded — confirmed env baseline noise · binary signing cert validation added after TH-2025-091 (MicrosoftEdgeUpdate FP)</span></div>
-                <div class="code-block"><span class="cm">| Gap fill: T1547.001 Registry Run Key · DetectionLogicAgent</span>
-index=sysmon EventCode=<span class="str">13</span>
-    TargetObject IN (<span class="str">"*\\Run\\*"</span>, <span class="str">"*\\RunOnce\\*"</span>)
-<span class="kw">| where</span> NOT match(Image,<span class="str">"(MsiExec|OneDrive|Teams|Chrome)"</span>)
-<span class="kw">| eval</span> hive=<span class="kw">if</span>(match(TargetObject,<span class="str">"HKLM"</span>),<span class="str">"SYSTEM"</span>,<span class="str">"USER"</span>)
-<span class="kw">| stats</span> count <span class="kw">by</span> _time, host, User, Image, TargetObject, Details, hive
-<span class="kw">| table</span> _time, host, User, hive, Image, TargetObject, Details</div>
-                <button class="rule-test-btn" onclick="runRuleTest(this,'rule-2')">▶ Run Test</button>
-                <div class="rule-test-panel" id="test-panel-rule-2"></div>
+                <div class="feed-spl">
+                  <div class="feed-spl-head"><span class="feed-spl-label">SPL · T1547.001</span><button class="spl-copy" onclick="_copySplFromPre(this)">copy</button></div>
+                  <pre class="feed-spl-pre"><span class="cm">| Gap fill: T1547.001 Registry Run Key · DetectionLogicAgent</span>
+index=sysmon EventCode=<span class="spl-kw">13</span>
+    TargetObject IN (<span class="spl-val">"*\\Run\\*"</span>, <span class="spl-val">"*\\RunOnce\\*"</span>)
+<span class="spl-pipe">|</span> <span class="spl-kw">where</span> NOT match(<span class="spl-fld">Image</span>,<span class="spl-val">"(MsiExec|OneDrive|Teams|Chrome)"</span>)
+<span class="spl-pipe">|</span> <span class="spl-cmd">eval</span> <span class="spl-fld">hive</span>=if(match(TargetObject,<span class="spl-val">"HKLM"</span>),<span class="spl-val">"SYSTEM"</span>,<span class="spl-val">"USER"</span>)
+<span class="spl-pipe">|</span> <span class="spl-cmd">stats</span> <span class="spl-cmd">count</span> <span class="spl-kw">by</span> _time, host, User, Image, TargetObject, Details, hive
+<span class="spl-pipe">|</span> <span class="spl-cmd">table</span> _time, host, User, hive, Image, TargetObject, Details</pre>
+                </div>
               </div>
 
               <!-- Rule 3 -->
@@ -746,17 +748,18 @@ index=sysmon EventCode=<span class="str">13</span>
                   <span class="chip chip-yellow" style="font-size:10px;margin-left:auto;">RAA partial · 0 hits</span>
                 </div>
                 <div class="context-annotation"><span class="ca-label">⚙ Context applied</span><span>BackupExec, MSSQLSvc SPN exclusion list pre-loaded from Marcus Webb note (TH-2026-035) · scoped to index=wineventlog · baseline window: 30 days · threshold: &gt;3 unique SPNs/user/5m</span></div>
-                <div class="code-block"><span class="cm">| Gap fill: T1558.003 Kerberoasting · DetectionLogicAgent (RAA 0 hits — new rule required)</span>
-index=wineventlog EventCode=<span class="str">4769</span>
-    TicketEncryptionType=<span class="str">0x17</span>
-<span class="kw">| bucket</span> _time span=<span class="str">5m</span>
-<span class="kw">| stats</span> dc(ServiceName) <span class="kw">as</span> spn_count, values(ServiceName) <span class="kw">as</span> spns, count <span class="kw">by</span> _time, Account, src_ip
-<span class="kw">| where</span> spn_count &gt; 3
-<span class="kw">| where</span> NOT match(Account,<span class="str">"(BackupExec|MSSQLSvc|svc_)"</span>)
-<span class="kw">| eval</span> risk=<span class="kw">if</span>(spn_count&gt;=10,<span class="str">"CRITICAL"</span>,<span class="kw">if</span>(spn_count&gt;=5,<span class="str">"HIGH"</span>,<span class="str">"MED"</span>))
-<span class="kw">| table</span> _time, Account, src_ip, spn_count, spns, risk</div>
-                <button class="rule-test-btn" onclick="runRuleTest(this,'rule-3')">▶ Run Test</button>
-                <div class="rule-test-panel" id="test-panel-rule-3"></div>
+                <div class="feed-spl">
+                  <div class="feed-spl-head"><span class="feed-spl-label">SPL · T1558.003</span><button class="spl-copy" onclick="_copySplFromPre(this)">copy</button></div>
+                  <pre class="feed-spl-pre"><span class="cm">| Gap fill: T1558.003 Kerberoasting · DetectionLogicAgent (RAA 0 hits — new rule required)</span>
+index=wineventlog EventCode=<span class="spl-kw">4769</span>
+    TicketEncryptionType=<span class="spl-val">0x17</span>
+<span class="spl-pipe">|</span> <span class="spl-cmd">bucket</span> _time span=<span class="spl-val">5m</span>
+<span class="spl-pipe">|</span> <span class="spl-cmd">stats</span> dc(<span class="spl-fld">ServiceName</span>) <span class="spl-kw">as</span> spn_count, values(<span class="spl-fld">ServiceName</span>) <span class="spl-kw">as</span> spns, <span class="spl-cmd">count</span> <span class="spl-kw">by</span> _time, Account, src_ip
+<span class="spl-pipe">|</span> <span class="spl-kw">where</span> spn_count &gt; 3
+<span class="spl-pipe">|</span> <span class="spl-kw">where</span> NOT match(<span class="spl-fld">Account</span>,<span class="spl-val">"(BackupExec|MSSQLSvc|svc_)"</span>)
+<span class="spl-pipe">|</span> <span class="spl-cmd">eval</span> <span class="spl-fld">risk</span>=if(spn_count&gt;=10,<span class="spl-val">"CRITICAL"</span>,if(spn_count&gt;=5,<span class="spl-val">"HIGH"</span>,<span class="spl-val">"MED"</span>))
+<span class="spl-pipe">|</span> <span class="spl-cmd">table</span> _time, Account, src_ip, spn_count, spns, risk</pre>
+                </div>
               </div>
 
             </div>
@@ -1121,103 +1124,24 @@ index=wineventlog EventCode=<span class="str">4769</span>
   <div class="card check-summary-prominent" id="check-summary-card" style="display:none;"></div>
 
   <div class="check-wrap">
-    <div class="check-main">
       <div class="card card-collapsible" id="raa-card" style="display:none;"></div>
-      <div class="info-bar">
-        <span class="ib-icon">ℹ️</span>
-        <span>Select a hypothesis below, then hit <b>▶ Run</b> to execute the detection query against <b>Splunk ES</b>. RAA runs continuously — results above are always current.</span>
-      </div>
-      <div class="card card-collapsible" id="query-runner-card">
-        <div class="card-head" onclick="toggleCollapse('query-runner-card',event)">
+      <!-- Detection Rule Output card — populated by renderGeneratedRulesCard() in check.js -->
+      <div class="card card-collapsible" id="generated-rules-card" style="border-color:rgba(16,185,129,.25);">
+        <div class="card-head" onclick="toggleCollapse('generated-rules-card',event)" style="background:rgba(16,185,129,.04);">
           <div style="display:flex;flex-direction:column;gap:2px;">
-            <span class="card-title">⚙️ Detection Logic</span>
-            <span style="font-size:10px;color:var(--muted);" id="check-hyp-label">H-01 · PsExec Lateral Movement — TH-2026-041</span>
+            <span class="card-title">📦 Detection Rule Output</span>
+            <span style="font-size:10px;color:var(--muted);" id="gen-rules-sub">One detection rule per subhunt TTP · ready for SIEM deployment</span>
           </div>
           <div style="display:flex;gap:7px;align-items:center;">
-            <span class="card-summary" id="qrunner-summary">H-01 · not run yet</span>
-            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();runQuery()">▶ Run</button>
-            <button class="collapse-btn" onclick="toggleCollapse('query-runner-card',event)">▾</button>
+            <span class="chip chip-green" style="font-size:10px;">Ready</span>
+            <button class="collapse-btn" onclick="toggleCollapse('generated-rules-card',event)">▾</button>
           </div>
         </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
-          <div id="query-desc" class="query-desc-box">
-            <div class="query-desc-label">What this rule detects</div>
-            <div id="query-desc-text">Looks for off-hours authentication events (22:00–06:00 UTC) where a single account touches 3 or more distinct hosts. This pattern is characteristic of PsExec-style lateral movement, where a compromised account is reused to propagate across the network. Risk score scales with host count.</div>
-          </div>
-          <textarea class="query-editor" id="qeditor">| H-01: PsExec Lateral Movement — Splunk ES (SPL)
-index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
-| eval hour=strftime(_time,"%H")
-| where hour>="22" OR hour<="06"
-| where NOT match(Account,"\$$")
-| stats dc(host) as host_count, count as event_count by Account, EventCode, _time
-| where host_count > 3
-| eval risk_score=case(host_count>=10, 95, host_count>=5, 75, true(), 55)
-| sort - risk_score
-| table _time, Account, EventCode, host_count, event_count, risk_score</textarea>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="check-hyp-btns">
-            <button class="btn btn-outline btn-sm check-hyp-btn active-hyp" id="qbtn-h01" onclick="setQ('h01')">H-01 · PsExec Lateral Movement</button>
-            <button class="btn btn-outline btn-sm check-hyp-btn" id="qbtn-h02" onclick="setQ('h02')">H-02 · LSASS + Kerberoasting</button>
-            <button class="btn btn-outline btn-sm check-hyp-btn" id="qbtn-h03" onclick="setQ('h03')">H-03 · C2 Beacon JA3</button>
-          </div>
+        <div class="card-body" id="generated-rules-body" style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Populated by renderGeneratedRulesCard() -->
         </div>
       </div>
-      <div class="card" id="agent-reasoning-card" style="display:none;"></div>
-      <div class="card" id="results-card" style="display:none;">
-        <div class="card-head">
-          <span class="card-title">Results</span>
-          <div style="display:flex;gap:6px;" id="results-meta"><span class="chip chip-red">14 hits</span><span class="chip chip-gray" style="font-size:10px;">0.43s</span></div>
-        </div>
-        <div class="card-body" style="padding:0;overflow-x:auto;" id="results-table-wrap">
-          <table class="results-table" id="results-table">
-            <thead><tr><th>TimeGenerated</th><th>Account</th><th>Hosts</th><th>Events</th></tr></thead>
-            <tbody>
-              <tr><td>2026-04-27 09:38</td><td style="color:var(--red)">CORP\jsmith</td><td>14</td><td>47</td></tr>
-              <tr><td>2026-04-27 02:12</td><td>CORP\svc-sql01</td><td>7</td><td>23</td></tr>
-              <tr><td>2026-04-26 23:55</td><td>CORP\admin-backup</td><td>5</td><td>18</td></tr>
-              <tr><td>2026-04-26 01:34</td><td>CORP\jsmith</td><td>4</td><td>11</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div id="result-interp" class="result-interp-box" style="margin:0 0 0;border-top:1px solid var(--border);padding:10px 14px;">
-          <div class="result-interp-label"><span style="font-size:11px;">🤖</span> Agent interpretation</div>
-          <div id="result-interp-text">14 hits across 4 sessions. <b style="color:var(--red)">CORP\jsmith</b> is the highest-risk account — 14 distinct hosts touched in a single session, far exceeding the 3-host threshold. A second session the same day (01:34) confirms persistent reuse. <b>CORP\svc-sql01</b> and <b>CORP\admin-backup</b> show similar lateral patterns and should be reviewed for credential compromise. Recommend immediate isolation of jsmith and escalation to IR.</div>
-        </div>
-      </div>
-    </div>
-    <div class="check-side">
-      <div class="card">
-        <div class="card-head"><span class="card-title">MITRE Coverage</span></div>
-        <div class="card-body">
-          <div class="mitre-grid">
-            <div class="mc hit" data-ttp="T1570">T1570</div><div class="mc hit" data-ttp="T1078">T1078</div><div class="mc partial" data-ttp="T1003">T1003</div><div class="mc hit" data-ttp="T1558">T1558</div><div class="mc partial" data-ttp="T1071">T1071</div>
-            <div class="mc" data-ttp="T1547">T1547</div><div class="mc" data-ttp="T1053">T1053</div><div class="mc partial" data-ttp="T1041">T1041</div><div class="mc" data-ttp="T1059">T1059</div><div class="mc" data-ttp="T1027">T1027</div>
-            <div class="mc hit" data-ttp="T1021">T1021</div><div class="mc" data-ttp="T1135">T1135</div><div class="mc" data-ttp="T1018">T1018</div><div class="mc partial" data-ttp="T1046">T1046</div><div class="mc" data-ttp="T1083">T1083</div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:8px;font-size:10px;">
-            <span style="color:var(--red)">■ Detected</span>
-            <span style="color:var(--yellow)">■ Partial</span>
-            <span style="color:var(--muted)">■ Gap</span>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-title">Saved Queries</span></div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;">
-          <div class="saved-query" onclick="setQ('h01')">
-            <div class="sq-name">H-01 · PsExec Lateral Movement</div>
-            <div class="sq-meta">SPL · index=windows · 14 hits last run</div>
-          </div>
-          <div class="saved-query" onclick="setQ('h02')">
-            <div class="sq-name">H-02 · LSASS + Kerberoasting</div>
-            <div class="sq-meta">SPL · index=sysmon · Not run yet</div>
-          </div>
-          <div class="saved-query" onclick="setQ('h03')">
-            <div class="sq-name">H-03 · C2 Beacon JA3 Match</div>
-            <div class="sq-meta">SPL · index=network · Not run yet</div>
-          </div>
-        </div>
-      </div>
-    </div>
+
   </div>
   </div><!-- /subpane-check -->
 
@@ -1344,6 +1268,20 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
         </div>
       </div>
 
+      <!-- Evidence Graph -->
+      <div class="card card-collapsible" id="card-evidence-graph">
+        <div class="card-head" onclick="toggleCollapse('card-evidence-graph',event)">
+          <span class="card-title">🕸 Attack Graph</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip chip-red" style="font-size:10px;" id="evg-node-chip"></span>
+            <button class="collapse-btn" onclick="toggleCollapse('card-evidence-graph',event)">▾</button>
+          </div>
+        </div>
+        <div class="ev-graph-wrap" id="keep-evidence-graph">
+          <!-- populated by renderEvidenceGraph() -->
+        </div>
+      </div>
+
       <!-- Hunter Notes -->
       <div class="card card-collapsible" id="card-notes">
         <div class="card-head" onclick="toggleCollapse('card-notes',event)">
@@ -1374,17 +1312,6 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
 
     <!-- Sidebar -->
     <div style="display:flex;flex-direction:column;gap:14px;">
-
-      <!-- Hunt Velocity Metrics -->
-      <div class="card" id="card-velocity">
-        <div class="card-head">
-          <span class="card-title">⚡ Hunt Velocity</span>
-          <span class="chip chip-blue" style="font-size:10px;" id="vel-runs-chip">3 runs</span>
-        </div>
-        <div class="card-body" style="padding:10px 12px;" id="velocity-body">
-          <!-- populated by renderVelocityCard() -->
-        </div>
-      </div>
 
       <!-- Similar Hunts -->
       <div class="card card-collapsible" id="card-simhunts">
@@ -1498,6 +1425,11 @@ index=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)
                 <path id="tp-ts"   d="M130,112 L52,185"/>
                 <path id="tp-dl"   d="M130,112 L208,185"/>
               </defs>
+
+              <!-- Secondary inter-agent lines (dashed, behind hub lines) -->
+              <line id="topo-sl-hyp-ts"  x1="52"  y1="57"  x2="52"  y2="170" stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
+              <line id="topo-sl-ts-data" x1="64"  y1="178" x2="196" y2="52"  stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
+              <line id="topo-sl-dl-ts"   x1="193" y1="185" x2="67"  y2="185" stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
 
               <!-- Hub lines (shortened to node edge) -->
               <line id="topo-l-hyp"  x1="130" y1="112" x2="63"  y2="52"  stroke="#263550" stroke-width="1.5" marker-end="url(#arr-hyp)"/>

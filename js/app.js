@@ -60,7 +60,7 @@ const checkHuntMeta = {
   '041': {
     cti: 'CISA AA24-038A — Volt Typhoon',
     ttpCount: '14 TTPs',
-    hypCount: '3 hypotheses under test',
+    hypCount: '4 hypotheses under test',
     statusClass: 'chip-red', statusText: 'Volt Typhoon · Active',
     active: true,
   },
@@ -101,20 +101,14 @@ function resetCheckForHunt(huntId) {
   document.getElementById('check-hunt-ttps').textContent = cm.ttpCount || '';
   document.getElementById('check-hunt-hyps').textContent = cm.hypCount || '';
 
-  // Always clear results
-  document.getElementById('results-card').style.display = 'none';
-
   if (!cm.active) {
     const archivedSum = closedCheckSummaries[keepId];
     const archivedRAA = closedRAAResults[keepId];
 
     if (archivedSum) {
-      // Closed hunt with archived results — show summary + RAA, collapse query runner
-      renderCheckSummary(null, false, archivedSum);
-      renderRAAResults(null, archivedRAA || null);
-      // Collapse Detection Logic card — no need to re-run for closed hunts
-      const qr = document.getElementById('query-runner-card');
-      if (qr) qr.classList.add('card-collapsed');
+      // Closed hunt with archived results — show summary + RAA
+      renderCheckSummary(false, archivedSum);
+      renderRAAResults(archivedRAA || null);
     } else {
       // Draft or no archived data — show placeholder only
       const sumCard = document.getElementById('check-summary-card');
@@ -134,20 +128,11 @@ function resetCheckForHunt(huntId) {
     return;
   }
 
-  // Active hunt — reset hypothesis state and re-render
-  checkQueryRun = {};
-  activeQuery = 'h01';
-  document.querySelectorAll('.check-hyp-btn').forEach(b => b.classList.remove('active-hyp'));
-  const btn = document.getElementById('qbtn-h01');
-  if (btn) btn.classList.add('active-hyp');
-  document.getElementById('qeditor').value = queries['h01'] || '';
-  const ql = document.getElementById('check-hyp-label');
-  if (ql) ql.textContent = hypLabels['h01'] || '';
-  const descEl = document.getElementById('query-desc-text');
-  if (descEl && queryMeta['h01']) descEl.textContent = queryMeta['h01'].desc;
-  renderCheckSummary('h01', false);
-  renderQueryIterations('h01');
-  renderRAAResults('h01');
+  // Active hunt — load this hunt's Check data and re-render
+  _activeHuntId = keepId;
+  renderCheckSummary(true);
+  renderRAAResults();
+  renderGeneratedRulesCard();
 }
 
 // ── Hunt meta for detail pane header ──
@@ -1016,6 +1001,7 @@ function copyReport() {
    INLINE RULE TEST
 ════════════════════════════════════ */
 const ruleTestData = {
+  // KB tab rules
   'rule-1': {
     execTime:'1.2s', count:14,
     cols:['_time','host','User','task_name','task_cmd','risk'],
@@ -1046,7 +1032,48 @@ const ruleTestData = {
       ['14:33:21','jsmith@CORP','10.10.14.22','11','CRITICAL'],
       ['13:58:44','lchen@CORP','10.10.11.54','4','MED'],
     ]
-  }
+  },
+  // Check stage subhunt rules — TH-2026-041
+  'ck-t1570': {
+    execTime:'1.1s', count:14,
+    cols:['_time','host','src_ip','Account','svc_file'],
+    riskCol:-1,
+    rows:[
+      ['03:14:07','WIN-WS089','10.10.14.22','CORP\\jsmith','psexesvc.exe'],
+      ['03:14:09','WIN-WS102','10.10.14.22','CORP\\jsmith','psexesvc.exe'],
+      ['03:14:11','WIN-DC01','10.10.14.22','CORP\\jsmith','psexesvc.exe'],
+      ['03:15:33','WIN-WS089','10.10.14.22','CORP\\jsmith','update.exe'],
+    ]
+  },
+  'ck-t1003': {
+    execTime:'0.6s', count:5,
+    cols:['_time','host','SourceImage','GrantedAccess','user'],
+    riskCol:-1,
+    rows:[
+      ['03:14:00','WIN-WS089','rundll32.exe','0x1fffff','CORP\\jsmith'],
+      ['03:15:01','WIN-WS089','powershell.exe','0x1fffff','CORP\\jsmith'],
+      ['22:48:33','WIN-DC01','msiexec.exe','0x1fffff','CORP\\admin'],
+    ]
+  },
+  'ck-t1558': {
+    execTime:'1.3s', count:3,
+    cols:['_time','Account','src_ip','spn_count','risk'],
+    riskCol:4,
+    rows:[
+      ['02:14:07','jsmith@CORP','10.10.14.22','11','CRITICAL'],
+      ['02:16:44','lchen@CORP','10.10.11.54','4','MED'],
+      ['02:18:02','bwalker@CORP','10.10.12.83','5','HIGH'],
+    ]
+  },
+  'ck-t1071': {
+    execTime:'2.1s', count:2,
+    cols:['_time','src_ip','dest_ip','ja3','connections','jitter'],
+    riskCol:-1,
+    rows:[
+      ['03:00–03:30','10.10.14.22','185.220.101.47','769c10b0…','47','1.8s'],
+      ['03:30–04:00','10.10.14.22','185.220.101.47','1aa7bf8b…','12','1.4s'],
+    ]
+  },
 };
 
 function runRuleTest(btn, ruleId) {

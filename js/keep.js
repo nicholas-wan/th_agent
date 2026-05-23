@@ -20,8 +20,8 @@ const keepData = {
       { sev:'m', title:'Shadow Copy Deletion via vssadmin — Score 97',       meta:'WIN-DC01 · RAA Supervisor Agent · T1490 · 31m ago',       drawer:'tradecraft' },
     ],
     lock: {
-      l: 'Ingested CISA AA24-038A (Volt Typhoon). Extracted 14 ATT&amp;CK techniques. Generated 3 hypotheses focused on lateral movement, credential harvesting, and C2 beaconing.',
-      o: 'H-01 confirmed (PsExec lateral movement — 14 hosts). H-02 likely (LSASS + Kerberoasting). H-03 under investigation (Cobalt Strike C2 profile match).',
+      l: 'Ingested CISA AA24-038A (Volt Typhoon). Extracted 14 ATT&amp;CK techniques. Generated 4 hypotheses focused on lateral movement, credential dumping, Kerberoasting, and C2 beaconing.',
+      o: 'H-01 confirmed (PsExec lateral movement — 14 hosts). H-02 confirmed (LSASS credential dump — WIN-DC01). H-03 likely (Kerberoasting). H-04 under investigation (Cobalt Strike C2 profile match).',
       c: 'SPL queries executed in Splunk ES via MCP. 14 hits on H-01 (index=windows). MITRE coverage: 4 confirmed, 3 partial. Detection rules generated and pushed to SIEM.',
       k: 'Recording in progress. 8 findings documented. Recommend IR escalation for WIN-DC01. New detection rules deployed.',
       kItalic: true,
@@ -35,12 +35,12 @@ const keepData = {
       { color:'indigo', text:'<b>Rule Validation Agent</b> — persistence rule triggered, svcupd.exe registry key',time:'09:29', tag:'T1547.001', host:'SRV-APP03' },
       { color:'green',  text:'<b>Detection Logic Agent</b> — SPL rules validated and pushed to SIEM',             time:'09:18', tag:'',          host:'SYSTEM'    },
       { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-041 started, 6 agents deployed',          time:'09:15', tag:'',          host:'SYSTEM'    },
-      { color:'teal',   text:'<b>Hypothesis Agent</b> — 3 hypotheses generated from 14 TTPs · 3 past hunts recalled · coverage gaps flagged', time:'09:14', tag:'', host:'SYSTEM' },
+      { color:'teal',   text:'<b>Hypothesis Agent</b> — 4 hypotheses generated from 14 TTPs · 3 past hunts recalled · coverage gaps flagged', time:'09:14', tag:'', host:'SYSTEM' },
     ],
     report: {
       status: 'Active', statusClass: 'chip-red',
-      summary: 'This hunt targeted active APT29/Volt Typhoon intrusion activity across the corporate Windows domain. Over a 26-minute window, agents analysed authentication logs, Sysmon process telemetry, and network flow data against three hypotheses derived from the CISA AA24-038A advisory. All three hypotheses returned positive results, confirming a live, multi-stage intrusion involving lateral movement, credential harvesting, and an active C2 channel.',
-      approach: 'H-01 (PsExec lateral movement) was confirmed first via off-hours authentication analysis — 14 distinct hosts were touched by a single compromised account (CORP\\jsmith) in two sessions, far exceeding the 3-host detection threshold. H-02 (credential harvesting) was confirmed via process chain anomaly: <span class="report-ioc">rundll32.exe</span> accessed LSASS with handle <span class="report-ioc">0x1fffff</span> from an <span class="report-ioc">explorer.exe</span> parent on WIN-DC01, consistent with Mimikatz sekurlsa::logonpasswords. H-03 (C2 beacon) was confirmed by JA3 fingerprint match — beacon interval 60.1s, watermark <span class="report-ioc">0x4e4b5547</span>, destination <span class="report-ioc">185.220.101.47:443</span>.',
+      summary: 'This hunt targeted active APT29/Volt Typhoon intrusion activity across the corporate Windows domain. Over a 26-minute window, agents analysed authentication logs, Sysmon process telemetry, and network flow data against four hypotheses derived from the CISA AA24-038A advisory. All four hypotheses returned positive results, confirming a live, multi-stage intrusion involving lateral movement, credential dumping, Kerberoasting, and an active C2 channel.',
+      approach: 'H-01 (PsExec lateral movement) was confirmed first via off-hours authentication analysis — 14 distinct hosts were touched by a single compromised account (CORP\\jsmith) in two sessions, far exceeding the 3-host detection threshold. H-02 (LSASS credential dump) was confirmed via process chain anomaly: <span class="report-ioc">rundll32.exe</span> accessed LSASS with handle <span class="report-ioc">0x1fffff</span> from an <span class="report-ioc">explorer.exe</span> parent on WIN-DC01, consistent with Mimikatz sekurlsa::logonpasswords. H-03 (Kerberoasting) was confirmed by RC4 TGS-REQ volume analysis — jsmith requested 11 unique SPNs in a 5-minute window against the CORP domain. H-04 (C2 beacon) was confirmed by JA3 fingerprint match — beacon interval 60.1s, watermark <span class="report-ioc">0x4e4b5547</span>, destination <span class="report-ioc">185.220.101.47:443</span>.',
       impact: [
         { val:'14', lbl:'Hosts involved', color:'var(--red)' },
         { val:'26m', lbl:'Detection to containment', color:'var(--text)' },
@@ -53,6 +53,23 @@ const keepData = {
         'Push perimeter block for <span class="report-ioc">185.220.101.47/32</span> and audit all outbound connections on port 443 for matching JA3 hashes.',
         'Review CORP\\svc-sql01 and CORP\\admin-backup for signs of credential reuse — both accounts exceeded the lateral movement threshold.',
         'Schedule full EDR coverage audit — WIN-DC01 LSASS access was detected via RAA, not a deployed rule.',
+      ]
+    },
+    graph: {
+      nodes: [
+        { id:'jsmith',  label:'CORP\\\\jsmith',       shape:'ellipse', cls:'gn-user',    cx:130, cy:110 },
+        { id:'ws089',   label:'WS-089',               shape:'rect',    cls:'gn-host',   cx:40,  cy:40  },
+        { id:'windc01', label:'WIN-DC01 (T0)',         shape:'rect',    cls:'gn-tier0',  cx:220, cy:40  },
+        { id:'winsql',  label:'WIN-SQL02',             shape:'rect',    cls:'gn-host',   cx:220, cy:110 },
+        { id:'winfs01', label:'WIN-FS01',              shape:'rect',    cls:'gn-host',   cx:220, cy:180 },
+        { id:'rundll',  label:'rundll32.exe',          shape:'rect',    cls:'gn-malware',cx:130, cy:200 },
+      ],
+      edges: [
+        { from:'ws089',  to:'jsmith',  label:'source host',    cls:'ge-normal'   },
+        { from:'jsmith', to:'windc01', label:'T1570 pivot',     cls:'ge-critical' },
+        { from:'jsmith', to:'winsql',  label:'T1570 pivot',     cls:'ge-critical' },
+        { from:'jsmith', to:'winfs01', label:'T1570 pivot',     cls:'ge-critical' },
+        { from:'rundll', to:'windc01', label:'T1003.001 0x1fffff', cls:'ge-critical' },
       ]
     },
     pivot: {
@@ -107,6 +124,21 @@ const keepData = {
         'Submit IOC package (file hashes, C2 domains) to FS-ISAC and notify sector peers via TLP:AMBER channel.',
         'Audit Office macro policy — enforce signed-macro-only policy across Finance segment endpoints.',
         'Deploy DLL sideloading detection rule to all hosts; current rule was Finance-scoped only.',
+      ]
+    },
+    graph: {
+      nodes: [
+        { id:'email',   label:'Phishing Email',     shape:'ellipse', cls:'gn-user',    cx:50,  cy:100 },
+        { id:'ws012',   label:'WIN-WS012',           shape:'rect',    cls:'gn-host',   cx:160, cy:40  },
+        { id:'dism',    label:'DISM.exe (sideload)', shape:'rect',    cls:'gn-malware',cx:160, cy:110 },
+        { id:'winfs02', label:'WIN-FS02 (payroll)',  shape:'rect',    cls:'gn-tier0',  cx:160, cy:180 },
+        { id:'windc02', label:'WIN-DC02',            shape:'rect',    cls:'gn-host',   cx:270, cy:110 },
+      ],
+      edges: [
+        { from:'email',  to:'ws012',   label:'T1566.001 macro',   cls:'ge-critical' },
+        { from:'ws012',  to:'dism',    label:'T1574.002 sideload',cls:'ge-critical' },
+        { from:'dism',   to:'windc02', label:'T1003.001 LSASS',   cls:'ge-critical' },
+        { from:'dism',   to:'winfs02', label:'T1490 vssadmin',    cls:'ge-critical' },
       ]
     },
     pivot: {
@@ -317,8 +349,8 @@ function renderKeepHunt(id) {
   renderTTPSelector(d);
   renderKeepFindings(d);
   renderKeepTimeline(d);
-  renderVelocityCard(id);
   renderGateDecisionLog(id);
+  renderEvidenceGraph(d);
 
   // Similar hunts summary
   const ss = document.getElementById('simhunts-summary');
@@ -326,6 +358,68 @@ function renderKeepHunt(id) {
 
   // Refresh notes
   renderNotes();
+}
+
+function renderEvidenceGraph(d) {
+  const wrap = document.getElementById('keep-evidence-graph');
+  const card = document.getElementById('card-evidence-graph');
+  const chip = document.getElementById('evg-node-chip');
+  if (!wrap) return;
+
+  if (!d.graph) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  if (card) card.style.display = '';
+
+  const { nodes, edges } = d.graph;
+  if (chip) chip.textContent = nodes.length + ' nodes · ' + edges.length + ' edges';
+
+  // Compute SVG bounds from node positions
+  const pad = 40;
+  const maxX = Math.max(...nodes.map(n => n.cx)) + pad + 50;
+  const maxY = Math.max(...nodes.map(n => n.cy)) + pad + 20;
+
+  // Arrow markers
+  const defs = `<defs>
+    <marker id="ge-arr-n" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 z" fill="#263550"/></marker>
+    <marker id="ge-arr-c" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L0,7 L7,3.5 z" fill="#ef4444" opacity=".7"/></marker>
+  </defs>`;
+
+  // Render edges
+  function nodeCenter(id) {
+    return nodes.find(n => n.id === id) || { cx:0, cy:0 };
+  }
+  const edgeSvg = edges.map(e => {
+    const f = nodeCenter(e.from); const t = nodeCenter(e.to);
+    // Shorten line by 18px each end so it doesn't overlap node
+    const dx = t.cx - f.cx; const dy = t.cy - f.cy;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const ux = dx/len; const uy = dy/len;
+    const x1 = f.cx + ux*18; const y1 = f.cy + uy*18;
+    const x2 = t.cx - ux*22; const y2 = t.cy - uy*22;
+    const mx = (x1+x2)/2; const my = (y1+y2)/2 - 10;
+    return `<line class="${e.cls}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" marker-end="url(#ge-arr-${e.cls==='ge-critical'?'c':'n'})"/>
+            <text x="${mx.toFixed(1)}" y="${my.toFixed(1)}" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">${e.label}</text>`;
+  }).join('');
+
+  // Render nodes
+  const nodeSvg = nodes.map(n => {
+    const lw = n.label.length * 5.5 + 16;
+    const lh = 22;
+    if (n.shape === 'ellipse') {
+      return `<g style="cursor:default;">
+        <ellipse class="${n.cls}" cx="${n.cx}" cy="${n.cy}" rx="${lw/2}" ry="${lh/2}"/>
+        <text x="${n.cx}" y="${n.cy+4}" text-anchor="middle" fill="#e2e8f0" style="font-size:9px;font-weight:600;pointer-events:none;">${n.label}</text>
+      </g>`;
+    }
+    return `<g style="cursor:default;">
+      <rect class="${n.cls}" x="${n.cx - lw/2}" y="${n.cy - lh/2}" width="${lw}" height="${lh}" rx="4"/>
+      <text x="${n.cx}" y="${n.cy+4}" text-anchor="middle" fill="#e2e8f0" style="font-size:9px;font-weight:600;pointer-events:none;">${n.label}</text>
+    </g>`;
+  }).join('');
+
+  wrap.innerHTML = `<svg class="ev-graph-svg" viewBox="0 0 ${maxX} ${maxY}" xmlns="http://www.w3.org/2000/svg">${defs}${edgeSvg}${nodeSvg}</svg>`;
 }
 
 function renderGateDecisionLog(huntId) {
@@ -377,50 +471,6 @@ function renderGateDecisionLog(huntId) {
   }).join('');
 }
 
-function renderVelocityCard(huntId) {
-  const el = document.getElementById('velocity-body');
-  if (!el) return;
-  const shortId = huntId.replace('TH-2026-', '');
-  const v = velocityData[shortId];
-  if (!v) { el.innerHTML = '<div style="font-size:11px;color:var(--muted);">No velocity data for this hunt.</div>'; return; }
-
-  const trendIcon = v.fpTrend === 'down' ? '↓' : v.fpTrend === 'up' ? '↑' : '→';
-  const trendColor = v.fpTrend === 'down' ? 'var(--green)' : v.fpTrend === 'up' ? 'var(--red)' : 'var(--muted)';
-
-  const mttdMax = Math.max(...v.mttdBars);
-  const fpMax   = Math.max(...v.fpBars);
-
-  function sparkline(bars, max, color) {
-    return bars.map(b => {
-      const h = Math.max(3, Math.round((b / max) * 20));
-      return `<div class="vel-bar" style="height:${h}px;background:${color};"></div>`;
-    }).join('');
-  }
-
-  el.innerHTML = `
-    <div class="vel-grid">
-      <div class="vel-item">
-        <div class="vel-val">${v.mttd}</div>
-        <div class="vel-lbl">Mean Time to Detect</div>
-        <div class="vel-sparkline">${sparkline(v.mttdBars, mttdMax, 'var(--blue)')}</div>
-      </div>
-      <div class="vel-item">
-        <div class="vel-val">${v.h2rule}</div>
-        <div class="vel-lbl">Hyp → Rule Time</div>
-        <div class="vel-sparkline">${sparkline([...v.mttdBars].map(b=>b*.45), mttdMax*.45, 'var(--indigo)')}</div>
-      </div>
-      <div class="vel-item" style="grid-column:1/-1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <div class="vel-val">${v.fpRate} <span style="font-size:12px;color:${trendColor};">${trendIcon}</span></div>
-            <div class="vel-lbl">False Positive Rate</div>
-          </div>
-          <div class="vel-sparkline" style="width:70px;">${sparkline(v.fpBars, fpMax, 'var(--yellow)')}</div>
-        </div>
-      </div>
-    </div>
-    <div style="margin-top:8px;font-size:10px;color:var(--muted);text-align:center;">Last 3 hunts · same TTP cluster</div>`;
-}
 
 function renderTTPSelector(d) {
   const card = document.getElementById('keep-ttp-card');

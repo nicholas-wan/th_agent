@@ -22,42 +22,8 @@ function filterRules(hunt, btn) {
   });
 }
 
-// ── Query runner ──
-const queries = {
-  h01: `| H-01: PsExec Lateral Movement — Splunk ES (SPL)\nindex=windows (EventCode=7045 OR EventCode=4624 OR EventCode=4648)\n| eval hour=strftime(_time,"%H")\n| where hour>="22" OR hour<="06"\n| where NOT match(Account,"\\$$")\n| stats dc(host) as host_count, count as event_count by Account, EventCode, _time\n| where host_count > 3\n| eval risk_score=case(host_count>=10, 95, host_count>=5, 75, true(), 55)\n| sort - risk_score\n| table _time, Account, EventCode, host_count, event_count, risk_score`,
-  h02: `| H-02: LSASS Memory Access — Splunk ES (SPL)\nindex=sysmon EventCode=10 TargetImage="*\\\\lsass.exe"\n| where match(GrantedAccess,"0x1010|0x1410|0x147a|0x1fffff")\n| stats count by _time, host, SourceImage, TargetImage, GrantedAccess, SourceProcessId\n| eval severity=if(count>5,"critical","high")\n| sort - count\n| table _time, host, SourceImage, GrantedAccess, SourceProcessId, severity`,
-  h03: `| H-03: C2 Beacon JA3 Match — Splunk ES (SPL)\nindex=network dest_ip="185.220.101.47"\n| eval beacon_interval=_time-lag(_time,1,0) over (host)\n| stats avg(beacon_interval) as avg_interval, count, dc(src_ip) as src_count\n    by dest_ip, dest_port, ja3_hash\n| where avg_interval>55 AND avg_interval<65\n| eval confidence=round((1-(avg_interval-60)/60)*100,1)\n| sort - confidence\n| table dest_ip, dest_port, ja3_hash, avg_interval, count, confidence`
-};
-const queryMeta = {
-  h01: {
-    desc: 'Looks for off-hours authentication events (22:00–06:00 UTC) where a single account touches 3 or more distinct hosts. Characteristic of PsExec-style lateral movement — a compromised account reused to propagate across the network. Risk score scales with host count.',
-    resultsMeta: '<span class="chip chip-red">14 hits</span><span class="chip chip-gray" style="font-size:10px;">0.43s</span>',
-    resultsHead: '<tr><th>TimeGenerated</th><th>Account</th><th>Hosts</th><th>Events</th><th>Risk</th></tr>',
-    resultsBody: `<tr><td>2026-04-27 09:38</td><td style="color:var(--red)">CORP\\jsmith</td><td>14</td><td>47</td><td><span class="chip chip-red" style="font-size:10px;">95</span></td></tr>
-              <tr><td>2026-04-27 02:12</td><td>CORP\\svc-sql01</td><td>7</td><td>23</td><td><span class="chip chip-yellow" style="font-size:10px;">75</span></td></tr>
-              <tr><td>2026-04-26 23:55</td><td>CORP\\admin-backup</td><td>5</td><td>18</td><td><span class="chip chip-yellow" style="font-size:10px;">75</span></td></tr>
-              <tr><td>2026-04-26 01:34</td><td style="color:var(--red)">CORP\\jsmith</td><td>4</td><td>11</td><td><span class="chip chip-gray" style="font-size:10px;">55</span></td></tr>`,
-    interp: '14 hits across 4 sessions. <b style="color:var(--red)">CORP\\jsmith</b> is the highest-risk account — 14 distinct hosts touched in one session, far exceeding the 3-host threshold; a second session the same day confirms persistent reuse. <b>svc-sql01</b> and <b>admin-backup</b> show similar patterns and should be reviewed for credential compromise. Recommend immediate isolation of jsmith and escalation to IR.',
-  },
-  h02: {
-    desc: 'Detects processes accessing LSASS memory with handles commonly used by credential dumping tools. Filters on suspicious GrantedAccess masks (0x1010, 0x1410, 0x147a, 0x1fffff) indicating full or partial LSASS read rights. Any non-AV/EDR process touching LSASS this way is anomalous.',
-    resultsMeta: '<span class="chip chip-red">3 hits</span><span class="chip chip-gray" style="font-size:10px;">0.61s</span>',
-    resultsHead: '<tr><th>TimeGenerated</th><th>Host</th><th>Source Image</th><th>Access Mask</th><th>Severity</th></tr>',
-    resultsBody: `<tr><td>2026-04-27 03:14</td><td>WIN-WS089</td><td style="color:var(--red);font-family:monospace;">rundll32.exe</td><td class="ttp-id">0x1fffff</td><td><span class="chip chip-red" style="font-size:10px;">critical</span></td></tr>
-              <tr><td>2026-04-27 03:15</td><td>WIN-WS089</td><td style="font-family:monospace;">powershell.exe</td><td class="ttp-id">0x1010</td><td><span class="chip chip-yellow" style="font-size:10px;">high</span></td></tr>
-              <tr><td>2026-04-26 22:48</td><td>WIN-DC01</td><td style="font-family:monospace;">msiexec.exe</td><td class="ttp-id">0x1410</td><td><span class="chip chip-yellow" style="font-size:10px;">high</span></td></tr>`,
-    interp: '3 hits, all anomalous. <b style="color:var(--red)">rundll32.exe</b> on WIN-WS089 used a full-access handle (0x1fffff) — the broadest possible LSASS access, consistent with Mimikatz sekurlsa::logonpasswords. The subsequent powershell.exe hit on the same host 1 minute later suggests a staged dump-and-exfil sequence. The DC01 msiexec hit warrants investigation — msiexec has no business accessing LSASS on a domain controller.',
-  },
-  h03: {
-    desc: 'Correlates outbound traffic to a known C2 IP (185.220.101.47) and measures inter-packet intervals. A beacon firing consistently near 60 seconds with a matching JA3 hash fingerprint is characteristic of a Cobalt Strike malleable profile. Low jitter indicates automated beaconing rather than human browsing.',
-    resultsMeta: '<span class="chip chip-yellow">2 hits</span><span class="chip chip-gray" style="font-size:10px;">1.12s</span>',
-    resultsHead: '<tr><th>Dest IP</th><th>Port</th><th>JA3 Hash</th><th>Avg Interval</th><th>Confidence</th></tr>',
-    resultsBody: `<tr><td style="font-family:monospace;color:var(--red);">185.220.101.47</td><td>443</td><td class="ttp-id">769c10…</td><td>60.3s</td><td><span class="chip chip-yellow" style="font-size:10px;">94.2%</span></td></tr>
-              <tr><td style="font-family:monospace;">185.220.101.47</td><td>8443</td><td class="ttp-id">769c10…</td><td>59.8s</td><td><span class="chip chip-yellow" style="font-size:10px;">96.7%</span></td></tr>`,
-    interp: '2 beacon sessions confirmed to the same C2 IP across ports 443 and 8443. Both share JA3 hash <b>769c10…</b> — a known Cobalt Strike malleable profile fingerprint. Average intervals of 60.3s and 59.8s are well within CS default jitter range. The dual-port pattern suggests a primary + fallback channel. Recommend immediate network block of 185.220.101.47 and host isolation for the beaconing endpoints.',
-  },
-};
-let activeQuery = 'h01';
+// ── Active hunt tracker (set by resetCheckForHunt in app.js) ──
+let _activeHuntId = '041';
 
 // ── Query iteration chains — per hypothesis (Detection Logic Agent reasoning) ──
 // failMode: 'too-many' = alert flood, 'no-results' = zero hits (field/index issue), undefined = pass/warn
@@ -176,70 +142,253 @@ const queryIterations = {
   ]
 };
 
-// ── Check Summary — combined RAA + query assessment per hypothesis ──
-const checkSummaryData = {
-  h01: {
-    pre: {
-      status: 'chip-yellow', statusLabel: 'Query not run',
-      tags: [
-        { label: 'RAA', val: 'Triggered', cls: 'chip-red' },
-        { label: 'Query', val: 'Not run', cls: 'chip-gray' },
-        { label: 'Gaps', val: 'None identified', cls: 'chip-green' },
-      ],
-      assessment: 'RAA has already triggered on both analytics — <b>high-confidence T1570/T1078.002 indicators</b> are established from continuous monitoring. Run the H-01 SPL query to confirm with raw log evidence and quantify affected accounts. RAA and query are expected to be mutually reinforcing for this hypothesis.',
-    },
-    post: {
-      status: 'chip-green', statusLabel: '✓ Assessment complete',
-      tags: [
-        { label: 'RAA', val: 'Triggered · 62 hits', cls: 'chip-red' },
-        { label: 'Query', val: '14 hits', cls: 'chip-red' },
-        { label: 'Gaps', val: 'None', cls: 'chip-green' },
-      ],
-      assessment: '<b>High-confidence lateral movement confirmed across all detection layers.</b> Command Line Anomaly (59 hits), Process Chain Anomaly (3 hits), and the H-01 SPL query (14 hits) independently surface the same T1570/T1078.002 activity — the convergence eliminates false-positive risk. No coverage gaps remain. Recommend immediate escalation to IR and isolation of <b style="color:var(--red)">CORP\\jsmith</b>.',
-    },
-  },
-  h02: {
-    pre: {
+// ── Per-hunt Check data — keyed by short hunt ID ──
+const checkData = {
+  '041': {
+    hypothesis: 'H-02 · LSASS + Kerberoasting',
+    queryDesc: 'Detects processes accessing LSASS memory with handles commonly used by credential dumping tools. Filters on suspicious GrantedAccess masks (0x1010, 0x1410, 0x147a, 0x1fffff) indicating full or partial LSASS read rights. Any non-AV/EDR process touching LSASS this way is anomalous.',
+    querySpl: `index=sysmon EventCode=10 TargetImage="*\\\\lsass.exe"
+| where match(GrantedAccess,"0x1010|0x1410|0x147a|0x1fffff")
+| stats count by _time, host, SourceImage, TargetImage, GrantedAccess, SourceProcessId
+| eval severity=if(count>5,"critical","high")
+| sort - count
+| table _time, host, SourceImage, GrantedAccess, SourceProcessId, severity`,
+    resultsMeta: '<span class="chip chip-red">3 hits</span><span class="chip chip-gray" style="font-size:10px;">0.61s</span>',
+    resultsHead: '<tr><th>TimeGenerated</th><th>Host</th><th>Source Image</th><th>Access Mask</th><th>Severity</th></tr>',
+    resultsBody: `<tr><td>2026-04-27 03:14</td><td>WIN-WS089</td><td style="color:var(--red);font-family:monospace;">rundll32.exe</td><td class="ttp-id">0x1fffff</td><td><span class="chip chip-red" style="font-size:10px;">critical</span></td></tr>
+              <tr><td>2026-04-27 03:15</td><td>WIN-WS089</td><td style="font-family:monospace;">powershell.exe</td><td class="ttp-id">0x1010</td><td><span class="chip chip-yellow" style="font-size:10px;">high</span></td></tr>
+              <tr><td>2026-04-26 22:48</td><td>WIN-DC01</td><td style="font-family:monospace;">msiexec.exe</td><td class="ttp-id">0x1410</td><td><span class="chip chip-yellow" style="font-size:10px;">high</span></td></tr>`,
+    interp: '3 hits, all anomalous. <b style="color:var(--red)">rundll32.exe</b> on WIN-WS089 used a full-access handle (0x1fffff) — consistent with Mimikatz sekurlsa::logonpasswords. The subsequent powershell.exe hit on the same host 1 minute later suggests a staged dump-and-exfil sequence. WIN-DC01 msiexec hit warrants investigation — msiexec has no business accessing LSASS on a domain controller.',
+    summaryPre: {
       status: 'chip-yellow', statusLabel: 'Query not run',
       tags: [
         { label: 'RAA', val: 'Partial', cls: 'chip-yellow' },
         { label: 'Query', val: 'Not run', cls: 'chip-gray' },
         { label: 'Gaps', val: 'T1558.003', cls: 'chip-yellow' },
       ],
-      assessment: 'Process Chain Anomaly triggered on <b>T1003.001</b> (LSASS credential dump — WIN-WS089). However, <b>T1558.003 (Kerberoasting)</b> is outside RAA scope — TGS-REQ patterns live in authentication logs, not process chains. <b>This is a coverage gap.</b> Run the H-02 query to fill it with direct Kerberos ticket-request evidence from EventCode 4769.',
+      assessment: 'Process Chain Anomaly triggered on <b>T1003.001</b> (LSASS credential dump — WIN-WS089). However, <b>T1558.003 (Kerberoasting)</b> is outside RAA scope — TGS-REQ patterns live in authentication logs, not process chains. <b>This is a coverage gap.</b> Run the query to fill it with direct Kerberos ticket-request evidence from EventCode 4769.',
     },
-    post: {
-      status: 'chip-green', statusLabel: '✓ Assessment complete',
+    summaryPost: {
+      status: 'chip-green', statusLabel: '✓ 4 rules deployed',
       tags: [
-        { label: 'RAA', val: 'Partial', cls: 'chip-yellow' },
-        { label: 'Query', val: '3 hits', cls: 'chip-red' },
-        { label: 'Gaps', val: 'Closed by query', cls: 'chip-green' },
+        { label: 'Subhunts', val: '4 confirmed', cls: 'chip-red' },
+        { label: 'Rules', val: '4 deployed', cls: 'chip-green' },
+        { label: 'Coverage', val: 'Complete', cls: 'chip-green' },
       ],
-      assessment: '<b>Combined assessment complete — RAA gap closed by detection query.</b> T1003.001 confirmed by Process Chain Anomaly (rundll32.exe / 0x1fffff LSASS handle). The H-02 query filled the T1558.003 gap via Kerberos access log analysis. Both credential-theft TTPs are now evidenced. Recommend credential rotation across CORP domain and full forensics on WIN-WS089 and WIN-DC01.',
+      assessment: '<b>All four subhunt detection rules validated and deployed.</b> T1570 (PsExec) confirmed — 14 correlated ADMIN$ file-drop + service-install events. T1003.001 (LSASS dump) confirmed — 5 full-access handle events matching SK-029 pattern. T1558.003 (Kerberoasting) confirmed — 3 RC4 TGS-REQ bursts from jsmith. T1071.001 (C2 beacon) confirmed — 2 Cobalt Strike sessions by JA3 + interval regularity. Credential rotation across CORP domain initiated; WIN-WS089 and WIN-DC01 isolated.',
     },
-  },
-  h03: {
-    pre: {
-      status: 'chip-gray', statusLabel: 'Query not run',
-      tags: [
-        { label: 'RAA', val: 'Not applicable', cls: 'chip-gray' },
-        { label: 'Query', val: 'Not run', cls: 'chip-gray' },
-        { label: 'Gaps', val: 'RAA N/A', cls: 'chip-gray' },
+    raa: {
+      relevant: true,
+      analytics: [
+        {
+          name: 'Process Chain Anomaly',
+          ttps: ['T1003.001'],
+          status: 'triggered',
+          hits: 1,
+          findings: [
+            'rundll32.exe → LSASS handle 0x1fffff — parent: explorer.exe on WIN-WS089 (not AV/EDR whitelist)',
+          ],
+          interp: '<b>High-confidence T1003.001.</b> <b style="color:var(--red)">rundll32.exe</b> with a full-access LSASS handle (0x1fffff) spawned from explorer.exe has no legitimate baseline. This access mask is characteristic of Mimikatz <span style="font-family:monospace;font-size:10px;">sekurlsa::logonpasswords</span>. The explorer.exe parent rules out security tooling — this is operator-driven credential dumping on WIN-WS089.',
+        },
+        {
+          name: 'Command Line Anomaly',
+          ttps: ['T1558.003'],
+          status: 'partial',
+          hits: 0,
+          findings: [],
+          interp: '<b>T1558.003 (Kerberoasting)</b> is outside Command Line Anomaly scope — TGS-REQ patterns are captured in authentication logs (EventCode 4769), not process command lines. RAA coverage for this technique is partial. The detection query directly addresses this gap.',
+        },
       ],
-      assessment: 'RAA is <b>not applicable</b> for T1071.001 — C2 beacon detection requires network-layer telemetry (JA3/JA3S fingerprints, inter-packet intervals) that is outside process and command-line analytic scope. <b>The H-03 SPL query is the sole detection path</b> for this hypothesis. This is expected — not all techniques are addressable by host-based analytics.',
     },
-    post: {
-      status: 'chip-green', statusLabel: '✓ Assessment complete',
-      tags: [
-        { label: 'RAA', val: 'Not applicable', cls: 'chip-gray' },
-        { label: 'Query', val: '2 sessions confirmed', cls: 'chip-yellow' },
-        { label: 'Gaps', val: 'RAA N/A — by design', cls: 'chip-gray' },
-      ],
-      assessment: '<b>Query-only assessment — RAA not applicable for network-layer technique.</b> H-03 SPL confirmed 2 active beacon sessions to 185.220.101.47 with JA3 hash matching a known Cobalt Strike malleable profile. The absence of RAA results is expected for T1071.001 — this is full detection coverage given available telemetry. Recommend immediate network block and endpoint isolation for beaconing hosts.',
-    },
+    genRules: [
+      // ── Subhunt 1 · H-01 · T1570 ───────────────────────────────────────────
+      {
+        id: 'ck-t1570',
+        hypothesis: 'H-01 · T1570 · Lateral Tool Transfer — is the adversary using PsExec to drop executables via ADMIN$ and install them as Windows services on lateral targets? ADMIN$ file-drop events alone are noisy; the detection must correlate with a same-host service install to confirm remote execution.',
+        ttp: 'T1570',
+        badge: 'chip-red',
+        name: 'PsExec Lateral Tool Transfer — ADMIN$ drop + service install',
+        ctx: 'SCCM management hosts 10.0.5.20/10.0.5.21 excluded · EventCode=5145 joined with EventCode=7045 to confirm execution followed file drop · index=windows',
+        spl: `index=windows EventCode=5145 Share_Name="*ADMIN$*"
+  (RelativeTargetName="*PSEXESVC*" OR RelativeTargetName="*.exe")
+| where src_ip != "10.0.5.20" AND src_ip != "10.0.5.21"
+| join type=inner host [
+    index=windows EventCode=7045
+    | rename host as host, ServiceFileName as svc_file ]
+| stats count by host, src_ip, Account, svc_file`,
+        finalBadge: 'PASS',
+        iters: [
+          {
+            num: 'v1', badge: 'FAIL', failMode: 'too-many', metric: 'Too many — 2,341 alerts',
+            spl: `index=windows EventCode=5145 Share_Name="*ADMIN$*"
+| stats count by host, src_ip, Account`,
+            reason: 'Query too broad — SCCM, Ansible, and Veeam all write to ADMIN$ constantly during patch windows. 2,341 events with no way to distinguish PsExec from legitimate IT traffic.',
+            action: 'Scope to known-bad source IPs; require RelativeTargetName match on PsExec service file patterns.',
+          },
+          {
+            num: 'v2', badge: 'WARN', failMode: 'too-many', metric: 'Still too many — 134 alerts',
+            spl: `index=windows EventCode=5145 Share_Name="*ADMIN$*"
+  RelativeTargetName="*PSEXESVC*" OR RelativeTargetName="*.exe"
+| where src_ip != "10.0.5.20" AND src_ip != "10.0.5.21"
+| stats count by host, src_ip, Account`,
+            reason: 'Better, but still too noisy — legitimate admin tools also drop service executables to ADMIN$. File drop alone is not enough without confirming the executable actually ran.',
+            action: 'Join with EventCode=7045 (service install) to confirm execution followed the file drop.',
+          },
+          {
+            num: 'v3', badge: 'PASS', failMode: '', metric: '14 hits · confirmed',
+            spl: `index=windows EventCode=5145 Share_Name="*ADMIN$*"
+  (RelativeTargetName="*PSEXESVC*" OR RelativeTargetName="*.exe")
+| where src_ip != "10.0.5.20" AND src_ip != "10.0.5.21"
+| join type=inner host [
+    index=windows EventCode=7045
+    | rename host as host, ServiceFileName as svc_file ]
+| stats count by host, src_ip, Account, svc_file`,
+            reason: '14 hits — file drop correlated with service install on same host. All from non-IT source addresses (jsmith, 10.10.14.22). Analyst-reviewed and confirmed suspicious.',
+            action: '',
+          },
+        ],
+      },
+      // ── Subhunt 2 · H-02 · T1003.001 ──────────────────────────────────────
+      {
+        id: 'ck-t1003',
+        hypothesis: 'H-02 · T1003.001 · LSASS Credential Dumping — is the adversary using a credential dumping tool (e.g. Mimikatz) to extract secrets from LSASS? Focus: Sysmon EventCode=10 process-access events with full-read GrantedAccess masks on lsass.exe from non-security-tool processes.',
+        ttp: 'T1003.001',
+        badge: 'chip-red',
+        name: 'LSASS Memory Access — full-access handle dump (SK-029)',
+        ctx: 'SK-029 access-mask pattern applied · MsMpEng / CrowdStrike / SentinelOne / Velociraptor excluded · index=sysmon',
+        spl: `index=sysmon EventCode=10 TargetImage="*lsass.exe*"
+  GrantedAccess="0x1fffff"
+| where NOT match(SourceImage,"(?i)MsMpEng|CrowdStrike|SentinelOne|velociraptor")
+| stats count by SourceImage, GrantedAccess, host, user`,
+        finalBadge: 'PASS',
+        iters: [
+          {
+            num: 'v1', badge: 'FAIL', failMode: 'no-results', metric: 'No results — field not mapped',
+            spl: `index=crowdstrike event_simpleName=ProcessRollup2
+  TargetFileName="*lsass.exe*"
+| stats count by ComputerName, UserName, CommandLine, process_handle_flags`,
+            reason: 'Zero results — process_handle_flags is not available in the CIM-normalised data model. Field silently dropped at the Splunk CIM mapping layer. Query returns nothing.',
+            action: 'Switch to raw Sysmon EventCode=10; use GrantedAccess field as the access-mask proxy.',
+          },
+          {
+            num: 'v2', badge: 'FAIL', failMode: 'too-many', metric: 'Too many — 189 alerts',
+            spl: `index=sysmon EventCode=10 TargetImage="*lsass.exe*"
+| stats count by SourceImage, GrantedAccess, host`,
+            reason: 'Query too broad — svchost.exe, MsMpEng.exe (Defender), CrowdStrike, and every other security tool on the box legitimately opens LSASS handles. 189 events, nearly all benign.',
+            action: 'Apply SK-029 pattern: filter on GrantedAccess=0x1fffff (full access mask); exclude known EDR/AV process names.',
+          },
+          {
+            num: 'v3', badge: 'PASS', failMode: '', metric: '5 hits · confirmed',
+            spl: `index=sysmon EventCode=10 TargetImage="*lsass.exe*"
+  GrantedAccess="0x1fffff"
+| where NOT match(SourceImage,"(?i)MsMpEng|CrowdStrike|SentinelOne|velociraptor")
+| stats count by SourceImage, GrantedAccess, host, user`,
+            reason: '5 hits — rundll32.exe requesting full LSASS access (0x1fffff). SK-029 NtDuplicateObject pattern confirmed. No legitimate process needs this mask on a domain controller.',
+            action: '',
+          },
+        ],
+      },
+      // ── Subhunt 3 · H-02 · T1558.003 ──────────────────────────────────────
+      {
+        id: 'ck-t1558',
+        hypothesis: 'H-03 · T1558.003 · Kerberoasting — is the adversary requesting RC4-encrypted Kerberos service tickets to crack offline? Focus: EventCode=4769 TGS-REQ events with TicketEncryptionType=0x17 (RC4-HMAC downgrade) at volume anomalous for a given user.',
+        ttp: 'T1558.003',
+        badge: 'chip-red',
+        name: 'Kerberoasting — RC4 TGS-REQ volume anomaly (SK-038)',
+        ctx: 'SK-038 SPN exclusion list: BackupExec / MSSQLSvc / WSMAN pre-loaded from TH-2026-035 · threshold: >3 unique SPNs/user/5m · index=wineventlog',
+        spl: `index=wineventlog EventCode=4769
+    TicketEncryptionType=0x17
+| bucket _time span=5m
+| stats dc(ServiceName) as spn_count, values(ServiceName) as spns, count by _time, Account, src_ip
+| where spn_count > 3
+| where NOT match(Account,"(BackupExec|MSSQLSvc|svc_)")
+| eval risk=if(spn_count>=10,"CRITICAL",if(spn_count>=5,"HIGH","MED"))
+| table _time, Account, src_ip, spn_count, spns, risk`,
+        finalBadge: 'PASS',
+        iters: [
+          {
+            num: 'v1', badge: 'FAIL', failMode: 'no-results', metric: '0 results',
+            spl: `index=wineventlog EventCode=4769
+    TicketEncryptionType=0x23
+| stats count by Account, ServiceName, src_ip`,
+            reason: 'Wrong encryption type — 0x23 (AES256) filters out the RC4-downgrade tickets used in Kerberoasting. Off-line cracking requires RC4 (0x17).',
+            action: 'Corrected TicketEncryptionType filter to 0x17 (RC4-HMAC).',
+          },
+          {
+            num: 'v2', badge: 'WARN', failMode: '', metric: '31 alerts/day',
+            spl: `index=wineventlog EventCode=4769
+    TicketEncryptionType=0x17
+| bucket _time span=5m
+| stats dc(ServiceName) as spn_count, values(ServiceName) as spns, count by _time, Account, src_ip
+| where spn_count > 1`,
+            reason: 'Threshold too low — legitimate service accounts requesting multiple SPNs in the same window triggered 28 of 31 alerts (BackupExec, MSSQLSvc).',
+            action: 'Raised threshold to >3 SPNs per 5m window; added account exclusion list from TH-2026-035.',
+          },
+          {
+            num: 'v3', badge: 'PASS', failMode: '', metric: '3 hits · confirmed',
+            spl: `index=wineventlog EventCode=4769
+    TicketEncryptionType=0x17
+| bucket _time span=5m
+| stats dc(ServiceName) as spn_count, values(ServiceName) as spns, count by _time, Account, src_ip
+| where spn_count > 3
+| where NOT match(Account,"(BackupExec|MSSQLSvc|svc_)")
+| eval risk=if(spn_count>=10,"CRITICAL",if(spn_count>=5,"HIGH","MED"))
+| table _time, Account, src_ip, spn_count, spns, risk`,
+            reason: '3 anomalous TGS-REQ bursts from non-service accounts. jsmith@corp.local — 11 unique SPNs in 5m on 2026-04-27T02:14 — CRITICAL.',
+            action: '',
+          },
+        ],
+      },
+      // ── Subhunt 4 · H-03 · T1071.001 ──────────────────────────────────────
+      {
+        id: 'ck-t1071',
+        hypothesis: 'H-04 · T1071.001 · C2 Beacon via HTTPS — is there an active command-and-control beacon using known Cobalt Strike malleable profiles? A JA3 hash alone is too broad; the key signal is mechanical regularity — low jitter, high frequency — that separates an automated beacon from human browsing.',
+        ttp: 'T1071.001',
+        badge: 'chip-red',
+        name: 'C2 Beacon — JA3 fingerprint + interval regularity',
+        ctx: 'Known Cobalt Strike JA3 hashes from threat intel · interval regularity: stddev < 5s AND ≥ 8 connections/30m · index=network (zeek:ssl)',
+        spl: `index=network sourcetype=zeek:ssl
+  ja3 IN ("769c10b06a1a2b7b7a26b0a2be2e88a4","1aa7bf8b9c6c3463e7785c3de70e4ec9")
+| bucket _time span=30m
+| stats count, stdev(duration) as jitter by src_ip, dest_ip, ja3, _time
+| where count >= 8 AND jitter < 5
+| sort - count`,
+        finalBadge: 'PASS',
+        iters: [
+          {
+            num: 'v1', badge: 'FAIL', failMode: 'too-many', metric: 'Too many — 41,203 alerts',
+            spl: `index=network sourcetype=zeek:ssl
+| stats count by ja3, dest_ip, src_ip
+| where count > 10`,
+            reason: 'Query too broad — JA3 alone covers nearly all corporate HTTPS traffic. Chrome and Edge share dozens of common fingerprints across thousands of sessions. Unusable at this volume.',
+            action: 'Filter to known-bad JA3 hashes from threat intel; add beacon interval regularity check.',
+          },
+          {
+            num: 'v2', badge: 'WARN', failMode: 'too-many', metric: 'Still too many — 48 alerts',
+            spl: `index=network sourcetype=zeek:ssl
+  ja3 IN ("769c10b06a1a2b7b7a26b0a2be2e88a4","1aa7bf8b9c6c3463e7785c3de70e4ec9")
+| stats count, stdev(duration) as jitter, avg(duration) as avg_interval
+    by src_ip, dest_ip, ja3
+| where count > 5`,
+            reason: "Still too many — video conferencing tools share the Cobalt Strike JA3 fingerprint. 48 sessions, can't triage without confirming the clock-like interval pattern of an automated beacon.",
+            action: 'Require stddev(interval) < 5s and ≥ 8 connections per 30-min window to confirm mechanical beaconing.',
+          },
+          {
+            num: 'v3', badge: 'PASS', failMode: '', metric: '2 sessions · confirmed',
+            spl: `index=network sourcetype=zeek:ssl
+  ja3 IN ("769c10b06a1a2b7b7a26b0a2be2e88a4","1aa7bf8b9c6c3463e7785c3de70e4ec9")
+| bucket _time span=30m
+| stats count, stdev(duration) as jitter by src_ip, dest_ip, ja3, _time
+| where count >= 8 AND jitter < 5
+| sort - count`,
+            reason: '2 sessions — 185.220.101.47 on ports 443 and 8443. Intervals 60.3s/59.8s with jitter < 2s. Cobalt Strike malleable C2 profile fingerprint confirmed.',
+            action: '',
+          },
+        ],
+      },
+    ],
   },
 };
-let checkQueryRun = {};   // tracks per-hypothesis post-run state
 
 // ── Hunt velocity metrics ──
 const velocityData = {
@@ -339,7 +488,7 @@ const closedRAAResults = {
   },
 };
 
-function renderCheckSummary(hypId, postRun, dataOverride) {
+function renderCheckSummary(postRun, dataOverride) {
   const card = document.getElementById('check-summary-card');
   if (!card) return;
   let s, subtitle;
@@ -347,9 +496,9 @@ function renderCheckSummary(hypId, postRun, dataOverride) {
     s = dataOverride;
     subtitle = 'Archived results — hunt closed';
   } else {
-    const d = checkSummaryData[hypId];
+    const d = checkData[_activeHuntId];
     if (!d) { card.style.display = 'none'; return; }
-    s = postRun ? d.post : d.pre;
+    s = postRun ? d.summaryPost : d.summaryPre;
     subtitle = 'Combined RAA + detection query assessment';
   }
   const tagsHTML = s.tags.map(t =>
@@ -372,8 +521,9 @@ function renderCheckSummary(hypId, postRun, dataOverride) {
   card.style.display = '';
 }
 
-// ── RAA (Reasoning Augmented Analytics) results per hypothesis ──
+// ── RAA (Reasoning Augmented Analytics) results — now stored in checkData[huntId].raa ──
 const raaResults = {
+  // legacy stub — kept for closed-hunt dataOverride path only
   h01: {
     relevant: true,
     analytics: [
@@ -431,10 +581,10 @@ const raaResults = {
   },
 };
 
-function renderRAAResults(hypId, dataOverride) {
+function renderRAAResults(dataOverride) {
   const card = document.getElementById('raa-card');
   if (!card) return;
-  const d = dataOverride !== undefined ? dataOverride : raaResults[hypId];
+  const d = dataOverride !== undefined ? dataOverride : (checkData[_activeHuntId]?.raa || null);
   if (!d) { card.style.display = 'none'; return; }
 
   const statusChip = (status, hits) => {
@@ -495,119 +645,107 @@ function renderRAAResults(hypId, dataOverride) {
   card.style.display = '';
 }
 
-const hypLabels = {
-  h01: 'H-01 · PsExec Lateral Movement — TH-2026-041',
-  h02: 'H-02 · LSASS + Kerberoasting — TH-2026-041',
-  h03: 'H-03 · C2 Beacon JA3 Match — TH-2026-041',
-};
-function renderQueryIterations(id) {
-  const card = document.getElementById('agent-reasoning-card');
-  if (!card) return;
-  const chains = queryIterations[id];
-  if (!chains || chains.length === 0) { card.style.display = 'none'; return; }
-  card.style.display = '';
+// ── Shared helper: render det-chain HTML from a chains array ──
+function _buildIterChainsHtml(chains) {
   const chipCls  = { PASS:'chip-green', WARN:'chip-yellow', FAIL:'chip-red' };
   const badgeCls = { PASS:'pass', WARN:'warn', FAIL:'fail' };
-  // Metric label colour: too-many=orange, no-results=indigo, warn=yellow, pass=green
   function metricStyle(iter) {
     if (iter.badge === 'PASS') return 'color:var(--green)';
     if (iter.badge === 'WARN') return 'color:var(--yellow)';
     if (iter.failMode === 'no-results') return 'color:var(--indigo)';
-    return 'color:var(--orange)'; // too-many (default FAIL)
+    return 'color:var(--orange)';
   }
-  // Icon prefix for the metric label
   function metricIcon(iter) {
     if (iter.badge === 'PASS') return '✓ ';
     if (iter.failMode === 'no-results') return '∅ ';
     if (iter.failMode === 'too-many') return '⚡ ';
     return '';
   }
-  const totalIters = chains.reduce((a,c) => a + c.iters.length, 0);
-  card.innerHTML = `
-    <div class="card-head" style="cursor:default;">
-      <div style="display:flex;flex-direction:column;gap:2px;">
-        <span class="card-title">🔍 Agent Reasoning — Query Iterations</span>
-        <span style="font-size:10px;color:var(--muted);">${totalIters} iteration${totalIters!==1?'s':''} across ${chains.length} rule chain${chains.length!==1?'s':''} · Detection Logic Agent</span>
+  return chains.map(chain => `
+  <div class="det-chain">
+    <div class="det-chain-head" onclick="toggleDetChain(this)">
+      <span class="det-chain-ttp">${chain.ttp}</span>
+      <span class="det-chain-name">${chain.name}</span>
+      <div class="det-chain-meta">
+        <span class="chip ${chipCls[chain.finalBadge]}" style="font-size:9px;">${chain.finalBadge}</span>
+        <span class="det-chain-iters">${chain.iters.length} attempt${chain.iters.length!==1?'s':''}</span>
+        <span class="det-chain-chevron">▼</span>
       </div>
     </div>
-    <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
-      <div style="font-size:11px;color:var(--muted);line-height:1.5;">The Detection Logic Agent iterated on each rule until the alert volume was usable — collapsing from noise to signal. Expand a chain to see each attempt, whether it returned too many alerts or none, and what was adjusted.</div>
-      ${chains.map(chain => `
-      <div class="det-chain">
-        <div class="det-chain-head" onclick="toggleDetChain(this)">
-          <span class="det-chain-ttp">${chain.ttp}</span>
-          <span class="det-chain-name">${chain.name}</span>
-          <div class="det-chain-meta">
-            <span class="chip ${chipCls[chain.finalBadge]}" style="font-size:9px;">${chain.finalBadge}</span>
-            <span class="det-chain-iters">${chain.iters.length} attempt${chain.iters.length!==1?'s':''}</span>
-            <span class="det-chain-chevron">▼</span>
-          </div>
+    <div class="det-chain-body">
+      ${chain.iters.map(iter => `
+      <div class="det-iter">
+        <div class="det-iter-head">
+          <span class="det-iter-num">${iter.num}</span>
+          <span class="det-iter-badge ${badgeCls[iter.badge]}">${iter.badge}</span>
+          <span class="det-iter-fp" style="${metricStyle(iter)};font-weight:600;">${metricIcon(iter)}${iter.metric}</span>
         </div>
-        <div class="det-chain-body">
-          ${chain.iters.map(iter => `
-          <div class="det-iter">
-            <div class="det-iter-head">
-              <span class="det-iter-num">${iter.num}</span>
-              <span class="det-iter-badge ${badgeCls[iter.badge]}">${iter.badge}</span>
-              <span class="det-iter-fp" style="${metricStyle(iter)};font-weight:600;">${metricIcon(iter)}${iter.metric}</span>
-            </div>
-            <pre class="det-iter-spl">${iter.spl}</pre>
-            ${iter.reason ? `<div class="det-iter-reason">${iter.reason}</div>` : ''}
-            ${iter.action ? `<div class="det-iter-action">${iter.action}</div>` : ''}
-          </div>`).join('')}
-        </div>
+        <pre class="det-iter-spl">${_highlightSpl(iter.spl)}</pre>
+        ${iter.reason ? `<div class="det-iter-reason">${iter.reason}</div>` : ''}
+        ${iter.action ? `<div class="det-iter-action">${iter.action}</div>` : ''}
       </div>`).join('')}
-    </div>`;
+    </div>
+  </div>`).join('');
 }
 
-function setQ(id) {
-  activeQuery = id;
-  document.getElementById('qeditor').value = queries[id] || '';
-  const m = queryMeta[id];
-  if (m) document.getElementById('query-desc-text').textContent = m.desc;
-  document.getElementById('results-card').style.display = 'none';
-  // Update active button highlight
-  document.querySelectorAll('.check-hyp-btn').forEach(b => b.classList.remove('active-hyp'));
-  const activeBtn = document.getElementById('qbtn-' + id);
-  if (activeBtn) activeBtn.classList.add('active-hyp');
-  // Update subtitle label
-  const lbl = document.getElementById('check-hyp-label');
-  if (lbl) lbl.textContent = hypLabels[id] || id;
-  // Update Detection Logic card summary
-  const qrs = document.getElementById('qrunner-summary');
-  const shortLabel = { h01:'H-01', h02:'H-02', h03:'H-03' }[id] || id;
-  if (qrs) qrs.textContent = checkQueryRun[id]
-    ? `${shortLabel} · ran · ${(queryMeta[id]?.resultsMeta || '').replace(/<[^>]+>/g,'').trim()}`
-    : `${shortLabel} · not run yet`;
-  // Render summary (restore post-run state if this hyp was already run)
-  renderCheckSummary(id, !!checkQueryRun[id]);
-  // Render agent reasoning chains for this hypothesis
-  renderQueryIterations(id);
-  // Render RAA results for this hypothesis
-  renderRAAResults(id);
+function renderGeneratedRulesCard() {
+  const body = document.getElementById('generated-rules-body');
+  if (!body) return;
+  const rules = checkData[_activeHuntId]?.genRules || [];
+
+  // Update card subtitle with live rule count
+  const sub = document.getElementById('gen-rules-sub');
+  if (sub && rules.length) {
+    sub.textContent = `${rules.length} subhunt detection rule${rules.length !== 1 ? 's' : ''} · one per TTP · ready for SIEM deployment`;
+  }
+
+  body.innerHTML = rules.map((r, idx) => {
+    const isLast = idx === rules.length - 1;
+    const iterHtml = (r.iters && r.iters.length)
+      ? `<div style="margin-top:8px;">
+           <div style="font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+             <span style="color:var(--sub);">⚙ Detection Logic Agent</span>
+             <span style="color:var(--border2);">·</span>
+             <span>${r.iters.length} refinement attempt${r.iters.length !== 1 ? 's' : ''}</span>
+           </div>
+           ${_buildIterChainsHtml([{ ttp: r.ttp, name: r.name, finalBadge: r.finalBadge, iters: r.iters }])}
+         </div>`
+      : '';
+    const hypHtml = r.hypothesis
+      ? `<div class="context-annotation" style="background:rgba(99,102,241,.07);border-left-color:var(--indigo);margin-bottom:6px;">
+           <span class="ca-label" style="color:var(--indigo);">💡 Hypothesis</span>
+           <span>${r.hypothesis}</span>
+         </div>`
+      : '';
+    return `
+    <div style="${isLast ? '' : 'padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;'}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span class="chip chip-indigo" style="font-size:10px;padding:1px 6px;">${r.ttp}</span>
+        <span class="chip chip-green" style="font-size:10px;">${r.finalBadge}</span>
+        <span style="font-size:12px;color:var(--text);font-weight:600;">${r.name}</span>
+      </div>
+      ${hypHtml}
+      <div class="context-annotation"><span class="ca-label">⚙ Context applied</span><span>${r.ctx}</span></div>
+      <div class="feed-spl">
+        <div class="feed-spl-head">
+          <span class="feed-spl-label">SPL · ${r.ttp}</span>
+          <button class="spl-copy" id="chk-cp-${r.id}">copy</button>
+        </div>
+        <pre class="feed-spl-pre" id="chk-pre-${r.id}">${_highlightSpl(r.spl)}</pre>
+      </div>
+      ${iterHtml}
+      <button class="rule-test-btn" id="chk-rtb-${r.id}" onclick="runRuleTest(this,'${r.id}')">▶ Run Test</button>
+      <div class="rule-test-panel" id="test-panel-${r.id}"></div>
+    </div>`;
+  }).join('');
+  // Wire up copy buttons (after HTML is in DOM)
+  rules.forEach(r => {
+    const btn = document.getElementById('chk-cp-' + r.id);
+    if (btn) btn.addEventListener('click', () => _copySpl(btn, r.spl));
+  });
 }
-function runQuery() {
-  const c = document.getElementById('results-card');
-  c.style.display = 'none';
-  const m = queryMeta[activeQuery];
-  setTimeout(() => {
-    c.style.display = '';
-    if (m) {
-      document.getElementById('results-meta').innerHTML = m.resultsMeta;
-      document.getElementById('results-table').querySelector('thead tr').innerHTML = m.resultsHead.replace(/<tr>|<\/tr>/g,'');
-      document.getElementById('results-table').querySelector('tbody').innerHTML = m.resultsBody;
-      document.getElementById('result-interp-text').innerHTML = m.interp;
-    }
-    // Update summary to post-run state
-    checkQueryRun[activeQuery] = true;
-    renderCheckSummary(activeQuery, true);
-    // Update Detection Logic card summary with hit count
-    const qrs2 = document.getElementById('qrunner-summary');
-    const sl2 = { h01:'H-01', h02:'H-02', h03:'H-03' }[activeQuery] || activeQuery;
-    if (qrs2) qrs2.textContent = `${sl2} · ran · ${(m?.resultsMeta || '').replace(/<[^>]+>/g,'').trim()}`;
-  }, 500);
-}
+
 // ── Top-level init ──
-renderCheckSummary('h01', false);
-renderQueryIterations('h01');
-renderRAAResults('h01');
+renderCheckSummary(true);
+renderRAAResults();
+renderGeneratedRulesCard();

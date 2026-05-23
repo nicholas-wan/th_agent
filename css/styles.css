@@ -229,9 +229,8 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 /* ═══════════════════════════════════════
    CHECK TAB
 ═══════════════════════════════════════ */
-.check-wrap { padding: 18px 20px; display: grid; grid-template-columns: 1fr 440px; gap: 16px; align-items: start; overflow: auto; min-width: 0; }
-.check-main { display: flex; flex-direction: column; gap: 14px; }
-.check-side { display: flex; flex-direction: column; gap: 14px; }
+.check-wrap { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow: auto; min-width: 0; }
+.check-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 .query-editor { width: 100%; min-height: 180px; background: var(--s2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-family: monospace; font-size: 12px; color: #93c5fd; outline: none; resize: vertical; line-height: 1.65; }
 .query-editor:focus { border-color: var(--blue); }
@@ -1361,8 +1360,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   .hunts-grid { grid-template-columns: 1fr; }
   .observe-wrap { grid-template-columns: 1fr !important; }
   .ds-grid { grid-template-columns: 1fr !important; }
-  .check-wrap { grid-template-columns: 1fr !important; }
-  .keep-wrap { grid-template-columns: 1fr !important; }
+.keep-wrap { grid-template-columns: 1fr !important; }
   .lock-4col { grid-template-columns: repeat(2, 1fr); }
   .lock-4col-cell:nth-child(odd) { border-right: 1px solid rgba(59,130,246,.1); }
   .lock-4col-cell:nth-child(1), .lock-4col-cell:nth-child(2) { border-bottom: 1px solid rgba(59,130,246,.1); }
@@ -1683,3 +1681,43 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .kb-md-modal.kb-md-single .kb-md-tabs { display:none; }
 .kb-md-body { flex:1;overflow-y:auto;padding:0;background:var(--bg); }
 .kb-md-pre { margin:0;padding:20px 22px;font-family:'Consolas','Fira Code',monospace;font-size:11.5px;line-height:1.7;color:#94a3b8;white-space:pre;overflow-x:auto;min-height:200px; }
+
+/* ═══════════════════════════════════════
+   SPL BLOCKS — syntax highlight + results
+═══════════════════════════════════════ */
+.feed-spl { background:var(--bg);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-top:7px; }
+.feed-spl-head { display:flex;align-items:center;justify-content:space-between;padding:4px 10px;background:rgba(249,115,22,.06);border-bottom:1px solid var(--border); }
+.feed-spl-label { font-size:9px;font-weight:700;color:#fb923c;text-transform:uppercase;letter-spacing:.5px; }
+.feed-spl-pre { margin:0;padding:8px 10px;font-family:'Consolas','Fira Code',monospace;font-size:10.5px;line-height:1.7;overflow-x:auto;white-space:pre;color:#93c5fd; }
+.spl-copy { background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;border-radius:3px;padding:2px 7px;cursor:pointer;transition:color .12s,border-color .12s; }
+.spl-copy:hover { color:var(--text);border-color:var(--border2); }
+.spl-kw   { color:#93c5fd; }
+.spl-cmd  { color:#86efac; }
+.spl-pipe { color:var(--muted);font-weight:700; }
+.spl-val  { color:#fca5a5; }
+.spl-fld  { color:#c4b5fd; }
+
+/* Results micro-table */
+.feed-results { margin-top:7px;overflow-x:auto; }
+.feed-results-table { width:100%;border-collapse:collapse;font-size:10px;font-family:monospace; }
+.feed-results-table th { padding:4px 8px;background:rgba(99,102,241,.08);border-bottom:1px solid var(--border);color:var(--muted);text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap; }
+.feed-results-table td { padding:4px 8px;border-bottom:1px solid rgba(31,45,71,.6);color:var(--sub);white-space:nowrap; }
+.feed-results-table tr:last-child td { border-bottom:none; }
+.feed-results-table tr:hover td { background:rgba(99,102,241,.04); }
+
+/* Secondary topology lines */
+.topo-sec-lit { animation:topo-sec-pulse 1.2s ease-out forwards; }
+@keyframes topo-sec-pulse { 0%{stroke:#4e6180;stroke-width:.8;opacity:.3} 20%{stroke:#94a3b8;stroke-width:1.8;opacity:.9} 100%{stroke:#4e6180;stroke-width:.8;opacity:.3} }
+
+/* ═══════════════════════════════════════
+   EVIDENCE GRAPH (Keep stage)
+═══════════════════════════════════════ */
+.ev-graph-wrap { padding:10px 14px;overflow-x:auto; }
+.ev-graph-svg { display:block;width:100%;max-width:520px;margin:0 auto;height:auto; }
+.gn-host    { fill:rgba(59,130,246,.12);stroke:#3b82f6;stroke-width:1.5; }
+.gn-tier0   { fill:rgba(239,68,68,.12);stroke:#ef4444;stroke-width:2; }
+.gn-user    { fill:rgba(20,184,166,.12);stroke:#14b8a6;stroke-width:1.5; }
+.gn-agent   { fill:rgba(245,158,11,.12);stroke:#f59e0b;stroke-width:1.5; }
+.gn-malware { fill:rgba(239,68,68,.18);stroke:#ef4444;stroke-width:2;stroke-dasharray:3 2; }
+.ge-normal   { stroke:var(--border2);stroke-width:1.2;fill:none; }
+.ge-critical { stroke:#ef4444;stroke-width:1.8;fill:none;stroke-dasharray:4 2; }

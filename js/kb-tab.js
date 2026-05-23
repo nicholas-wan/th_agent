@@ -968,7 +968,7 @@ function renderKbRunbooks() {
     const qHTML = (r.queries||[]).map(q =>
       `<div class="rb-kb-query">
         <div class="rb-kb-qlabel">${q.label}</div>
-        <div class="rb-kb-qspl">${q.spl.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        <div class="rb-kb-qspl">${_highlightSpl(q.spl)}</div>
       </div>`
     ).join('');
     const noteHTML = (r.huntNotes||[]).map(n =>
@@ -1406,7 +1406,7 @@ function openRunbook(ttpId) {
   qEl.innerHTML = rb.queries.length
     ? rb.queries.map((q, i) => `
       <div class="rb-query-label">${q.label}</div>
-      <div class="rb-query" id="rb-q-${i}">${q.spl.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+      <div class="rb-query" id="rb-q-${i}">${_highlightSpl(q.spl)}
         <button class="rb-use-query-btn" onclick="useRunbookQuery(${i},'${ttpId}')">Use in Check ↗</button>
       </div>`).join('')
     : '<div style="font-size:11px;color:var(--muted);">No query templates for this technique.</div>';
