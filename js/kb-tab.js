@@ -1,4 +1,4 @@
-﻿/* ── Knowledge Base Tab ─────────────────────────────────────────────────
+/* ── Knowledge Base Tab ─────────────────────────────────────────────────
    All KB tab functions: tradecraft (skills + runbooks), environment pane,
    IOC repository, skills repo modal, runbook modal, rule validation modal.
    Loaded after app.js — references globals declared there.
@@ -1761,3 +1761,6 @@ function switchRvTab(tab) {
   document.querySelectorAll('.rv-tab').forEach(t => t.classList.toggle('on', t.dataset.rvTab === tab));
   document.querySelectorAll('.rv-pane').forEach(p => p.classList.toggle('on', p.id === `rv-pane-${tab}`));
 }
+
+// ── Init repo list (deferred to last script so all init code has run) ──
+renderRepo(repoData);
