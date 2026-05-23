@@ -750,6 +750,11 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 /* Token counter chip in feed header */
 .feed-token-chip { font-size:9px; color:var(--muted); font-family:monospace; background:var(--s3); border:1px solid var(--border); border-radius:3px; padding:2px 7px; white-space:nowrap; }
 
+/* Topology status ring (active agents) */
+.topo-status-ring { transition:opacity .3s ease; }
+.topo-ring-active { animation:topo-ring-pulse 1.6s ease-in-out infinite; }
+@keyframes topo-ring-pulse { 0%,100%{opacity:.25;stroke-width:1} 50%{opacity:.85;stroke-width:2.5} }
+
 /* Topology in Agents sidebar — larger */
 .agents-topo-svg-wrap { padding:18px 14px 12px; }
 .agents-topo-svg-wrap svg { width:100%; height:auto; display:block; }

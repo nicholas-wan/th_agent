@@ -392,17 +392,30 @@ function clearAgentsFeed() {
 }
 
 function _setAgentLegendStatus(agent, status) {
+  // Agent Status card row
   const el = document.getElementById('aleg-' + agent + '-s');
-  if (!el) return;
-  el.textContent = status;
-  el.style.color = status === 'idle'         ? 'var(--muted)'
-                 : status === 'done'         ? 'var(--blue)'
-                 : status === 'reasoning…'   ? '#a5b4fc'
-                 : status === 'querying…'    ? 'var(--blue)'
-                 : status === 'receiving…'   ? 'var(--teal)'
-                 : status.startsWith('→')    ? 'var(--teal)'
-                 : status.startsWith('⚠')   ? 'var(--red)'
-                 : 'var(--green)';
+  if (el) {
+    el.textContent = status;
+    el.style.color = status === 'idle'       ? 'var(--muted)'
+                   : status === 'done'       ? 'var(--blue)'
+                   : status === 'reasoning…' ? '#a5b4fc'
+                   : status === 'querying…'  ? 'var(--blue)'
+                   : status === 'receiving…' ? 'var(--teal)'
+                   : status.startsWith('→')  ? 'var(--teal)'
+                   : status.startsWith('⚠') ? 'var(--red)'
+                   : 'var(--green)';
+  }
+  // Topology live label
+  const lbl = document.getElementById('topo-lbl-' + agent);
+  if (lbl) lbl.textContent = (status === 'idle' || status === 'done') ? '' : status;
+  // Topology status ring
+  const ring = document.getElementById('topo-r-' + agent);
+  if (ring) {
+    const active = status !== 'idle' && status !== 'done';
+    ring.setAttribute('opacity', active ? '1' : '0');
+    if (active) ring.classList.add('topo-ring-active');
+    else ring.classList.remove('topo-ring-active');
+  }
 }
 
 function _setAgentProgStep(step, state) {
@@ -434,15 +447,33 @@ function pulseTopoNode(agent) {
   setTimeout(() => el.classList.remove('topo-node-lit'), 1400);
 }
 function pulseTopoLine(agent) {
-  // pulse the line between orch and this agent (lines radiate from orch)
   const lineId = _topoLineMap[agent];
   if (!lineId) return;
+  // Flash line color
   const el = document.getElementById(lineId);
-  if (!el) return;
-  el.classList.remove('topo-line-lit');
-  void el.getBoundingClientRect();
-  el.classList.add('topo-line-lit');
-  setTimeout(() => el.classList.remove('topo-line-lit'), 1000);
+  if (el) {
+    el.classList.remove('topo-line-lit');
+    void el.getBoundingClientRect();
+    el.classList.add('topo-line-lit');
+    setTimeout(() => el.classList.remove('topo-line-lit'), 1000);
+  }
+  // Traveling dot along the line
+  const dot = document.getElementById('topo-dot-' + agent);
+  const am  = document.getElementById('topo-am-'  + agent);
+  if (dot && am) {
+    dot.setAttribute('opacity', '0.9');
+    try { am.beginElement(); } catch(e) {}
+    setTimeout(() => dot.setAttribute('opacity', '0'), 400);
+  }
+}
+
+function topoFilterFeed(agent) {
+  let matchPill = null;
+  document.querySelectorAll('.ffp').forEach(b => {
+    const oc = b.getAttribute('onclick') || '';
+    if (oc.includes(`'${agent}'`)) matchPill = b;
+  });
+  setFeedFilter(agent, matchPill);
 }
 
 function playFeedStep(step) {
