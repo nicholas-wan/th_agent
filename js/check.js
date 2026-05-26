@@ -178,27 +178,95 @@ const checkData = {
       assessment: '<b>All four subhunt detection rules validated and deployed.</b> T1570 (PsExec) confirmed — 14 correlated ADMIN$ file-drop + service-install events. T1003.001 (LSASS dump) confirmed — 5 full-access handle events matching SK-029 pattern. T1558.003 (Kerberoasting) confirmed — 3 RC4 TGS-REQ bursts from jsmith. T1071.001 (C2 beacon) confirmed — 2 Cobalt Strike sessions by JA3 + interval regularity. Credential rotation across CORP domain initiated; WIN-WS089 and WIN-DC01 isolated.',
     },
     raa: {
+      // Hunt-level "all subhunts" view
       relevant: true,
       analytics: [
         {
-          name: 'Process Chain Anomaly',
-          ttps: ['T1003.001'],
+          name: 'Command Line Anomaly',
+          ttps: ['T1570'],
           status: 'triggered',
-          hits: 1,
+          hits: 59,
           findings: [
-            'rundll32.exe → LSASS handle 0x1fffff — parent: explorer.exe on WIN-WS089 (not AV/EDR whitelist)',
+            'psexesvc.exe spawned from services.exe on 3 hosts (WIN-WS089, WIN-WS102, WIN-DC01) — not in SCCM-managed task baseline',
+            'wmic.exe with /node: remote target flag on CORP\\jsmith — 14 unique remote targets in 4h window',
+            'net use \\\\&lt;target&gt;\\ipc$ with CORP\\jsmith credentials — 7 events at 23:17–01:42 UTC',
           ],
-          interp: '<b>High-confidence T1003.001.</b> <b style="color:var(--red)">rundll32.exe</b> with a full-access LSASS handle (0x1fffff) spawned from explorer.exe has no legitimate baseline. This access mask is characteristic of Mimikatz <span style="font-family:monospace;font-size:10px;">sekurlsa::logonpasswords</span>. The explorer.exe parent rules out security tooling — this is operator-driven credential dumping on WIN-WS089.',
+          interp: '<b>High-confidence T1570.</b> PsExec invocations are outside the SCCM-managed task baseline, and WMI remote process creation spans 14 targets in a 4-hour window — consistent with automated lateral propagation rather than manual admin activity. Corroborates H-01 query output and elevates confidence to high. Note: <b>T1558.003</b> and <b>T1071.001</b> are outside CLA scope — refer to their per-subhunt RAA panels for coverage details.',
         },
         {
-          name: 'Command Line Anomaly',
-          ttps: ['T1558.003'],
-          status: 'partial',
-          hits: 0,
-          findings: [],
-          interp: '<b>T1558.003 (Kerberoasting)</b> is outside Command Line Anomaly scope — TGS-REQ patterns are captured in authentication logs (EventCode 4769), not process command lines. RAA coverage for this technique is partial. The detection query directly addresses this gap.',
+          name: 'Process Chain Anomaly',
+          ttps: ['T1570', 'T1003.001'],
+          status: 'triggered',
+          hits: 4,
+          findings: [
+            'svchost.exe → powershell.exe → net.exe on WIN-DC01 — chain outside DC host-class baseline (T1570)',
+            'rundll32.exe → LSASS handle 0x1fffff on WIN-DC01 — parent: explorer.exe, not in AV/EDR whitelist (T1003.001)',
+          ],
+          interp: '<b>Two confirmed findings.</b> The svchost→PowerShell chain on a DC (T1570) confirms post-lateral-movement execution. The rundll32→LSASS full-access handle (T1003.001) confirms credential dumping by a LOLBin with no legitimate baseline. Combined with Command Line Anomaly results, the jsmith pivot chain and credential dump are high-confidence. Note: <b>T1558.003</b> and <b>T1071.001</b> do not generate process chain artefacts — select individual subhunts to see their RAA scope assessments.',
         },
       ],
+    },
+    raaSubhunts: {
+      sh01: {
+        relevant: true,
+        analytics: [
+          {
+            name: 'Command Line Anomaly',
+            ttps: ['T1570'],
+            status: 'triggered',
+            hits: 59,
+            findings: [
+              'psexesvc.exe spawned from services.exe on 3 hosts (WIN-WS089, WIN-WS102, WIN-DC01) — not in SCCM-managed task baseline',
+              'wmic.exe with /node: remote target flag on CORP\\jsmith — 14 unique remote targets in 4h window',
+              'net use \\\\&lt;target&gt;\\ipc$ with CORP\\jsmith credentials — 7 events at 23:17–01:42 UTC',
+            ],
+            interp: '<b>High-confidence T1570.</b> PsExec invocations are outside the SCCM-managed baseline, and WMI remote process creation spans 14 targets in a 4-hour window — consistent with automated lateral propagation. The <span style="font-family:monospace;font-size:10px;">net use \\\\target\\ipc$</span> events in the jsmith session window confirm the pivot chain. Corroborates the H-01 query (14 confirmed ADMIN$ drop + service install events).',
+          },
+          {
+            name: 'Process Chain Anomaly',
+            ttps: ['T1570'],
+            status: 'triggered',
+            hits: 3,
+            findings: [
+              'svchost.exe → powershell.exe → net.exe on WIN-DC01 — chain outside baseline for DC host class',
+            ],
+            interp: '<b>Process chain confirms post-lateral-movement execution on a domain controller.</b> <span style="font-family:monospace;font-size:10px;">svchost.exe</span> spawning PowerShell is not in this environment\'s DC host-class baseline — the chain matches a PsExec-delivered payload running discovery commands. Combined with CLA results, this is high-confidence T1570 activity.',
+          },
+        ],
+      },
+      sh02: {
+        relevant: true,
+        analytics: [
+          {
+            name: 'Process Chain Anomaly',
+            ttps: ['T1003.001'],
+            status: 'triggered',
+            hits: 1,
+            findings: [
+              'rundll32.exe → LSASS handle 0x1fffff on WIN-DC01 — parent: explorer.exe (not AV/EDR whitelist)',
+            ],
+            interp: '<b>High-confidence T1003.001.</b> <b style="color:var(--red)">rundll32.exe</b> with a full-access LSASS handle (0x1fffff) spawned from <span style="font-family:monospace;font-size:10px;">explorer.exe</span> has no legitimate baseline. This access mask is characteristic of Mimikatz <span style="font-family:monospace;font-size:10px;">sekurlsa::logonpasswords</span>. The explorer.exe parent rules out security tooling — this is operator-driven credential dumping on WIN-DC01 (Tier-0).',
+          },
+          {
+            name: 'Command Line Anomaly',
+            ttps: ['T1003.001'],
+            status: 'n/a',
+            hits: 0,
+            findings: [],
+            interp: '<b>Not applicable for T1003.001.</b> LSASS credential dumping via reflective DLL injection and NtDuplicateObject handle theft does not produce meaningful command line artefacts — the tool is loaded into memory without a visible command string. Process Chain Anomaly (above) and the Sysmon EventCode=10 query are the correct detection paths for this technique.',
+          },
+        ],
+      },
+      sh03: {
+        relevant: false,
+        reason: '<b>T1558.003 (Kerberoasting)</b> operates via the standard Kerberos Windows API — the attacker calls <span style="font-family:monospace;font-size:10px;">KerbQueryTktCacheEx2</span> or sends TGS-REQ packets directly to the KDC. No suspicious process chain or distinctive command line is generated on the attacking host. The primary detection path is <b>Windows Security EventCode=4769</b> (TGS-REQ with TicketEncryptionType=0x17) in authentication logs — covered by the H-03 SPL query.',
+        analytics: [],
+      },
+      sh04: {
+        relevant: false,
+        reason: '<b>T1071.001 (C2 Beacon via HTTPS)</b> is a network-layer technique. JA3/JA3S fingerprint matching, beacon interval regularity analysis, and certificate chain inspection all operate on TLS handshake metadata and connection timing from network sensors — not on host-side process invocations or command lines. The primary detection path is the <b>H-04 SPL query</b> against the Zeek SSL index.',
+        analytics: [],
+      },
     },
     genRules: [
       // ── Subhunt 1 · H-01 · T1570 ───────────────────────────────────────────
@@ -584,12 +652,30 @@ const raaResults = {
 function renderRAAResults(dataOverride) {
   const card = document.getElementById('raa-card');
   if (!card) return;
-  const d = dataOverride !== undefined ? dataOverride : (checkData[_activeHuntId]?.raa || null);
+
+  let d, subhuntLabel = null;
+  if (dataOverride !== undefined) {
+    d = dataOverride;
+  } else {
+    const huntData = checkData[_activeHuntId];
+    if (!huntData) { card.style.display = 'none'; return; }
+    const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+    if (shId && huntData.raaSubhunts && huntData.raaSubhunts[shId]) {
+      d = huntData.raaSubhunts[shId];
+      // Resolve label from keep data subhunts if available
+      const kd = (typeof keepData !== 'undefined') ? keepData[_activeHuntId] : null;
+      const sh = kd?.subhunts?.find(s => s.id === shId);
+      if (sh) subhuntLabel = `${sh.label} · ${sh.ttp} · ${sh.name}`;
+    } else {
+      d = huntData.raa || null;
+    }
+  }
   if (!d) { card.style.display = 'none'; return; }
 
   const statusChip = (status, hits) => {
-    if (status === 'triggered') return `<span class="chip chip-red" style="font-size:10px;">⚡ Triggered &middot; ${hits} hits</span>`;
-    if (status === 'partial')   return `<span class="chip chip-yellow" style="font-size:10px;">⚠ Partial coverage</span>`;
+    if (status === 'triggered')  return `<span class="chip chip-red" style="font-size:10px;">⚡ Triggered &middot; ${hits} hits</span>`;
+    if (status === 'partial')    return `<span class="chip chip-yellow" style="font-size:10px;">⚠ Partial coverage</span>`;
+    if (status === 'n/a')        return `<span class="chip chip-gray" style="font-size:10px;">— Not applicable</span>`;
     return `<span class="chip chip-gray" style="font-size:10px;">— No coverage</span>`;
   };
   const ttpChips = (ttps) => ttps.map(t => `<span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;cursor:default;" data-ttp="${t}">${t}</span>`).join('');
@@ -628,6 +714,13 @@ function renderRAAResults(dataOverride) {
     raaSummary = `${d.analytics.length} analytics · ${totalHits} hits${triggered ? ' · ' + triggered + ' triggered' : ''}`;
   }
 
+  const subhuntBanner = subhuntLabel
+    ? `<div style="display:flex;align-items:center;gap:8px;padding:7px 15px;background:rgba(59,130,246,.05);border-bottom:1px solid rgba(59,130,246,.12);font-size:11px;color:var(--muted);">
+        <span>RAA scope for</span>
+        <span class="chip chip-blue" style="font-size:10px;">${subhuntLabel}</span>
+      </div>`
+    : '';
+
   card.innerHTML = `<div class="card-head" onclick="toggleCollapse('raa-card',event)">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span class="card-title">🔬 RAA — Reasoning Augmented Analytics</span>
@@ -639,6 +732,7 @@ function renderRAAResults(dataOverride) {
       <button class="collapse-btn" onclick="toggleCollapse('raa-card',event)">▾</button>
     </div>
   </div>
+  ${subhuntBanner}
   <div class="card-body" style="padding:${d.relevant ? '14px 15px' : '0'};">
     ${bodyHTML}
   </div>`;

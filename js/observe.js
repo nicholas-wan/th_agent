@@ -26,6 +26,92 @@ const observeData = {
       Network: ['JA3: 3b5074b1b5d032e5620f69f9159e9c4d (Cobalt Strike profile)', '185.220.101.47:443 and :8443', 'Beacon interval 60s ± 2s', 'Dual-port primary + fallback C2 channel'],
       Files: ['New scheduled tasks outside SCCM namespace', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\MicrosoftEdgeUpdate', 'LSASS minidump in %TEMP% or C:\\ProgramData\\', 'Staging files in non-standard locations'],
       Authentication: ['Off-hours NTLM/Kerberos from CORP\\jsmith', 'Lateral auth via ADMIN$ across 14 hosts', 'TGS-REQ spike — 7 SPNs within 5 min (T1558.003)'],
+    },
+    subhunts: {
+      sh01: {
+        label: 'SH-01 · T1570 · Lateral Tool Transfer', ttpChip: 'chip-red',
+        normal: [
+          { text: 'SCCM-initiated PsExec or remote service installs from SCCM server (10.0.5.11) — signed service binaries, EventCode 7045 from SCCM account only' },
+          { text: 'IT admin PSRemoting/WinRM sessions from approved jump hosts (10.0.8.0/24) during business hours 06:00–22:00 UTC' },
+          { text: 'Scheduled ADMIN$ file copies from backup service account (svc-backup) during maintenance window 02:00–04:00 UTC' },
+          { text: 'Named pipe connections on \\pipe\\svcctl or \\pipe\\winreg from domain admin accounts in approved console sessions' },
+        ],
+        suspicious: [
+          { text: 'psexesvc.exe or ADMIN$ file drop originating from a workstation IP — lateral movement not initiated by SCCM or jump host' },
+          { text: 'New service installation (EventCode 7045) outside SCCM namespace by a user-class or compromised account' },
+          { text: 'Named pipe relay over \\pipe\\svcctl forming a hop chain — more than 2 lateral hops within 10 minutes' },
+          { text: 'CORP\\jsmith authenticating to 3+ distinct hosts via NTLM/Kerberos outside 06:00–22:00 UTC — confirmed off-hours pattern' },
+          { text: 'EventCode 5145 (network share access) targeting ADMIN$ or C$ from a non-admin workstation account' },
+        ],
+        observables: {
+          'Key Events': ['EventCode 5145 — ADMIN$ share access from workstation IP', 'EventCode 7045 — new service created outside SCCM namespace', 'EventCode 4624 Type 3 — NTLM lateral logon off-hours'],
+          Processes: ['psexesvc.exe dropped on remote target host', 'cmd.exe /c net use \\\\target\\ADMIN$', 'svcctl service install chain from CORP\\jsmith'],
+          Network: ['SMB port 445 from workstation → server ADMIN$', 'Named pipe relay \\pipe\\svcctl across 14-host chain'],
+          Authentication: ['CORP\\jsmith — 14-host pivot chain confirmed (TH-2026-038 overlap)', 'Off-hours Kerberos TGS-REQ 23:17–01:42 UTC'],
+        }
+      },
+      sh02: {
+        label: 'SH-02 · T1003.001 · LSASS Credential Dumping', ttpChip: 'chip-red',
+        normal: [
+          { text: 'CrowdStrike (csagent.sys, csfalconservice.exe) and Windows Defender (MsMpEng.exe) accessing lsass.exe with stable known PIDs — expected EDR behaviour' },
+          { text: 'Windows system processes (winlogon.exe, lsm.exe, services.exe) holding known read-only handles on lsass.exe at boot' },
+          { text: 'LSASS restarts during Windows Update cycles in approved maintenance window (02:00–04:00 UTC Sunday)' },
+        ],
+        suspicious: [
+          { text: 'Non-AV/EDR process opening lsass.exe with PROCESS_ALL_ACCESS (GrantedAccess 0x1fffff) — full credential dump access' },
+          { text: 'rundll32.exe, cmd.exe, or explorer.exe as source image in Sysmon EventCode=10 targeting lsass.exe' },
+          { text: 'Unsigned or LOLBin process holding LSASS handle on WIN-DC01 — Tier-0 DC is the highest-value credential store' },
+          { text: 'LSASS minidump file (.dmp or .mdmp) created in %TEMP%, %APPDATA%, or C:\\ProgramData\\ by a non-system process' },
+          { text: 'Sysmon EventCode=10 burst on WIN-DC01 within the CORP\\jsmith session window (23:17–01:42 UTC)' },
+        ],
+        observables: {
+          'Key Events': ['Sysmon EventCode=10 · TargetImage=lsass.exe · GrantedAccess=0x1fffff · SourceImage ∉ AV baseline', 'EventCode 4673 — sensitive privilege use (SeDebugPrivilege) on WIN-DC01'],
+          Processes: ['rundll32.exe (PID 7340) — PROCESS_ALL_ACCESS on lsass.exe at 01:38:22 UTC', 'Process chain: explorer.exe → cmd.exe (4812) → rundll32.exe (7340)'],
+          Files: ['lsass.dmp / sekurlsa.log artefact in %TEMP% or C:\\ProgramData\\', 'Mimikatz or reflective DLL in non-standard path'],
+          Host: ['WIN-DC01 (10.0.1.10) — Tier-0 DC · primary target · SK-029 exclusions scoped to this host'],
+        }
+      },
+      sh03: {
+        label: 'SH-03 · T1558.003 · Kerberoasting', ttpChip: 'chip-red',
+        normal: [
+          { text: 'BackupExec service account (svc-backup$) requesting TGS tickets for registered backup SPNs — RC4 expected, scheduled (02:00–04:00 UTC)' },
+          { text: 'MSSQLSvc/* SPN requests from SQL service accounts during DB startup and replication — on schedule, single SPN per request' },
+          { text: 'DC replication Kerberos events (DomainDNSZones, GC) during maintenance window — known source IPs only' },
+        ],
+        suspicious: [
+          { text: 'Single user account requesting RC4-encrypted TGS tickets for 3+ distinct SPNs within 5 minutes — targeted kerberoasting pattern' },
+          { text: 'TGS-REQ for high-privilege SPN (krbtgt, HTTP/intranet, RPCSS) from a standard domain user account — Golden Ticket pre-staging' },
+          { text: 'RC4 TGS-REQ spike above 15/hr from a single account outside the scheduled backup window — threshold set post-SPN-exclusion' },
+          { text: 'TGS request for SPNs not in the 147-entry CMDB exclusion list from a non-service account — likely targeted enumeration' },
+        ],
+        observables: {
+          'Key Events': ['EventCode 4769 · TicketEncryptionType=0x17 (RC4) · ServiceName ∉ 147-SPN exclusion list', 'EventCode 4768 burst — multiple Kerberos AS-REQ from single account in short window'],
+          Account: ['CORP\\jsmith — 11 distinct SPN requests in 5 min including krbtgt (23:17 UTC)', 'SPNs targeted: krbtgt/CORP, MSSQLSvc/WIN-SQL02:1433, HTTP/intranet.corp.local'],
+          'Detection Tuning': ['RC4 burst threshold: 15/hr · 147 CMDB SPN exclusions loaded (BackupExec + MSSQLSvc)', 'FP rate dropped from 22% (TH-2026-035) to <2% after exclusion list applied'],
+          Network: ['Kerberos traffic to WIN-DC01 (10.0.1.10) from workstation CORP\\jsmith source host'],
+        }
+      },
+      sh04: {
+        label: 'SH-04 · T1071.001 · C2 Beacon via HTTPS', ttpChip: 'chip-indigo',
+        normal: [
+          { text: 'Browser HTTPS to Microsoft 365, Akamai CDN, and approved SaaS endpoints — stable JA3 profiles, cert chains rooted in DigiCert or Sectigo' },
+          { text: 'CrowdStrike and Microsoft ATP cloud connectivity — known destination IPs, cert lifetime > 30 days, regular EDR heartbeat interval' },
+          { text: 'Office application HTTPS telemetry to Microsoft endpoints — variable interval, approved user-agent strings' },
+        ],
+        suspicious: [
+          { text: 'HTTPS beacon with stdev < 5s on 58–62s interval to non-approved external IP — Cobalt Strike default profile signature' },
+          { text: 'JA3 fingerprint 3b5074b1b5d032e5620f69f9159e9c4d matching known Cobalt Strike malleable C2 profiles' },
+          { text: 'Short-lived Let\'s Encrypt certificate (lifetime < 24hr) with non-browser or empty user-agent string to external IP' },
+          { text: 'Outbound HTTPS to ASN associated with VPS/hosting infrastructure (Frantech, Mullvad, AS62160) with no prior baseline' },
+          { text: 'Dual-port C2 channel: primary :443 + fallback :8443 to same destination IP with identical beacon timing' },
+        ],
+        observables: {
+          Network: ['185.220.101.47:443 — JA3 3b5074b1b5d032e5620f69f9159e9c4d · beacon 60.1s ±0.3s stdev', '185.220.101.47:8443 — fallback C2 channel, identical JA3 + timing'],
+          Certificate: ['CN=update.windows-cdn[.]net · Let\'s Encrypt · issued < 24hr · 1 SAN · not in approved cert baseline'],
+          'Detection Path': ['JA3 fingerprint match (Zeek SSL log)', 'Beacon interval regularity: stdev < 5s over 30-min window', 'Short cert lifetime + non-browser UA string in HTTP log'],
+          'Prior Hunt': ['TH-2025-091 — zero JA3 hits · net-new cert-chain path not previously hunted · Alice Chen flagged gap'],
+        }
+      },
     }
   },
   '040': {
@@ -95,15 +181,28 @@ const observeData = {
 };
 
 function renderHuntObserve(id) {
-  const d = observeData[id];
+  const huntData = observeData[id];
   const main = document.getElementById('obs-main-body');
   const side = document.getElementById('obs-side-body');
   if (!main || !side) return;
-  if (!d) {
+  if (!huntData) {
     main.innerHTML = `<div class="info-bar"><span class="ib-icon">ℹ️</span><span>No observe profile available for this hunt yet.</span></div>`;
     side.innerHTML = '';
     return;
   }
+
+  // Resolve subhunt-specific data if a subhunt is selected
+  const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+  const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
+  const d = shData || huntData;
+
+  // Subhunt context banner (shown when a specific subhunt is active)
+  const subhuntBannerHTML = shData ? `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius-sm);margin-bottom:10px;">
+      <span style="font-size:11px;color:var(--muted);">Observe profile for</span>
+      <span class="chip ${shData.ttpChip}" style="font-size:10px;">${shData.label}</span>
+    </div>` : '';
+
   const normalHTML = d.normal.map(n => `
     <div class="obs-item">
       <span class="obs-item-icon" style="color:var(--green);">✓</span>
@@ -115,6 +214,7 @@ function renderHuntObserve(id) {
       <span>${s.text}</span>
     </div>`).join('');
   main.innerHTML = `
+    ${subhuntBannerHTML}
     <div class="info-bar"><span class="ib-icon">ℹ️</span><span>The <b>Observe</b> stage defines your environment baseline for this hunt — what normal looks like, what adversary activity looks like, and what artefacts to watch for. This informs agent thresholds and exclusions applied in Learn and Check.</span></div>
     <div class="card">
       <div class="card-head">

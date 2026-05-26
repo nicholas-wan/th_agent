@@ -57,7 +57,7 @@ const keepData = {
       c: 'SPL queries executed in Splunk ES via MCP. 14 hits on H-01 (index=windows). MITRE coverage: 4 confirmed, 3 partial. Detection rules generated and pushed to SIEM.',
       k: 'Recording in progress. 8 findings documented. Recommend IR escalation for WIN-DC01. New detection rules deployed.',
       kItalic: true,
-      raa: { relevant: true, note: 'RAA triggered — 2 analytics, 62 hits confirmed (T1570, T1078.002)' },
+      raa: { relevant: true, note: 'RAA triggered — 2 analytics confirmed · T1570 (14-host pivot chain) · T1003.001 (LSASS dump on WIN-DC01)' },
     },
     timeline: [
       { color:'red',    text:'<b>RAA Supervisor Agent</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
@@ -116,6 +116,24 @@ const keepData = {
     title: 'TH-2026-040', label: 'FIN7 Ransomware · Closed', labelClass: 'chip-yellow',
     createdBy: 'marcus', createdAt: 'Apr 24, 2026 · 13:15',
     criticals: 2, highs: 6,
+    subhunts: [
+      { id:'sh01', label:'SH-01', ttp:'T1566.001', name:'Phishing Email Delivery',    status:'confirmed' },
+      { id:'sh02', label:'SH-02', ttp:'T1490',     name:'Ransomware Pre-staging',     status:'confirmed' },
+    ],
+    subhuntLock: {
+      sh01: {
+        l: 'H-01 · T1566.001 scoped from FS-ISAC TLP:AMBER advisory. Office macro delivery via TA577-attributed phishing. Confidence 88% — prior IOC overlap with TH-2025-088.',
+        o: 'Macro execution confirmed on WIN-WS012. vba→cmd→rundll32.exe parent chain. DLL sideloading via DISM.exe pivot from same host. 3 hosts received the phishing email.',
+        c: 'DL-2026-040-001 deployed · T1566.001-office-macro-exec · PASS · FP rate 2.1%.',
+        k: '3 hosts exposed. WIN-WS012 re-imaged. IOC package (file hashes, C2 domains) submitted to FS-ISAC TLP:AMBER channel.',
+      },
+      sh02: {
+        l: 'H-02 · T1490 ransomware pre-staging scoped post-macro-delivery on WIN-FS02. Shadow copy deletion expected before encryption phase. Confidence 85%.',
+        o: 'vssadmin delete shadows /all executed on WIN-FS02 at 14:22 UTC. Command-line anomaly score 97. Followed immediately by Cipher.exe events on \\\\payroll$ share.',
+        c: 'DL-2026-040-002 deployed · T1490-vssadmin-shadow-deletion · PASS · FP rate 0.3%.',
+        k: 'WIN-FS02 payroll data partially encrypted before EDR containment. Server isolated. Apr 23 backup restoration initiated — ETA 4h. Payroll team notified.',
+      },
+    },
     findings: [
       { sev:'c', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · RAA Supervisor Agent · T1490 · 3d ago',        drawer:'tradecraft' },
       { sev:'c', title:'Phishing Payload Execution — Office Macro',        meta:'WIN-WS012 · Detection Logic Agent · T1204 · 3d ago',             drawer:'detection'  },
@@ -185,6 +203,24 @@ const keepData = {
     title: 'TH-2026-039', label: 'Supply Chain · Closed', labelClass: 'chip-gray',
     createdBy: 'priya', createdAt: 'Apr 14, 2026 · 10:15',
     criticals: 1, highs: 4,
+    subhunts: [
+      { id:'sh01', label:'SH-01', ttp:'T1195.002', name:'Trojanised Build Artifact',  status:'confirmed' },
+      { id:'sh02', label:'SH-02', ttp:'T1071.001', name:'Cobalt Strike C2 via HTTPS', status:'confirmed' },
+    ],
+    subhuntLock: {
+      sh01: {
+        l: 'H-01 · T1195.002 scoped from CISA supply chain advisory. Trojanised build artifact on CI/CD pipeline. Confidence 84% — SolarWinds-pattern unsigned binary insertion.',
+        o: 'Unsigned binary introduced on SRV-BUILD01 Apr 10. SHA-256 mismatch against artefact registry. 4-day exposure window before detection. 10 downstream hosts received the payload.',
+        c: 'DL-2026-039-001 deployed · T1195.002-unsigned-build-artifact · PASS · FP rate 0.8%.',
+        k: 'SRV-BUILD01 re-imaged from pre-Apr 10 snapshot. All Apr 10–14 artifacts flagged and redistributed. CI/CD pipeline binary signing enforced as build gate.',
+      },
+      sh02: {
+        l: 'H-02 · T1071.001 C2 staging scoped via JA3 fingerprint — Cobalt Strike malleable profile from SRV-BUILD01 to update.cdn-cache[.]net. Confidence 71%.',
+        o: '2 C2 sessions confirmed by JA3 fingerprint match. Beacon interval 60s ± 0.3. Session active since Apr 10 — same day as trojanised binary introduction.',
+        c: 'DL-2026-039-002 deployed · T1071.001-cs-c2-ja3 · PASS · FP rate 0.3%.',
+        k: 'C2 domain blocked at perimeter DNS. JA3 hash added to threat intel feed. 10 downstream hosts swept for matching beacon pattern.',
+      },
+    },
     findings: [
       { sev:'c', title:'Trojanised Build Tool — Supply Chain Compromise',  meta:'build-srv01 · Detection Logic Agent · T1195.002 · 2w ago',            drawer:'detection'  },
       { sev:'h', title:'DLL Sideloading via Legitimate Binary',            meta:'10 hosts · Rule Validation Agent · T1574.002 · 2w ago',               drawer:'validation' },

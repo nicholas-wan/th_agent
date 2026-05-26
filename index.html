@@ -307,7 +307,7 @@
           <div class="card-head" onclick="toggleStage('stage-1', event)">
             <span class="card-title" id="stage1-title">🧬 Extracted TTPs<span class="stage-chevron">▾</span></span>
             <div style="display:flex;gap:6px;align-items:center;">
-              <span id="stage1-report-chips"><span class="chip chip-blue">14 techniques</span><span class="chip chip-indigo">ATT&amp;CK v14</span></span>
+              <span id="stage1-report-chips"><span class="chip chip-blue">14 extracted</span><span class="chip chip-indigo">4 prioritized</span><span class="chip chip-indigo">ATT&amp;CK v14</span></span>
               <span id="stage1-custom-chip" class="chip chip-indigo" style="display:none;">✏️ Custom TTPs</span>
               <button class="btn btn-outline btn-sm" onclick="setStep(0)">← Back</button>
             </div>
@@ -320,10 +320,10 @@
                 <thead><tr><th>ID</th><th>Technique</th><th>Tactic</th><th>Prior hunts</th><th>Rules</th><th>Source</th></tr></thead>
                 <tbody id="ttp-tbody">
                   <tr><td class="ttp-id">T1078.002</td><td>Valid Accounts: Domain</td><td><span class="chip chip-yellow">Def. Evasion</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">3</td><td style="font-size:11px;color:var(--green);font-weight:600;">2 live</td><td><span class="sent-badge" data-sid="s01">S01</span></td></tr>
-                  <tr><td class="ttp-id">T1570</td><td>Lateral Tool Transfer</td><td><span class="chip chip-red">Lateral Mvmt</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">2</td><td style="font-size:11px;color:var(--green);font-weight:600;">2 live</td><td><span class="sent-badge" data-sid="s02">S02</span></td></tr>
-                  <tr><td class="ttp-id">T1003.001</td><td>LSASS Memory</td><td><span class="chip chip-red">Cred. Access</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">2</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s04">S04</span></td></tr>
-                  <tr><td class="ttp-id">T1558.003</td><td>Kerberoasting</td><td><span class="chip chip-red">Cred. Access</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">2</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 tuned</td><td><span class="sent-badge" data-sid="s05">S05</span></td></tr>
-                  <tr><td class="ttp-id">T1071.001</td><td>Web Protocols C2</td><td><span class="chip chip-indigo">C&amp;C</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">3</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s06">S06</span></td></tr>
+                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1570<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>Lateral Tool Transfer</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">Confirmed in TH-2026-038 · jsmith pivot chain scoped · T1078.002 supporting signal merged</div></td><td><span class="chip chip-red">Lateral Mvmt</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">2</td><td style="font-size:11px;color:var(--green);font-weight:600;">2 live</td><td><span class="sent-badge" data-sid="s02">S02</span></td></tr>
+                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1003.001<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>LSASS Credential Dumping</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">Follows lateral movement to WIN-DC01 · SK-029 exclusion list pre-loaded</div></td><td><span class="chip chip-red">Cred. Access</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">2</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s04">S04</span></td></tr>
+                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1558.003<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>Kerberoasting</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">147 SPN exclusions loaded · RC4 threshold tuned to 15/hr · FP rate &lt;2%</div></td><td><span class="chip chip-red">Cred. Access</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">2</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 tuned</td><td><span class="sent-badge" data-sid="s05">S05</span></td></tr>
+                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1071.001<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>C2 Beacon via HTTPS</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">Net-new cert-chain path · JA3 fingerprint detection available</div></td><td><span class="chip chip-indigo">C&amp;C</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">3</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s06">S06</span></td></tr>
                   <tr><td class="ttp-id">T1547.001</td><td>Registry Run Keys</td><td><span class="chip chip-indigo">Persistence</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s08">S08</span></td></tr>
                   <tr><td class="ttp-id">T1053.005</td><td>Scheduled Task</td><td><span class="chip chip-indigo">Persistence</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s08">S08</span></td></tr>
                   <tr><td class="ttp-id">T1041</td><td>Exfil Over C2 Channel</td><td><span class="chip chip-red">Exfiltration</span></td><td style="font-size:11px;color:var(--muted);font-weight:600;">0</td><td style="font-size:11px;color:var(--muted);font-weight:600;">none</td><td><span class="sent-badge" data-sid="s07">S07</span></td></tr>
@@ -457,48 +457,64 @@
                   <span class="hyp-branch-num">H-01</span>
                   <span class="hyp-branch-icon">🎯</span>
                   <span class="hyp-branch-label hbl-confirmed">Confirmed</span>
-                  <span class="hyp-branch-hunt">TH-2026-038 · TH-2026-035</span>
+                  <span class="hyp-branch-hunt">TH-2026-038</span>
                 </div>
-                <div class="hyp-branch-body">PsExec lateral movement confirmed across 9 hosts · jsmith pivot point identified · off-hours logon pattern validated by Marcus Webb.</div>
-                <div class="hyp-branch-action">↳ Confidence elevated to High · single-hop threshold pre-applied · 02:00–04:00 UTC batch exclusion loaded</div>
+                <div class="hyp-branch-body">PsExec lateral movement confirmed across 9 hosts · CORP\jsmith pivot chain identified · off-hours logon pattern validated. T1078.002 auth anomaly scoped as supporting signal.</div>
+                <div class="hyp-branch-action">↳ Confidence elevated to High · single-hop threshold pre-applied · T1078.002 merged into scope (not a separate hypothesis)</div>
               </div>
-              <!-- H-02: FPs -->
+              <!-- H-02: Net-new -->
               <div class="hyp-branch-row">
                 <div class="hyp-branch-top">
                   <span class="hyp-branch-num">H-02</span>
+                  <span class="hyp-branch-icon">🔴</span>
+                  <span class="hyp-branch-label hbl-confirmed">Net-new finding</span>
+                  <span class="hyp-branch-hunt">TH-2026-038</span>
+                </div>
+                <div class="hyp-branch-body">LSASS access observed post-lateral-movement in TH-2026-038 but no dedicated rule existed. WIN-DC01 (Tier-0) confirmed as target host for credential dump.</div>
+                <div class="hyp-branch-action">↳ SK-029 LSASS exclusion list pre-loaded · scoped to DC VLAN · PROCESS_ALL_ACCESS handle from non-AV process only</div>
+              </div>
+              <!-- H-03: FPs -->
+              <div class="hyp-branch-row">
+                <div class="hyp-branch-top">
+                  <span class="hyp-branch-num">H-03</span>
                   <span class="hyp-branch-icon">🔔</span>
                   <span class="hyp-branch-label hbl-fp">FPs in prior run</span>
                   <span class="hyp-branch-hunt">TH-2026-035</span>
                 </div>
-                <div class="hyp-branch-body">Kerberoasting rule returned 22% FP rate — BackupExec and MSSQLSvc SPNs triggered on every scan. LSASS rule clean in same run.</div>
-                <div class="hyp-branch-action">↳ CMDB SPN exclusion list pre-loaded into Detection Logic Agent · FP threshold pre-tuned</div>
+                <div class="hyp-branch-body">Kerberoasting rule returned 22% FP rate — BackupExec and MSSQLSvc SPNs triggered on every scan. Signal recoverable with CMDB exclusion list.</div>
+                <div class="hyp-branch-action">↳ 147-entry CMDB SPN exclusion list pre-loaded · RC4 threshold tuned to 15/hr · FP drops to &lt;2%</div>
               </div>
-              <!-- H-03: Clean -->
+              <!-- H-04: Clean -->
               <div class="hyp-branch-row">
                 <div class="hyp-branch-top">
-                  <span class="hyp-branch-num">H-03</span>
+                  <span class="hyp-branch-num">H-04</span>
                   <span class="hyp-branch-icon">❄️</span>
                   <span class="hyp-branch-label hbl-clean">Clean prior run</span>
                   <span class="hyp-branch-hunt">TH-2025-091</span>
                 </div>
                 <div class="hyp-branch-body">No JA3 fingerprint match in prior run — technique variant possible or implant not present at time of hunt. Alice Chen flagged cert chain gap.</div>
-                <div class="hyp-branch-action">↳ Net-new hypothesis · cert chain validation added to C2 detection template · confidence Medium</div>
+                <div class="hyp-branch-action">↳ Net-new cert-chain detection path added · short-lived LE cert + non-browser UA + beacon interval · confidence Medium</div>
               </div>
             </div>
             <div class="hyp-card sel" onclick="selHyp(this)">
-              <div class="hyp-head"><span class="hyp-num">H-01</span><div class="hyp-text">Adversary has compromised valid domain accounts and is performing east-west lateral movement using PsExec across 10.0.0.0/8.</div></div>
-              <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1570</span><span class="chip chip-red" style="font-size:10px;">T1078.002</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
-              <div class="hyp-rationale">CTI references PsExec usage. Auth logs show unusual service account logins across multiple hosts in short windows.</div>
+              <div class="hyp-head"><span class="hyp-num">H-01</span><div class="hyp-text">Adversary has compromised a valid domain account (CORP\jsmith) and is performing east-west lateral movement via PsExec ADMIN$ file drop across 10.0.0.0/8.</div></div>
+              <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1570</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
+              <div class="hyp-rationale">CTI references PsExec ADMIN$ drop. TH-2026-038 confirmed 9-host jsmith pivot chain. T1078.002 off-hours auth anomaly scoped as supporting signal, not a separate hypothesis.</div>
             </div>
             <div class="hyp-card" onclick="selHyp(this)">
-              <div class="hyp-head"><span class="hyp-num">H-02</span><div class="hyp-text">Attacker is staging credential harvesting via LSASS access and Kerberoasting to escalate privileges before exfiltration.</div></div>
-              <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1003.001</span><span class="chip chip-red" style="font-size:10px;">T1558.003</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
-              <div class="hyp-rationale">Multiple TGS-REQ events for high-value SPNs. LSASS handle access from non-system processes detected.</div>
+              <div class="hyp-head"><span class="hyp-num">H-02</span><div class="hyp-text">Attacker accessed LSASS memory on WIN-DC01 following lateral movement using a LOLBin with PROCESS_ALL_ACCESS handle to dump credentials.</div></div>
+              <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1003.001</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
+              <div class="hyp-rationale">Sysmon EventCode=10 PROCESS_ALL_ACCESS from non-AV source on Tier-0 DC. SK-029 exclusion list pre-loaded. Follows T1570 kill chain to WIN-DC01.</div>
             </div>
             <div class="hyp-card" onclick="selHyp(this)">
-              <div class="hyp-head"><span class="hyp-num">H-03</span><div class="hyp-text">A C2 implant is beaconing over HTTPS using a Cobalt Strike malleable profile with DNS tunneling as a secondary exfil channel.</div></div>
-              <div class="hyp-meta"><span class="chip chip-indigo" style="font-size:10px;">T1071.001</span><span class="chip chip-indigo" style="font-size:10px;">T1041</span><span class="chip chip-blue" style="font-size:10px;">Medium confidence</span></div>
-              <div class="hyp-rationale">JA3 fingerprints matching CS profiles detected. Anomalous DNS TXT query volumes to external domains.</div>
+              <div class="hyp-head"><span class="hyp-num">H-03</span><div class="hyp-text">Attacker is requesting RC4-encrypted Kerberos service tickets for high-value SPNs to perform offline password cracking post-lateral-movement.</div></div>
+              <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1558.003</span><span class="chip chip-yellow" style="font-size:10px;">Medium confidence</span></div>
+              <div class="hyp-rationale">Prior run (TH-2026-035) showed 22% FP from BackupExec/MSSQLSvc traffic. 147 CMDB SPN exclusions pre-loaded to reduce FP rate below 2%.</div>
+            </div>
+            <div class="hyp-card" onclick="selHyp(this)">
+              <div class="hyp-head"><span class="hyp-num">H-04</span><div class="hyp-text">A C2 implant is beaconing over HTTPS using a Cobalt Strike malleable profile, identified via JA3 fingerprint and regular beacon interval anomaly.</div></div>
+              <div class="hyp-meta"><span class="chip chip-indigo" style="font-size:10px;">T1071.001</span><span class="chip chip-blue" style="font-size:10px;">Medium confidence</span></div>
+              <div class="hyp-rationale">Prior run (TH-2025-091) found zero JA3 hits — net-new cert-chain path added. Short-lived LE certs + non-browser user-agent + regular beacon interval (stdev &lt;5s).</div>
             </div>
             <!-- Custom hypotheses rendered here -->
             <div id="custom-hyp-list"></div>

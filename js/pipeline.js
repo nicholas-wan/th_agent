@@ -5,6 +5,12 @@
    ──────────────────────────────────────────────────────────────────────── */
 // ── Pipeline steps ──
 let maxStep = -1;
+let pipelineLocked = false; // true for closed/archived hunts — setStep is a no-op
+
+// Snapshots of Stage 0 / Stage 1 original content — captured at first load
+let _origTtpTbody      = null;
+let _origStage0InfoBar = '';
+let _origStage1InfoBar = '';
 
 function updateAgentPills(i) {
   const pills = [
@@ -62,11 +68,11 @@ const feedSteps = {
     { type:'relay',  agent:'orch', to:'hyp',  msg:'stand by — loading 14 TTPs from CISA AA24-038A upstream pipeline · pre-load environment topology to scope hypotheses' },
     { type:'relay',  agent:'hyp',  to:'orch', msg:'acknowledged · fetching environment topology now · will have context ready before gather phase begins' },
     { type:'env',    agent:'orch', msg:'get_topology() → 8 network segments · 10.0.0.0/8 scope · 2,412 endpoints · Tier-0 isolation active' },
-    { type:'done',   agent:'orch', msg:'14 TTPs loaded · confidence scored · T1078.002(95%) T1570(87%) T1003.001(82%) · routing to Stage 1',
-      detail:'Advisory signal strength scored across 14 TTPs. Top 3 candidates selected based on confidence score, Tier-0 asset exposure, and prior hunt signal. 3 TTPs flagged for analyst gate review before pipeline advances.' },
+    { type:'done',   agent:'orch', msg:'14 TTPs loaded · confidence scored · T1570(87%) T1003.001(82%) T1558.003(74%) T1071.001(78%) · 4 hypotheses flagged · routing to Stage 1',
+      detail:'Advisory signal strength scored across 14 TTPs. 4 hypotheses selected for this hunt:\n• T1570 — Lateral Tool Transfer (conf 87%)\n• T1003.001 — LSASS Credential Dumping (conf 82%)\n• T1558.003 — Kerberoasting (conf 74%)\n• T1071.001 — C2 Beacon via HTTPS (conf 78%)\nT1078.002 (Valid Accounts, conf 95%) acts as supporting authentication anomaly signal — scoped into T1570 hypothesis, not a separate hunt target.' },
   ],
   1: [
-    { type:'relay',  agent:'orch', to:'hyp',  msg:'begin parallel gather for T1078.002, T1570, T1003.001 · query past hunts, coverage checker, and runbooks simultaneously' },
+    { type:'relay',  agent:'orch', to:'hyp',  msg:'begin parallel gather for T1570, T1003.001, T1558.003, T1071.001 · query past hunts, coverage checker, and runbooks simultaneously' },
     { type:'relay',  agent:'hyp',  to:'orch', msg:'acknowledged · starting parallel gather now · will report back per-TTP as results land' },
     { type:'tool',   agent:'hyp',  msg:'search_hunts("T1078.002") → 3 past hunts retrieved · TH-2026-038 overlaps on jsmith credential abuse' },
     { type:'tool',   agent:'hyp',  msg:'get_hunt("TH-2026-038") → lateral movement confirmed · CORP\\jsmith pivoted 9 hosts · analyst notes loaded' },
@@ -90,8 +96,8 @@ const feedSteps = {
     },
     { type:'relay',  agent:'data', to:'hyp',  msg:'baseline complete · 2.4M events in scope · mean 18,400 ev/hr · DC VLAN (10.0.1.0/24) flagged Tier-0 · 3σ spike threshold set',
       detail:'2,412,087 Kerberos TGS-REQ events over 30 days. Fields mapped: src_user, dest, ticket_encryption_type. Spike threshold = 3σ above per-account daily average. DC VLAN ACL anomaly: 3 workstation IPs accessed DC segment outside maintenance window.' },
-    { type:'reason', agent:'orch', msg:'scope locked: T1078.002 · T1570 · T1003.001 · decision matrix complete · awaiting analyst gate approval',
-      detail:'Decision matrix:\n• T1078.002 — conf 95%, Tier-0 DC exposure, off-hours anomaly → INCLUDE\n• T1570 — conf 87%, confirmed in TH-2026-038 (9 hosts pivoted) → INCLUDE\n• T1003.001 — conf 82%, LSASS pattern follows lateral movement chain → INCLUDE\nExcluded: T1558.003 (22% FP, CMDB filter not yet applied), T1071.001 (clean prior run, no new signal).' },
+    { type:'reason', agent:'orch', msg:'scope locked: 4 hypotheses · Lateral Tool Transfer · LSASS Credential Dumping · Kerberoasting · C2 Beacon via HTTPS · awaiting analyst gate approval',
+      detail:'Decision matrix:\n• T1570 (Lateral Tool Transfer) — conf 87% → INCLUDE · confirmed TH-2026-038 (9-host jsmith pivot), Tier-0 DC reached\n• T1003.001 (LSASS Credential Dumping) — conf 82% → INCLUDE · follows lateral movement to WIN-DC01, SK-029 exclusion list pre-loaded\n• T1558.003 (Kerberoasting) — conf 74% → INCLUDE · 147 CMDB SPN exclusions loaded, RC4 threshold tuned to 15/hr, FP rate drops from 22% → <2%\n• T1071.001 (C2 Beacon via HTTPS) — conf 78% → INCLUDE · net-new cert-chain path not previously hunted, JA3 fingerprint detection available\nT1078.002 (Valid Accounts) — conf 95%, off-hours anomaly → SUPPORTING SIGNAL · merged into T1570 scope (jsmith credential context), not a separate hypothesis' },
   ],
   2: [
     { type:'env',    agent:'hyp',  msg:'get_topology() → 8 segments · 10.0.0.0/8 · 2,412 endpoints verified' },
@@ -101,21 +107,21 @@ const feedSteps = {
     { type:'relay',  agent:'hyp',  to:'ts',   msg:'T1570 confirmed in prior hunt — do you have a recommended host-hop limit for DC-proximity lateral movement hunts? Checking SK-045.' },
     { type:'relay',  agent:'ts',   to:'hyp',  msg:'yes — SK-045 specifies 2-hop threshold for vCenter-adjacent lateral movement · apply single-hop limit for jsmith pivot chain relative to WIN-DC01',
       detail:'SK-045 was validated against 3 prior hunts. The 2-hop threshold eliminates ~65% of noise from legitimate admin tooling while preserving the attack-chain signal. For a Tier-0 DC as the anchor, we typically tighten to 1-hop for the first analytical pass.' },
-    { type:'reason', agent:'hyp',  msg:'🎯 H-01 (T1570): Confirmed · single-hop threshold applied per Tradecraft recommendation · confidence 92%',
-      detail:'jsmith contacted 9 hosts across 2 sessions. Single-hop scope: hosts within 1 network hop of WIN-DC01. Confidence elevated 87% → 92% due to Tier-0 involvement and Tradecraft-validated scope reduction.' },
+    { type:'reason', agent:'hyp',  msg:'🎯 H-01 · Lateral Tool Transfer (T1570): confidence 92% · single-hop threshold applied · jsmith pivot chain confirmed',
+      detail:'jsmith contacted 9 hosts across 2 sessions (TH-2026-038). Single-hop scope: hosts within 1 network hop of WIN-DC01 per SK-045 recommendation. Confidence elevated 87% → 92% due to Tier-0 involvement. T1078.002 (off-hours auth anomaly) scoped in as supporting signal for this hypothesis.' },
     { type:'tool',   agent:'hyp',  msg:'search_hunts("T1003.001") → TH-2026-038 overlaps · LSASS access found post-lateral-movement · SK-029 pattern available' },
-    { type:'reason', agent:'hyp',  msg:'🔴 H-02 (T1003.001): LSASS access expected after lateral movement · SK-029 exclusion list pre-loaded · confidence 82%',
+    { type:'reason', agent:'hyp',  msg:'🔴 H-02 · LSASS Credential Dumping (T1003.001): confidence 82% · SK-029 exclusion list pre-loaded · follows T1570 chain to WIN-DC01',
       detail:'Lateral movement to Tier-0 DC (WIN-DC01) makes credential dumping highly likely as the next step. SK-029 identifies PROCESS_ALL_ACCESS (0x1fffff) handle requests on lsass.exe from non-security-tool processes. Scope: Sysmon EventCode=10 on DC VLAN.' },
     { type:'tool',   agent:'hyp',  msg:'search_hunts("T1558.003") → TH-2026-035 · 22% FP rate · BackupExec + MSSQLSvc SPNs identified' },
     { type:'relay',  agent:'hyp',  to:'orch', msg:'T1558.003 FP rate 22% in prior run — need CMDB SPN exclusion list before I can scope this properly, otherwise signal is noise-dominated' },
     { type:'relay',  agent:'orch', to:'hyp',  msg:'CMDB SPN exclusion list dispatched — 147 entries · BackupExec (svc-backup$) + all MSSQLSvc/* SPNs included' },
-    { type:'reason', agent:'hyp',  msg:'🔔 H-03 (T1558.003): FPs in prior run · 147 SPN exclusions loaded · RC4 threshold tuned to 15/hr · confidence 74%',
+    { type:'reason', agent:'hyp',  msg:'🔔 H-03 · Kerberoasting (T1558.003): confidence 74% · 147 SPN exclusions loaded · RC4 threshold tuned to 15/hr · FP rate <2%',
       detail:'BackupExec and MSSQLSvc SPNs were generating legitimate RC4 TGS-REQs on schedule. With 147 exclusions applied, the residual signal is attributable to targeted kerberoasting. RC4 threshold adjusted 5 → 15 req/hr to absorb scheduled job noise.' },
     { type:'tool',   agent:'hyp',  msg:'search_hunts("T1071.001") → TH-2025-091 · clean run · zero JA3 fingerprint matches in proxy logs' },
-    { type:'reason', agent:'hyp',  msg:'❄️ H-04 (T1071.001): Clean prior run · generating net-new cert-chain hypothesis · confidence 41%',
-      detail:'Rather than repeat the zero-yield JA3 hunt, pivoting to C2 frameworks using Let\'s Encrypt certs with <24hr lifetimes. Anomaly path: short-lived cert + non-browser user-agent + high-frequency beacon interval. Novel path — not previously hunted.' },
-    { type:'relay',  agent:'hyp',  to:'orch', msg:'hypothesis package ready · H-01(92%) H-02(82%) H-03(74%) H-04(41%) · 4 branches resolved · ready for analyst gate',
-      detail:'Package summary:\n• H-01 (T1570): conf 92% · 14-host scope · 1-hop limit · jsmith pivot context\n• H-02 (T1003.001): conf 82% · DC VLAN scope · SK-029 exclusion list pre-loaded\n• H-03 (T1558.003): conf 74% · full endpoint scope · 147 SPN exclusions\n• H-04 (T1071.001): conf 41% · net-new cert-chain path · proxy+DNS sources\nHandoff includes: env context, exclusion lists, branch decisions, TTP mappings.' },
+    { type:'reason', agent:'hyp',  msg:'❄️ H-04 · C2 Beacon via HTTPS (T1071.001): confidence 78% · net-new cert-chain path · JA3 fingerprint detection available',
+      detail:'Prior run (TH-2025-091) found zero JA3 hits — pivoting to a different detection path: short-lived Let\'s Encrypt certs (<24hr lifetime) + non-browser user-agent + regular beacon interval. This path was not previously hunted and covers Cobalt Strike malleable C2 profiles.' },
+    { type:'relay',  agent:'hyp',  to:'orch', msg:'hypothesis package ready · 4 branches resolved · ready for analyst gate',
+      detail:'Package summary:\n• H-01 · Lateral Tool Transfer (T1570): conf 92% · 14-host scope · 1-hop limit · jsmith pivot context\n• H-02 · LSASS Credential Dumping (T1003.001): conf 82% · DC VLAN scope · SK-029 exclusion list pre-loaded\n• H-03 · Kerberoasting (T1558.003): conf 74% · full endpoint scope · 147 SPN exclusions\n• H-04 · C2 Beacon via HTTPS (T1071.001): conf 78% · net-new cert-chain path · proxy+DNS sources\nHandoff includes: env context, exclusion lists, branch decisions, TTP mappings.' },
     { type:'relay',  agent:'orch', to:'ts',   msg:'hypothesis package received and analyst-approved · begin tradecraft analysis · T1570, T1003.001, T1558.003, T1071.001 in scope' },
     { type:'relay',  agent:'ts',   to:'orch', msg:'acknowledged · skill repository pre-loaded for T1570, T1003.001, T1558.003, T1071.001 · beginning RAA analysis now' },
   ],
@@ -137,7 +143,7 @@ const feedSteps = {
     { type:'relay',  agent:'data', to:'ts',   msg:'query complete · 47 process chains scored against 30-day baseline · 3 accounts exceed 3σ spike threshold · raw results attached' },
     { type:'runbook',agent:'ts',   msg:'get_runbook("T1570") → lateral tool transfer · 3 evidence tips loaded · SMB staging + named pipe relay patterns active' },
     { type:'tool',   agent:'ts',   msg:'running process chain analytic · 47 chains cross-referenced against jsmith account activity…' },
-    { type:'reason', agent:'ts',   msg:'59 hits on T1570/T1078.002 — CORP\\jsmith pivoted 14 hosts across 2 sessions',
+    { type:'reason', agent:'ts',   msg:'59 hits on T1570 — CORP\\jsmith pivoted 14 hosts across 2 sessions',
       detail:'Session 1 (23:17–00:43 UTC): 31 events · 8 hosts · SMB share staging via \\ADMIN$\nSession 2 (01:12–01:42 UTC): 28 events · 6 new hosts · named pipe relay (\\pipe\\svcctl)\nWIN-DC01 (Tier-0) and WIN-SQL02 (Tier-1) both touched.' },
     { type:'relay',  agent:'ts',   to:'orch', msg:'⚠ LATERAL MOVEMENT CONFIRMED — CORP\\jsmith pivot chain across 14 hosts including WIN-DC01 (Tier-0) · 59 events · recommend flagging to analyst' },
     { type:'relay',  agent:'orch', to:'ts',   msg:'acknowledged and escalated · continue — run T1003.001 credential access check on WIN-DC01 immediately · this is now the priority branch' },
@@ -160,7 +166,7 @@ const feedSteps = {
     { type:'tool',   agent:'rv',   msg:'scanning 847 deployed Splunk ES rules for LSASS + rundll32 + PROCESS_ALL_ACCESS coverage…' },
     { type:'relay',  agent:'rv',   to:'orch', msg:'checked all 847 rules — no deployed rule covers rundll32→LSASS with PROCESS_ALL_ACCESS · detection gap confirmed · WIN-DC01 is currently blind to this technique' },
     { type:'relay',  agent:'orch', to:'dl',   msg:'critical gap confirmed by Validation · T1003.001 LSASS on WIN-DC01 is priority-1 rule for Detection Logic · escalating ahead of T1053.005 and T1547.001' },
-    { type:'done',   agent:'ts',   msg:'tradecraft complete · T1570 + T1003.001 confirmed findings · T1558.003 + T1071.001 forwarded to Detection Logic',
+    { type:'done',   agent:'ts',   msg:'tradecraft complete · T1570 confirmed · T1003.001 confirmed · T1558.003 forwarded · T1071.001 forwarded to Detection Logic',
       detail:'RAA summary:\n• T1570: 59 confirmed hits · jsmith 14-host pivot chain · PASS TO KEEP\n• T1003.001: 1 critical hit · rundll32 LSASS 0x1fffff on WIN-DC01 · PASS TO KEEP\n• T1558.003: 0 hits above tuned threshold after SPN exclusion · needs rule refinement\n• T1071.001: network-layer technique outside RAA scope · forwarded to Detection Logic for JA3 analysis\nAll 4 hypotheses forwarded to Detection Logic for rule generation.' },
   ],
   4: [
@@ -611,6 +617,7 @@ function playFeedStep(step) {
 }
 
 function setStep(i) {
+  if (pipelineLocked) return; // closed hunt — pipeline is read-only
   const isForward = i > maxStep;
   maxStep = Math.max(maxStep, i);
   for (let j = 0; j < 5; j++) {
@@ -641,3 +648,319 @@ function setStep(i) {
     setTimeout(() => stageTarget.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 }
+
+// ── Reset pipeline state when switching hunts ──
+function resetPipeline() {
+  feedTimers.forEach(clearTimeout);
+  feedTimers = [];
+  maxStep = -1;
+  pipelineLocked = false;
+  // Remove locked class from pipeline
+  const pipelineEl = document.querySelector('.pipeline');
+  if (pipelineEl) pipelineEl.classList.remove('pipeline-locked');
+  clearAgentsFeed();
+  for (let j = 0; j < 5; j++) {
+    const n = document.getElementById('ps' + j);
+    if (n) n.className = 'ps-node ' + (j === 0 ? 'curr' : 'wait');
+    if (j < 4) {
+      const l = document.getElementById('pl' + j);
+      if (l) l.className = 'ps-line';
+    }
+    const s = document.getElementById('stage-' + j);
+    if (s) s.className = 'stage card' + (j === 0 ? ' show' : '');
+  }
+  updateAgentPills(0);
+  const stageEl = document.getElementById('lhc-stage');
+  if (stageEl) stageEl.textContent = 'Learn · Select Intel';
+  const hypEl = document.getElementById('lhc-hyp');
+  if (hypEl) { hypEl.textContent = '—'; hypEl.style.color = 'var(--muted)'; }
+  const pastCard = document.getElementById('learn-past-card');
+  if (pastCard) pastCard.style.display = 'none';
+  const feedStatus = document.getElementById('feed-status');
+  if (feedStatus) feedStatus.textContent = 'idle';
+
+  // Restore Stage 0 + Stage 1 DOM that loadClosedPipeline may have mutated
+  // Re-show any elements that were hidden (marked with data-archived-hidden)
+  document.querySelectorAll('[data-archived-hidden]').forEach(el => {
+    el.removeAttribute('data-archived-hidden');
+    el.style.display = '';
+  });
+  // Re-render repo list to restore interactive card list
+  if (typeof renderRepo === 'function' && typeof repoData !== 'undefined') renderRepo(repoData);
+  // Restore original TTP table rows
+  const ttpTb = document.getElementById('ttp-tbody');
+  if (ttpTb && _origTtpTbody) ttpTb.innerHTML = _origTtpTbody;
+  // Restore Stage 0 info-bar
+  const s0ib = document.querySelector('#stage-0 .info-bar');
+  if (s0ib && _origStage0InfoBar) s0ib.innerHTML = _origStage0InfoBar;
+  // Restore Stage 1 info-bar
+  const s1ib = document.querySelector('#stage-1 .info-bar');
+  if (s1ib && _origStage1InfoBar) s1ib.innerHTML = _origStage1InfoBar;
+  // Reset repo-loaded-badge
+  const badge = document.getElementById('repo-loaded-badge');
+  if (badge) badge.style.display = 'none';
+  const s0sum = document.getElementById('stage-0-summary-text');
+  if (s0sum) s0sum.innerHTML = '<span style="color:var(--muted);font-style:italic;">No report selected — expand to browse</span>';
+}
+
+// ── Pre-baked feed archives for closed hunts ──
+const closedHuntFeeds = {
+  '040': [
+    { sep: 'Select Intel' },
+    { type:'tool',   agent:'orch', msg:'pipeline initialised for TH-2026-040 · FS-ISAC TLP:AMBER FIN7 advisory · 9 TTPs queued · Finance segment scope' },
+    { type:'tool',   agent:'data', msg:'connected to Splunk ES · 4 indices confirmed · security(90d) wineventlog(30d) sysmon(7d) · CIM normalised · ready' },
+    { sep: 'TTP Extraction' },
+    { type:'reason', agent:'hyp',  msg:'9 TTPs extracted from FS-ISAC advisory · scored by confidence + kill chain position + coverage gap',
+      detail:'Confidence scores:\n• T1566.001 — 88% (TA577 IOC match, prior hunt TH-2025-088)\n• T1490 — 85% (FIN7 TTPs consistently include pre-encryption staging)\n• T1204 — 84% (dependent on T1566.001 delivery succeeding)\n• T1486 — 79% (post-staging, requires T1490 to precede)\n• T1574.002 — 76% (persistence mechanism, lower urgency)\n• T1003.001, T1071.001, T1547.001, T1053.005 — 55–68% · existing live rules cover these' },
+    { type:'tool',   agent:'data', msg:'Finance segment baseline complete · 1.2M events in scope · spike threshold set · EventCode=4688, 7, 1 indexed' },
+    { type:'reason', agent:'orch', msg:'scope decision: 2 of 9 TTPs selected for hypothesis generation — T1566.001 + T1490',
+      detail:'Selection rationale:\n• T1566.001 (Phishing macro): confidence 88% · initial access vector — foundational, all downstream TTPs depend on this succeeding · TA577 IOC confirmed by FS-ISAC · no prior Finance-scoped detection rule\n• T1490 (Shadow copy deletion): confidence 85% · no existing detection rule · critical business impact (Finance file server = payroll data) · FIN7 kill chain signature — if T1566.001 lands, T1490 is the next high-value hunt target\n\nDeferred from scope:\n• T1204 — covered within T1566.001 hypothesis (same delivery chain)\n• T1486 — post-staging; detection value requires T1490 confirmation first\n• T1574.002 — low signal; no sideloading incidents in Finance baseline\n• T1003.001, T1071.001, T1547.001, T1053.005 — existing live rules active · no coverage gap' },
+    { sep: 'Hypotheses' },
+    { type:'reason', agent:'hyp',  msg:'🎯 H-01 (T1566.001): phishing macro delivery · confidence 88% · initial access vector · TA577 IOC confirmed',
+      detail:'Prior hunt TH-2025-088 confirmed TA577 attribution in Finance segment. Office macro execution chain (vba→cmd→rundll32) is the expected delivery vector per FS-ISAC indicators. Scope: Finance segment endpoints, EventCode=4688 with Office parent process.' },
+    { type:'reason', agent:'hyp',  msg:'🔴 H-02 (T1490): ransomware pre-staging · confidence 85% · no detection rule · critical business impact',
+      detail:'FIN7 consistently deletes Volume Shadow Copies before deploying ransomware payload. No existing rule covers this on Finance file servers. Payroll data at risk if T1566.001 hypothesis is confirmed. Scope: WIN-FS02 + Finance file servers, vssadmin.exe with delete shadows /all args.' },
+    { type:'relay',  agent:'orch', to:'ts',  msg:'2 hypotheses analyst-approved · T1566.001 (delivery) + T1490 (staging) · begin tradecraft analysis' },
+    { sep: 'Tradecraft' },
+    { type:'reason', agent:'ts',   msg:'T1566.001 macro chain confirmed · WIN-WS012 · vba→cmd→rundll32.exe parent chain · 12 process chain hits across 3 hosts' },
+    { type:'warn',   agent:'ts',   msg:'🔴 T1490 CRITICAL — vssadmin delete shadows /all on WIN-FS02 at 14:22 UTC · anomaly score 97 · ransomware staging confirmed',
+      detail:'vssadmin.exe executed with full shadow deletion args from DISM.exe parent (sideloaded). Score 97. Followed by Cipher.exe activity on \\payroll$ share at 14:25. Recommend immediate isolation of WIN-FS02.' },
+    { type:'relay',  agent:'orch', to:'ts',  msg:'WIN-FS02 isolation escalated to analyst · continue to detection logic' },
+    { sep: 'Detection Logic' },
+    { type:'tool',   agent:'dl',   msg:'generating 5 SPL rules · T1566.001, T1204, T1574.002, T1486, T1490 · Finance segment scope · SCCM exclusions applied' },
+    { type:'relay',  agent:'dl',   to:'rv',  msg:'validate all 5 rules · DL-2026-040-001 through 005 · FP targets: < 3% each' },
+    { type:'relay',  agent:'rv',   to:'dl',  msg:'all 5 PASS · 001(T1566.001 FP 2.1%) · 002(T1490 FP 0.3%) · 003(T1204 FP 1.8%) · 004(T1574.002 FP 2.4%) · 005(T1486 FP 0.6%)' },
+    { type:'done',   agent:'dl',   msg:'5 rules deployed to Splunk ES · hunt TH-2026-040 archived · 2 hypotheses confirmed · 6 findings documented',
+      detail:'Deployment summary:\n• DL-2026-040-001 (T1566.001 — Office macro exec): PASS · FP 2.1% · severity HIGH\n• DL-2026-040-002 (T1490 — vssadmin shadow deletion): PASS · FP 0.3% · severity CRITICAL\n• DL-2026-040-003 (T1204 — user execution macro): PASS · FP 1.8% · severity HIGH\n• DL-2026-040-004 (T1574.002 — DISM sideload): PASS · FP 2.4% · severity HIGH\n• DL-2026-040-005 (T1486 — file encryption pattern): PASS · FP 0.6% · severity CRITICAL' },
+  ],
+  '039': [
+    { sep: 'Select Intel' },
+    { type:'tool',   agent:'orch', msg:'pipeline initialised for TH-2026-039 · CISA Supply Chain Advisory · 7 TTPs queued · DevOps pipeline + all endpoints scope' },
+    { type:'tool',   agent:'data', msg:'connected to Splunk ES · 4 indices confirmed · sysmon(7d) wineventlog(30d) network(14d) · artefact registry hash list loaded · ready' },
+    { sep: 'TTP Extraction' },
+    { type:'reason', agent:'hyp',  msg:'7 TTPs extracted from CISA advisory · scored by confidence + coverage gap + blast-radius impact',
+      detail:'Confidence scores:\n• T1195.002 — 84% (SolarWinds-pattern match, binary signing absent on CI/CD)\n• T1071.001 — 71% (Cobalt Strike malleable profile indicators in advisory)\n• T1574.002 — 68% (DLL sideloading common in supply chain implants)\n• T1053.005 — 65% (scheduled task persistence, 1 existing rule)\n• T1041 — 55% (post-C2 stage, low signal without C2 confirmed)\n• T1547.001 — 58% (registry persistence, existing rule active)\n• T1566.001 — 52% (phishing possible but low signal in DevOps context)' },
+    { type:'tool',   agent:'data', msg:'DevOps segment + all endpoints baseline complete · 870K events in scope · artefact registry cross-reference ready' },
+    { type:'reason', agent:'orch', msg:'scope decision: 2 of 7 TTPs selected for hypothesis generation — T1195.002 + T1071.001',
+      detail:'Selection rationale:\n• T1195.002 (Supply chain compromise): confidence 84% · root cause — if the build artifact is trojanised, all downstream TTPs follow from it · no prior hunt or active detection rule · widest blast radius (10+ downstream hosts)\n• T1071.001 (C2 via HTTPS): confidence 71% · most dangerous active threat once implant is deployed · JA3 fingerprint detection path available (Cobalt Strike malleable profile) · if confirmed, enables immediate containment before lateral movement\n\nDeferred from scope:\n• T1574.002 — downstream of T1195.002; will be covered within blast-radius scope of H-01\n• T1053.005 — existing rule active; no coverage gap\n• T1041 — post-C2 stage; requires H-02 (T1071.001) confirmation first\n• T1547.001 — existing rule active; no coverage gap\n• T1566.001 — active rule + low signal in DevOps segment baseline' },
+    { sep: 'Hypotheses' },
+    { type:'reason', agent:'hyp',  msg:'🎯 H-01 (T1195.002): trojanised build artifact on SRV-BUILD01 · confidence 84% · root cause · no existing rule',
+      detail:'CI/CD pipeline has no binary signing enforcement. Unsigned binary introduced into build output propagates to all downstream hosts pulling from SRV-BUILD01. Detection: Sysmon file-creation events on SRV-BUILD01 cross-referenced against artefact registry hashes. Scope: SRV-BUILD01 + all hosts in DevOps segment.' },
+    { type:'reason', agent:'hyp',  msg:'🔴 H-02 (T1071.001): Cobalt Strike C2 via HTTPS · confidence 71% · JA3 detection path · active threat if H-01 confirmed',
+      detail:'If SRV-BUILD01 is compromised, an implant establishes C2 via HTTPS using a Cobalt Strike Malleable profile. JA3 fingerprinting on outbound HTTPS from SRV-BUILD01 is the primary detection path. Short-lived Let\'s Encrypt cert + non-browser UA + 60s beacon interval are the anomaly indicators.' },
+    { type:'relay',  agent:'orch', to:'ts',  msg:'2 hypotheses analyst-approved · T1195.002 (root cause) + T1071.001 (active C2) · begin tradecraft analysis' },
+    { sep: 'Tradecraft' },
+    { type:'reason', agent:'ts',   msg:'T1195.002 confirmed · unsigned binary introduced Apr 10 on SRV-BUILD01 · SHA-256 mismatch vs artefact registry · 8 process chain hits' },
+    { type:'warn',   agent:'ts',   msg:'🔴 T1071.001 CRITICAL — Cobalt Strike C2 confirmed · JA3 match to update.cdn-cache[.]net · beacon 60s · implant active since Apr 10',
+      detail:'JA3 fingerprint 769c10b0 matches Cobalt Strike malleable profile. Beacon interval 60.0 ± 0.3s to update.cdn-cache[.]net:443. Session active since Apr 10 — same day as trojanised binary introduction. 10 downstream hosts at risk.' },
+    { type:'relay',  agent:'orch', to:'ts',  msg:'SRV-BUILD01 isolation escalated to analyst · continue to detection logic' },
+    { sep: 'Detection Logic' },
+    { type:'tool',   agent:'dl',   msg:'generating 4 SPL rules · T1195.002, T1574.002, T1071.001, T1053.005 · build server + endpoint scope · signed-binary exclusions applied' },
+    { type:'relay',  agent:'dl',   to:'rv',  msg:'validate all 4 rules · DL-2026-039-001 through 004 · FP targets: < 2% each' },
+    { type:'relay',  agent:'rv',   to:'dl',  msg:'all 4 PASS · 001(T1195.002 FP 0.8%) · 002(T1574.002 FP 1.2%) · 003(T1071.001 FP 0.3%) · 004(T1053.005 FP 1.6%)' },
+    { type:'done',   agent:'dl',   msg:'4 rules deployed to Splunk ES · hunt TH-2026-039 archived · 2 hypotheses confirmed · 5 findings documented',
+      detail:'Deployment summary:\n• DL-2026-039-001 (T1195.002 — unsigned build artifact): PASS · FP 0.8% · severity CRITICAL\n• DL-2026-039-002 (T1574.002 — DLL sideloading): PASS · FP 1.2% · severity HIGH\n• DL-2026-039-003 (T1071.001 — CS C2 JA3 beacon): PASS · FP 0.3% · severity CRITICAL\n• DL-2026-039-004 (T1053.005 — scheduled task persistence): PASS · FP 1.6% · severity HIGH' },
+  ],
+};
+
+// ── Per-hunt Learn stage data for closed hunts ──
+const closedLearnData = {
+  '040': {
+    reportIcon: '📊', reportTitle: 'FS-ISAC TLP:AMBER — FIN7 Ransomware Precursor Activity',
+    reportSource: 'FS-ISAC Sharing Platform', reportDate: 'Apr 24, 2026',
+    prioritized: new Set(['T1566.001','T1490']),
+    ttps: [
+      { id:'T1566.001', name:'Phishing: Spearphishing Attachment', tactic:'Initial Access',   tc:'chip-red',    ph:1, rules:'1 live', reason:'Initial access vector · TA577 IOC confirmed · foundational to kill chain' },
+      { id:'T1490',     name:'Inhibit System Recovery',            tactic:'Impact',           tc:'chip-red',    ph:0, rules:'none',   reason:'No detection rule · critical business impact · FIN7 ransomware staging signature' },
+      { id:'T1204',     name:'User Execution: Malicious File',     tactic:'Execution',        tc:'chip-indigo', ph:1, rules:'1 live'  },
+      { id:'T1486',     name:'Data Encrypted for Impact',          tactic:'Impact',           tc:'chip-red',    ph:0, rules:'none'    },
+      { id:'T1574.002', name:'DLL Side-Loading',                   tactic:'Def. Evasion',     tc:'chip-yellow', ph:1, rules:'none'    },
+      { id:'T1003.001', name:'OS Credential Dumping: LSASS',       tactic:'Cred. Access',     tc:'chip-red',    ph:2, rules:'1 live'  },
+      { id:'T1071.001', name:'Web Protocols C2',                   tactic:'C&amp;C',          tc:'chip-indigo', ph:3, rules:'1 live'  },
+      { id:'T1547.001', name:'Registry Run Keys / Startup Folder', tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
+      { id:'T1053.005', name:'Scheduled Task/Job: Sched. Task',    tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
+    ],
+  },
+  '039': {
+    reportIcon: '🏭', reportTitle: 'CISA Advisory — Supply Chain Compromise (SolarWinds-Pattern)',
+    reportSource: 'CISA', reportDate: 'Apr 14, 2026',
+    prioritized: new Set(['T1195.002','T1071.001']),
+    ttps: [
+      { id:'T1195.002', name:'Supply Chain Compromise: Software',  tactic:'Initial Access',   tc:'chip-red',    ph:0, rules:'none',   reason:'Root cause · no prior hunt or rule · entire build pipeline exposed' },
+      { id:'T1071.001', name:'Web Protocols C2',                   tactic:'C&amp;C',          tc:'chip-indigo', ph:3, rules:'1 live',  reason:'Active C2 indicator · JA3 detection path available · highest immediate risk' },
+      { id:'T1574.002', name:'DLL Side-Loading',                   tactic:'Def. Evasion',     tc:'chip-yellow', ph:1, rules:'none'    },
+      { id:'T1053.005', name:'Scheduled Task/Job: Sched. Task',    tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
+      { id:'T1041',     name:'Exfiltration over C2 Channel',       tactic:'Exfiltration',     tc:'chip-red',    ph:0, rules:'none'    },
+      { id:'T1547.001', name:'Registry Run Keys / Startup Folder', tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
+      { id:'T1566.001', name:'Phishing: Spearphishing Attachment', tactic:'Initial Access',   tc:'chip-red',    ph:1, rules:'1 live'  },
+    ],
+  },
+};
+
+// ── Load pre-baked pipeline state for closed/archived hunts ──
+function loadClosedPipeline(huntId, keepId) {
+  const cm = (typeof checkHuntMeta !== 'undefined') ? checkHuntMeta[keepId] : null;
+
+  // Update Learn Hunt Context strip
+  const lhcHunt  = document.getElementById('lhc-hunt');
+  const lhcCti   = document.getElementById('lhc-cti');
+  const lhcTtps  = document.getElementById('lhc-ttps');
+  const lhcHyp   = document.getElementById('lhc-hyp');
+  const lhcStage = document.getElementById('lhc-stage');
+  if (lhcHunt)  lhcHunt.textContent  = huntId;
+  if (lhcCti)   lhcCti.textContent   = cm ? cm.cti : '';
+  if (lhcTtps)  lhcTtps.textContent  = cm ? cm.ttpCount : '';
+  if (lhcHyp)   { lhcHyp.textContent = '2 confirmed'; lhcHyp.style.color = ''; }
+  if (lhcStage) lhcStage.textContent = 'Learn · Detection';
+
+  // Show context panel + agents card
+  const ctxPanel  = document.getElementById('learn-hunt-context');
+  const agentCard = document.getElementById('learn-agents-card');
+  if (ctxPanel)  ctxPanel.style.display  = '';
+  if (agentCard) agentCard.style.display = '';
+
+  // Update stage1-report-chips
+  const chips = document.getElementById('stage1-report-chips');
+  if (chips && cm) {
+    const parts      = cm.ttpCount.split(' · ');
+    const extracted  = parts[0] || cm.ttpCount;
+    const prioritized = parts[1] || '';
+    chips.innerHTML  = `<span class="chip chip-blue">${extracted}</span>`
+                     + (prioritized ? `<span class="chip chip-indigo">${prioritized}</span>` : '')
+                     + `<span class="chip chip-indigo">ATT&amp;CK v14</span>`;
+  }
+
+  // Advance pipeline bar to fully completed state (silent — no streaming)
+  maxStep = 4;
+  for (let j = 0; j < 5; j++) {
+    const n = document.getElementById('ps' + j);
+    if (n) n.className = 'ps-node done';
+    if (j < 4) {
+      const l = document.getElementById('pl' + j);
+      if (l) l.className = 'ps-line done';
+    }
+    const s = document.getElementById('stage-' + j);
+    if (s) s.className = 'stage card show';
+  }
+  updateAgentPills(4);
+  for (let i = 0; i < 5; i++) _setAgentProgStep(i, 'done');
+  ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'done'));
+
+  // Show past hunts card
+  const pastCard = document.getElementById('learn-past-card');
+  if (pastCard) pastCard.style.display = '';
+
+  // Feed status
+  const feedStatus = document.getElementById('feed-status');
+  if (feedStatus) feedStatus.textContent = 'archived';
+  const dot      = document.getElementById('agents-feed-dot');
+  const agStatus = document.getElementById('agents-feed-status');
+  if (dot)      dot.style.opacity     = '0.35';
+  if (agStatus) agStatus.textContent  = 'archived · ' + huntId;
+
+  // Populate feed with pre-baked entries (no typewriter)
+  const entries = closedHuntFeeds[keepId] || [];
+  entries.forEach(e => {
+    if (e.sep) feedAddBlockSep(e.sep);
+    else feedAddBlock(e, false);
+  });
+
+  // Approximate token count for visual consistency
+  const tokEl = document.getElementById('feed-token-count');
+  if (tokEl) {
+    tokEl.style.display = '';
+    tokEl.textContent = keepId === '040' ? '~8,400 tok' : '~7,100 tok';
+  }
+
+  // ── Lock pipeline stepper ──
+  pipelineLocked = true;
+  const pipelineEl = document.querySelector('.pipeline');
+  if (pipelineEl) pipelineEl.classList.add('pipeline-locked');
+
+  // ── Stage 0: archived report card ──
+  const ld = closedLearnData[keepId];
+  if (ld) {
+    // Summary bar
+    const s0sum = document.getElementById('stage-0-summary-text');
+    if (s0sum) s0sum.innerHTML = `${ld.reportIcon} <b>${ld.reportTitle}</b> · <span style="color:var(--green);font-weight:600;">${ld.ttps.length} TTPs</span> · ${ld.reportSource}`;
+
+    // Replace info-bar with archived notice, hide search, replace repo list
+    const s0body = document.querySelector('#stage-0 .card-body');
+    if (s0body) {
+      // Archived notice replaces the old info-bar
+      const oldInfoBar = s0body.querySelector('.info-bar');
+      if (oldInfoBar) oldInfoBar.innerHTML = `<span class="ib-icon">🔒</span><span>This hunt is <b>closed and archived</b>. The intelligence report and TTP selection are locked. View the <b>Keep</b> tab for the final hunt record.</span>`;
+
+      // Hide repo search (marked for restoration)
+      const srchWrap = s0body.querySelector('.repo-search-wrap');
+      if (srchWrap) { srchWrap.setAttribute('data-archived-hidden', '1'); srchWrap.style.display = 'none'; }
+
+      // Replace repo list with a single archived report card
+      const repoList = document.getElementById('repo-list');
+      if (repoList) {
+        repoList.innerHTML = `
+          <div class="repo-archived-card">
+            <div class="rac-icon">${ld.reportIcon}</div>
+            <div class="rac-info">
+              <div class="rac-title">${ld.reportTitle}</div>
+              <div class="rac-meta">
+                <span>${ld.reportSource}</span>
+                <span style="color:var(--border2);">·</span>
+                <span>${ld.ttps.length} TTPs extracted</span>
+                <span style="color:var(--border2);">·</span>
+                <span>${ld.reportDate}</span>
+              </div>
+            </div>
+            <span class="chip chip-green" style="flex-shrink:0;">✓ Archived</span>
+          </div>`;
+      }
+
+      // Hide the "Start with custom TTPs" footer row (marked for restoration)
+      const customFooter = s0body.querySelector('div[style*="border-top"]');
+      if (customFooter) { customFooter.setAttribute('data-archived-hidden', '1'); customFooter.style.display = 'none'; }
+    }
+  }
+
+  // ── Stage 1: per-hunt TTP table with prioritized rows highlighted ──
+  if (ld) {
+    const tbody = document.getElementById('ttp-tbody');
+    if (tbody) {
+      const phColor = n => n >= 2 ? 'var(--green)' : n === 1 ? 'var(--yellow)' : 'var(--muted)';
+      tbody.innerHTML = ld.ttps.map(t => {
+        const isPri = ld.prioritized.has(t.id);
+        const idCell = isPri
+          ? `<td class="ttp-id">${t.id}<span class="ttp-pri-badge">🎯 Selected</span></td>`
+          : `<td class="ttp-id">${t.id}</td>`;
+        const nameCell = isPri && t.reason
+          ? `<td>${t.name}<br><span style="font-size:10px;color:var(--blue);margin-top:2px;display:block;">${t.reason}</span></td>`
+          : `<td>${t.name}</td>`;
+        return `<tr class="${isPri ? 'ttp-row-prioritized' : ''}">
+          ${idCell}
+          ${nameCell}
+          <td><span class="chip ${t.tc}">${t.tactic}</span></td>
+          <td style="font-size:11px;color:${phColor(t.ph)};font-weight:600;">${t.ph || 0}</td>
+          <td style="font-size:11px;color:${t.rules === 'none' ? 'var(--muted)' : 'var(--green)'};font-weight:600;">${t.rules}</td>
+          <td>—</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Hide custom TTP add form (marked for restoration)
+    const customWrap = document.getElementById('custom-ttp-wrap');
+    if (customWrap) { customWrap.setAttribute('data-archived-hidden', '1'); customWrap.style.display = 'none'; }
+
+    // Update the Stage 1 info-bar to reflect archived state
+    const s1InfoBar = document.querySelector('#stage-1 .info-bar');
+    if (s1InfoBar) s1InfoBar.innerHTML = `<span class="ib-icon">🔒</span><span>TTPs were extracted and prioritized during this hunt. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. This view is read-only — see the <b>Keep</b> tab for the full hunt record.</span>`;
+  }
+}
+
+// ── Capture original Stage 0 / Stage 1 content for restoration on hunt switch ──
+;(function() {
+  const tb   = document.getElementById('ttp-tbody');
+  const s0ib = document.querySelector('#stage-0 .info-bar');
+  const s1ib = document.querySelector('#stage-1 .info-bar');
+  if (tb)   _origTtpTbody      = tb.innerHTML;
+  if (s0ib) _origStage0InfoBar = s0ib.innerHTML;
+  if (s1ib) _origStage1InfoBar = s1ib.innerHTML;
+})();

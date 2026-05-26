@@ -59,24 +59,24 @@ function goSubTab(name, el) {
 const checkHuntMeta = {
   '041': {
     cti: 'CISA AA24-038A — Volt Typhoon',
-    ttpCount: '14 TTPs',
+    ttpCount: '14 extracted · 4 prioritized',
     hypCount: '4 hypotheses under test',
     statusClass: 'chip-red', statusText: 'Volt Typhoon · Active',
     active: true,
   },
   '040': {
-    cti: 'FBI-IC3 Alert — FIN7 BEC',
-    ttpCount: '9 TTPs', hypCount: 'Hunt closed — 2 hypotheses archived',
+    cti: 'FS-ISAC TLP:AMBER — FIN7 Ransomware',
+    ttpCount: '9 extracted · 2 prioritized', hypCount: 'Hunt closed — 2 hypotheses confirmed',
     statusClass: 'chip-green', statusText: 'FIN7 Ransomware · Closed',
     active: false,
-    closedMsg: 'This hunt closed on 2026-03-14. Detection queries and final results are archived in the <b>Keep</b> tab.',
+    closedMsg: 'This hunt closed on 2026-04-24. Detection queries and final results are archived in the <b>Keep</b> tab.',
   },
   '039': {
     cti: 'CISA Supply Chain Advisory',
-    ttpCount: '7 TTPs', hypCount: 'Hunt closed — 2 hypotheses archived',
+    ttpCount: '7 extracted · 2 prioritized', hypCount: 'Hunt closed — 2 hypotheses confirmed',
     statusClass: 'chip-green', statusText: 'Supply Chain · Closed',
     active: false,
-    closedMsg: 'This hunt closed on 2026-02-28. Detection queries and final results are archived in the <b>Keep</b> tab.',
+    closedMsg: 'This hunt closed on 2026-04-14. Detection queries and final results are archived in the <b>Keep</b> tab.',
   },
   '038': {
     cti: 'Internal Intel — DNS Tunneling',
@@ -184,6 +184,8 @@ function switchSubhunt(id) {
   if (keepId) {
     renderGeneratedRulesCard();
     renderKeepHunt(keepId);
+    if (typeof renderHuntObserve === 'function') renderHuntObserve(keepId);
+    if (typeof renderRAAResults === 'function') renderRAAResults();
   }
 }
 
@@ -210,6 +212,8 @@ function openHunt(id) {
   if (activeItem) activeItem.classList.add('hsw-active');
   // Navigate to hunt-detail pane, highlight Hunts nav tab (hunt-detail is a sub-view of Hunts)
   goTab('hunt-detail', document.querySelector('.nav-tab'));
+  // Reset pipeline bar + feed to clean state before populating for this hunt
+  if (typeof resetPipeline === 'function') resetPipeline();
   // Render observe data for this hunt
   const keepId = id.replace('TH-2026-', '');
   renderHuntObserve(keepId);
@@ -224,6 +228,10 @@ function openHunt(id) {
   switchKeepHunt(keepId);
   // Reset Check sub-pane for the new hunt
   resetCheckForHunt(id);
+  // For closed hunts — populate Learn pipeline with pre-baked archived state
+  if (m.status && m.status.includes('Closed') && typeof loadClosedPipeline === 'function') {
+    loadClosedPipeline(id, keepId);
+  }
 }
 
 // ── Mobile nav ──
@@ -304,7 +312,7 @@ function selectReport(id) {
     if (s0sum) s0sum.innerHTML = `${r.icon} <b>${r.title}</b> · <span style="color:var(--green);font-weight:600;">${r.ttps} TTPs</span> · ${r.source}`;
     document.getElementById('lhc-hunt').textContent = 'TH-2026-041';
     document.getElementById('lhc-cti').textContent = r.title.replace(/^[^ ]+ /, '');
-    document.getElementById('lhc-ttps').textContent = r.ttps + ' extracted';
+    document.getElementById('lhc-ttps').textContent = r.id === 'r1' ? '14 extracted · 4 prioritized' : r.ttps + ' extracted';
     document.getElementById('lhc-hyp').textContent = '—';
     document.getElementById('lhc-hyp').style.color = 'var(--muted)';
     document.getElementById('lhc-stage').textContent = 'Learn · Select Intel';

@@ -1747,3 +1747,27 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .gn-malware { fill:rgba(239,68,68,.18);stroke:#ef4444;stroke-width:2;stroke-dasharray:3 2; }
 .ge-normal   { stroke:var(--border2);stroke-width:1.2;fill:none; }
 .ge-critical { stroke:#ef4444;stroke-width:1.8;fill:none;stroke-dasharray:4 2; }
+
+/* ══════════════════════════════════════
+   CLOSED HUNT — LEARN TAB ARCHIVED STATE
+   ══════════════════════════════════════ */
+
+/* Lock pipeline stepper nodes — no interaction */
+.pipeline.pipeline-locked .ps-node { pointer-events:none; cursor:default; }
+
+/* Prioritized TTP row highlight */
+.ttp-row-prioritized { background:rgba(59,130,246,.05) !important; }
+.ttp-row-prioritized td:first-child { border-left:2px solid var(--blue); padding-left:10px; }
+.ttp-row-prioritized .ttp-id { color:var(--blue) !important; font-weight:700; }
+.ttp-pri-badge { display:inline-block; font-size:9px; font-weight:600; background:rgba(59,130,246,.14); color:var(--blue); border:1px solid rgba(59,130,246,.28); border-radius:3px; padding:1px 5px; margin-left:5px; vertical-align:middle; white-space:nowrap; }
+
+/* Archived report card in Stage 0 */
+.repo-archived-card { display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(16,185,129,.06); border:1px solid rgba(16,185,129,.25); border-radius:var(--radius); }
+.repo-archived-card .rac-icon { font-size:22px; flex-shrink:0; }
+.repo-archived-card .rac-info { flex:1; min-width:0; }
+.repo-archived-card .rac-title { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.repo-archived-card .rac-meta { font-size:11px; color:var(--sub); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap; }
+
+/* Archived notice banner */
+.learn-archived-notice { display:flex; align-items:center; gap:8px; padding:9px 13px; background:rgba(16,185,129,.05); border:1px solid rgba(16,185,129,.2); border-radius:var(--radius-sm); font-size:11px; color:var(--sub); margin-bottom:4px; }
+.learn-archived-notice .lan-icon { font-size:13px; flex-shrink:0; }
