@@ -806,3 +806,4 @@ function renderNotes() {
 
 // ── Init ──
 renderKeepHunt('041');
+renderHuntPivot('041');
