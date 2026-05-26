@@ -301,7 +301,6 @@ const huntNotes = {
   ],
 };
 let activeKeepHunt = '041';
-let activeKeepTTP   = 'all';
 let activeTimelineView = 'list';
 
 function toggleCollapse(cardId, e) {
@@ -377,8 +376,6 @@ function ttpShortName(id) {
 function renderKeepHunt(id) {
   const d = keepData[id];
   if (!d) return;
-  // Reset TTP filter when switching hunts
-  activeKeepTTP = 'all';
 
   // Creator strip
   const creator = users[d.createdBy];
@@ -427,8 +424,6 @@ function renderKeepHunt(id) {
     }
   }
 
-  // Build TTP selector then render filtered views
-  renderTTPSelector(scopedD);
   renderKeepFindings(scopedD);
   renderKeepTimeline(scopedD);
   renderGateDecisionLog(id);
@@ -554,93 +549,23 @@ function renderGateDecisionLog(huntId) {
 }
 
 
-function renderTTPSelector(d) {
-  const card = document.getElementById('keep-ttp-card');
-  const pillsEl = document.getElementById('keep-ttp-pills');
-  if (!card || !pillsEl) return;
-
-  // Gather unique TTPs from findings, preserving order of first appearance
-  const seen = new Map(); // ttpId -> { count, worstSev }
-  const sevRank = { c:3, h:2, m:1 };
-  d.findings.forEach(f => {
-    const id = extractTTP(f.meta);
-    if (!id) return;
-    if (!seen.has(id)) seen.set(id, { count:0, worstSev:'m' });
-    const entry = seen.get(id);
-    entry.count++;
-    if ((sevRank[f.sev]||0) > (sevRank[entry.worstSev]||0)) entry.worstSev = f.sev;
-  });
-
-  if (!seen.size) { card.style.display = 'none'; return; }
-  card.style.display = '';
-
-  // "All TTPs" pill
-  let html = `<span class="tsp tsp-all ${activeKeepTTP==='all'?'tsp-on':''}" onclick="selectKeepTTP('all')">
-    All TTPs
-    <span class="tsp-badge">${d.findings.length}</span>
-  </span>`;
-
-  seen.forEach((entry, ttpId) => {
-    const name = ttpShortName(ttpId);
-    const isOn = activeKeepTTP === ttpId;
-    html += `<span class="tsp ${isOn?'tsp-on':''}" onclick="selectKeepTTP('${ttpId}')">
-      <span class="tsp-dot ${entry.worstSev}"></span>
-      <span class="tsp-id">${ttpId}</span>
-      ${name ? `<span class="tsp-name">${name}</span>` : ''}
-      <span class="tsp-badge">${entry.count}</span>
-    </span>`;
-  });
-
-  pillsEl.innerHTML = html;
-}
-
-function selectKeepTTP(ttpId) {
-  activeKeepTTP = ttpId;
-  const d = keepData[activeKeepHunt];
-  if (!d) return;
-  // Update pills active state
-  document.querySelectorAll('.tsp').forEach(el => el.classList.remove('tsp-on'));
-  const target = [...document.querySelectorAll('.tsp')].find(el =>
-    el.onclick?.toString().includes(`'${ttpId}'`)
-  );
-  if (target) target.classList.add('tsp-on');
-  // Update header label
-  const lbl = document.getElementById('keep-ttp-scope-label');
-  if (lbl) lbl.innerHTML = ttpId === 'all'
-    ? '<b>All TTPs</b>'
-    : `<b>${ttpId}</b>${ttpShortName(ttpId) ? ' — ' + ttpShortName(ttpId) : ''}`;
-  renderKeepFindings(d);
-  renderKeepTimeline(d);
-  renderHuntReport(activeKeepHunt);
-}
 
 function renderKeepFindings(d) {
-  const filtered = activeKeepTTP === 'all'
-    ? d.findings
-    : d.findings.filter(f => extractTTP(f.meta) === activeKeepTTP);
+  const filtered = d.findings;
 
   const crits = filtered.filter(f => f.sev === 'c').length;
   const highs = filtered.filter(f => f.sev === 'h').length;
 
-  // Title + chips
-  const titleSuffix = activeKeepTTP === 'all' ? d.title : activeKeepTTP;
-  document.getElementById('keep-findings-title').textContent = 'Findings — ' + titleSuffix;
+  document.getElementById('keep-findings-title').textContent = 'Findings — ' + d.title;
   document.getElementById('keep-crit-chip').textContent = crits + ' Critical';
   document.getElementById('keep-high-chip').textContent = highs + ' High';
-
-  // Scope counts chip in selector header
-  const sc = document.getElementById('keep-ttp-scope-counts');
-  if (sc) sc.innerHTML = crits
-    ? `<span class="chip chip-red" style="font-size:9px;">${crits} Critical</span>`
-    + (highs ? ` <span class="chip chip-yellow" style="font-size:9px;">${highs} High</span>` : '')
-    : highs ? `<span class="chip chip-yellow" style="font-size:9px;">${highs} High</span>` : '';
 
   const fl = document.getElementById('keep-findings-list');
   const huntComments = findingComments[activeKeepHunt] || {};
   const usersObj = typeof users !== 'undefined' ? users : {};
 
   if (!filtered.length) {
-    fl.innerHTML = `<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">No findings for ${activeKeepTTP} in this hunt.</div>`;
+    fl.innerHTML = `<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">No findings for this subhunt.</div>`;
   } else {
     const fullFindings = d.findings;
     fl.innerHTML = filtered.map(f => {
@@ -805,13 +730,11 @@ function renderSwimlane(filtered) {
 }
 
 function renderKeepTimeline(d) {
-  const filtered = activeKeepTTP === 'all'
-    ? d.timeline
-    : d.timeline.filter(t => !t.tag || t.tag === activeKeepTTP);
+  const filtered = d.timeline;
 
   const tl = document.getElementById('keep-timeline');
   if (!filtered.length) {
-    tl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:10px 0;">No timeline events for ${activeKeepTTP}.</div>`;
+    tl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:10px 0;">No timeline events for this subhunt.</div>`;
   } else if (activeTimelineView === 'swim') {
     tl.innerHTML = renderSwimlane(filtered);
   } else {

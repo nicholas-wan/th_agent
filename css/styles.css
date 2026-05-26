@@ -430,23 +430,6 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .hx-diff-text b { color:var(--text); }
 .hx-diff-text code { font-size:10px; font-family:monospace; color:var(--indigo); background:rgba(99,102,241,.1); padding:1px 4px; border-radius:3px; }
 
-/* ── Keep TTP Selector ── */
-.ttp-sel-card { background:var(--s1); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-.ttp-sel-header { padding:8px 14px; border-bottom:1px solid var(--border); background:var(--s2); display:flex; align-items:center; gap:8px; font-size:10px; color:var(--muted); }
-.ttp-sel-header b { color:var(--text); font-size:11px; }
-.ttp-sel-pills { display:flex; gap:6px; padding:10px 12px; overflow-x:auto; flex-wrap:wrap; }
-.ttp-sel-pills::-webkit-scrollbar { height:3px; }
-.tsp { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:20px; font-size:11px; cursor:pointer; border:1px solid var(--border2); background:var(--s2); color:var(--sub); transition:all .12s; white-space:nowrap; flex-shrink:0; user-select:none; }
-.tsp:hover { border-color:var(--indigo); color:var(--text); background:rgba(99,102,241,.06); }
-.tsp.tsp-on { background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.4); color:var(--indigo); font-weight:600; }
-.tsp.tsp-all.tsp-on { background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.4); color:var(--blue); }
-.tsp-id { font-family:monospace; font-size:10px; }
-.tsp-name { font-size:10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
-.tsp-badge { font-size:9px; background:rgba(255,255,255,.07); border-radius:8px; padding:1px 5px; min-width:16px; text-align:center; line-height:1.6; }
-.tsp-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-.tsp-dot.c { background:var(--red); }
-.tsp-dot.h { background:var(--yellow); }
-.tsp-dot.m { background:var(--blue); }
 
 
 /* ═══════════════════════════════════════
