@@ -231,6 +231,15 @@
     <div class="sub-tab" id="subtab-agents" onclick="goSubTab('agents',this)">🤖 Agents</div>
   </div>
 
+  <!-- ── Hunt body: subhunt sidebar + content ── -->
+  <div class="hunt-body">
+
+    <!-- Subhunt sidebar (hidden when hunt has no subhunts) -->
+    <div class="subhunt-sidebar" id="subhunt-sidebar" style="display:none;"></div>
+
+    <!-- Content wrapper (holds all sub-panes) -->
+    <div class="hunt-content">
+
   <!-- ── Learn sub-pane ── -->
   <div id="subpane-learn" class="sub-pane on">
   <div class="learn-wrap">
@@ -1627,6 +1636,9 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
       </div><!-- /agents-side -->
     </div><!-- /agents-wrap -->
   </div><!-- /subpane-agents -->
+
+    </div><!-- /hunt-content -->
+  </div><!-- /hunt-body -->
 
 </div><!-- /pane-hunt-detail -->
 

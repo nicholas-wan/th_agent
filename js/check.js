@@ -691,12 +691,21 @@ function _buildIterChainsHtml(chains) {
 function renderGeneratedRulesCard() {
   const body = document.getElementById('generated-rules-body');
   if (!body) return;
-  const rules = checkData[_activeHuntId]?.genRules || [];
+  let rules = checkData[_activeHuntId]?.genRules || [];
+
+  // Filter to active subhunt if one is selected
+  if (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') {
+    const shData = keepData[_activeHuntId];
+    const sh = shData?.subhunts?.find(s => s.id === activeSubhunt);
+    if (sh) rules = rules.filter(r => r.ttp === sh.ttp);
+  }
 
   // Update card subtitle with live rule count
   const sub = document.getElementById('gen-rules-sub');
-  if (sub && rules.length) {
-    sub.textContent = `${rules.length} subhunt detection rule${rules.length !== 1 ? 's' : ''} · one per TTP · ready for SIEM deployment`;
+  if (sub) {
+    sub.textContent = rules.length
+      ? `${rules.length} subhunt detection rule${rules.length !== 1 ? 's' : ''} · one per TTP · ready for SIEM deployment`
+      : 'No rules for selected subhunt';
   }
 
   body.innerHTML = rules.map((r, idx) => {

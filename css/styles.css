@@ -1428,6 +1428,32 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .sub-pane { display:none; flex:1; flex-direction:column; overflow:auto; min-height:0; }
 .sub-pane.on { display:flex; }
 
+/* ── Hunt body layout (sidebar + content) ── */
+.hunt-body { display:flex; flex:1; min-height:0; overflow:hidden; }
+.hunt-content { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+.hunt-content .sub-pane { overflow:auto; }
+
+/* ── Subhunt sidebar ── */
+.subhunt-sidebar { width:194px; flex-shrink:0; border-right:1px solid var(--border); background:var(--s1); overflow-y:auto; display:flex; flex-direction:column; padding:14px 0 20px; }
+.sh-section-label { font-size:9px; font-weight:700; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; padding:0 14px 10px; flex-shrink:0; }
+.sh-nav-item { padding:9px 12px 9px 14px; cursor:pointer; border-left:2px solid transparent; transition:background .13s, border-color .13s; }
+.sh-nav-item:hover { background:var(--s2); }
+.sh-nav-item.on { background:rgba(59,130,246,.07); border-left-color:var(--blue); }
+.sh-nav-item.on .sh-label { color:var(--blue); }
+.sh-all-row { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; color:var(--sub); }
+.sh-all-row .sh-all-dot { width:7px; height:7px; border-radius:50%; border:1.5px solid var(--muted); flex-shrink:0; }
+.sh-nav-item.on .sh-all-row { color:var(--blue); }
+.sh-nav-item.on .sh-all-dot { border-color:var(--blue); }
+.sh-item-row { display:flex; gap:8px; align-items:flex-start; }
+.sh-status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.sh-status-dot.confirmed { background:var(--green); }
+.sh-status-dot.active { background:var(--yellow); }
+.sh-status-dot.pending { background:var(--muted); opacity:.5; }
+.sh-label { font-size:11px; font-weight:600; color:var(--text); line-height:1.35; }
+.sh-ttp { font-size:10px; color:var(--indigo); font-family:monospace; margin-top:2px; }
+.sh-name { font-size:10px; color:var(--muted); line-height:1.35; margin-top:1px; }
+.sh-divider { height:1px; background:var(--border); margin:8px 14px; flex-shrink:0; }
+
 /* ═══════════════════════════════════════
    TECHNIQUE RUNBOOK
 ═══════════════════════════════════════ */

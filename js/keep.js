@@ -9,6 +9,38 @@ const keepData = {
     title: 'TH-2026-041', label: 'Volt Typhoon · Active', labelClass: 'chip-red',
     createdBy: 'alice', createdAt: 'Apr 27, 2026 · 09:15',
     criticals: 3, highs: 9,
+    subhunts: [
+      { id:'sh01', label:'SH-01', ttp:'T1570',     name:'Lateral Tool Transfer',    status:'confirmed' },
+      { id:'sh02', label:'SH-02', ttp:'T1003.001', name:'LSASS Credential Dumping', status:'confirmed' },
+      { id:'sh03', label:'SH-03', ttp:'T1558.003', name:'Kerberoasting',            status:'confirmed' },
+      { id:'sh04', label:'SH-04', ttp:'T1071.001', name:'C2 Beacon via HTTPS',      status:'active'    },
+    ],
+    subhuntLock: {
+      sh01: {
+        l: 'H-01 · T1570 scoped from CISA AA24-038A. Single-hop lateral movement via ADMIN$ file drop + service install. Confidence 92% — prior confirmed in TH-2026-038.',
+        o: 'PsExec process chain confirmed across 14 hosts. CORP\\jsmith account active off-hours (23:17–01:42 UTC). SMB staging + named pipe relay observed.',
+        c: 'DL-2026-041-001 deployed · T1570-psexec-admin-drop · PASS · FP rate 1.4%.',
+        k: '14 hosts involved. CORP\\jsmith pivot chain confirmed. WIN-DC01 (Tier-0) reached. IR escalation recommended.',
+      },
+      sh02: {
+        l: 'H-02 · T1003.001 scoped post-lateral-movement to WIN-DC01. SK-029 LSASS exclusion list pre-loaded. Confidence 82%.',
+        o: 'rundll32.exe accessed LSASS with handle 0x1fffff from explorer.exe parent — Mimikatz sekurlsa::logonpasswords pattern. 5 full-access events on WIN-DC01.',
+        c: 'DL-2026-041-002 deployed · T1003.001-lsass-full-access · PASS · FP rate 0.9%.',
+        k: '5 LSASS access events confirmed on WIN-DC01. Credential dump likely complete. Memory acquisition recommended before reboot.',
+      },
+      sh03: {
+        l: 'H-03 · T1558.003 scoped with 147 CMDB SPN exclusions (BackupExec, MSSQLSvc). RC4 threshold tuned to 15/hr. Confidence 74%.',
+        o: 'jsmith requested 11 unique SPNs in 5 minutes via RC4-encrypted TGS-REQ. Consistent with targeted kerberoasting post-lateral-movement.',
+        c: 'DL-2026-041-003 deployed · T1558.003-kerberoasting · PASS · FP rate 0.4%.',
+        k: '3 RC4 TGS-REQ bursts from jsmith@CORP confirmed. SPN list includes krbtgt — indicates Golden Ticket attempt possible.',
+      },
+      sh04: {
+        l: 'H-04 · T1071.001 net-new cert-chain path — short-lived LE cert + non-browser UA + beacon interval anomaly. Confidence 41%.',
+        o: '2 Cobalt Strike C2 sessions confirmed by JA3 fingerprint (769c10b0…) + beacon interval 60.1s to 185.220.101.47:443.',
+        c: 'DL-2026-041-004 deployed · T1071.001-c2-beacon-ja3 · PASS · FP rate 0.2%.',
+        k: 'Active C2 channel confirmed. Perimeter block for 185.220.101.47/32 recommended. JA3 watermark 0x4e4b5547 matches known Cobalt Strike profile.',
+      },
+    },
     findings: [
       { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · RAA Supervisor Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
       { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · RAA Supervisor Agent · T1570 · 5m ago',      drawer:'tradecraft' },
@@ -326,7 +358,9 @@ function renderKeepHunt(id) {
     statusEl.textContent = d.labelClass === 'chip-red' ? 'Active' : 'Closed';
     statusEl.className = 'chip ' + (d.labelClass === 'chip-red' ? 'chip-red' : 'chip-gray');
   }
-  const lock = d.lock;
+  // Use per-subhunt lock text if a subhunt is selected
+  const activeSH = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+  const lock = (activeSH && d.subhuntLock && d.subhuntLock[activeSH]) ? d.subhuntLock[activeSH] : d.lock;
   document.getElementById('keep-lock-body').innerHTML = `
     <div class="lock-4col-cell">
       <div class="lock-cell-head"><span class="lock-letter lock-l">L</span><span class="lock-cell-label">Learn</span></div>
@@ -345,10 +379,22 @@ function renderKeepHunt(id) {
       <div class="lock-cell-text"${lock.kItalic?' style="font-style:italic;"':''}>${lock.k}</div>
     </div>`;
 
+  // When a subhunt is selected, scope findings + timeline to that TTP
+  let scopedD = d;
+  if (activeSH && d.subhunts) {
+    const sh = d.subhunts.find(s => s.id === activeSH);
+    if (sh) {
+      scopedD = Object.assign({}, d, {
+        findings: d.findings.filter(f => f.meta && f.meta.includes(sh.ttp)),
+        timeline: d.timeline.filter(t => t.tag === sh.ttp || t.tag === ''),
+      });
+    }
+  }
+
   // Build TTP selector then render filtered views
-  renderTTPSelector(d);
-  renderKeepFindings(d);
-  renderKeepTimeline(d);
+  renderTTPSelector(scopedD);
+  renderKeepFindings(scopedD);
+  renderKeepTimeline(scopedD);
   renderGateDecisionLog(id);
   renderEvidenceGraph(d);
 

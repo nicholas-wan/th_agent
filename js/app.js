@@ -143,6 +143,50 @@ const huntMeta = {
   'TH-2026-038': { status:'Draft', statusClass:'chip-gray', title:'DNS Tunneling & C2 Beacon Detection — All Segments', defaultTab:'learn' },
 };
 
+// ── Subhunt sidebar ──
+let activeSubhunt = 'all';
+
+function renderSubhuntSidebar(huntId) {
+  const keepId = huntId.replace('TH-2026-', '');
+  const sidebar = document.getElementById('subhunt-sidebar');
+  if (!sidebar) return;
+  const d = keepData[keepId];
+  if (!d || !d.subhunts || !d.subhunts.length) {
+    sidebar.style.display = 'none';
+    return;
+  }
+  sidebar.style.display = '';
+  const dot = s => `<div class="sh-status-dot ${s}"></div>`;
+  sidebar.innerHTML = `
+    <div class="sh-section-label">Subhunts</div>
+    <div class="sh-nav-item${activeSubhunt === 'all' ? ' on' : ''}" onclick="switchSubhunt('all')">
+      <div class="sh-all-row"><div class="sh-all-dot"></div>All subhunts</div>
+    </div>
+    <div class="sh-divider"></div>
+    ${d.subhunts.map(sh => `
+      <div class="sh-nav-item${activeSubhunt === sh.id ? ' on' : ''}" onclick="switchSubhunt('${sh.id}')">
+        <div class="sh-item-row">
+          ${dot(sh.status)}
+          <div>
+            <div class="sh-label">${sh.label}</div>
+            <div class="sh-ttp">${sh.ttp}</div>
+            <div class="sh-name">${sh.name}</div>
+          </div>
+        </div>
+      </div>`).join('')}`;
+}
+
+function switchSubhunt(id) {
+  activeSubhunt = id;
+  const huntId = document.getElementById('hd-id')?.textContent || '';
+  renderSubhuntSidebar(huntId);
+  const keepId = huntId.replace('TH-2026-', '');
+  if (keepId) {
+    renderGeneratedRulesCard();
+    renderKeepHunt(keepId);
+  }
+}
+
 function openHunt(id) {
   const m = huntMeta[id] || {};
   // Capture current sub-tab BEFORE any navigation changes the pane state
@@ -150,6 +194,9 @@ function openHunt(id) {
   const preservedTab = alreadyInDetail
     ? (document.querySelector('.sub-tab.on')?.id?.replace('subtab-', '') || null)
     : null;
+
+  // Reset subhunt selection when opening a hunt
+  activeSubhunt = 'all';
 
   document.getElementById('hd-id').textContent = id;
   const statusEl = document.getElementById('hd-status');
@@ -171,6 +218,8 @@ function openHunt(id) {
   const safePreserved = (preservedTab === 'keep' && !hasKeepData) ? null : preservedTab;
   const targetTab = safePreserved || m.defaultTab || 'learn';
   goSubTab(targetTab, document.getElementById('subtab-' + targetTab));
+  // Render subhunt sidebar for this hunt
+  renderSubhuntSidebar(id);
   // Sync Keep sub-pane to the selected hunt
   switchKeepHunt(keepId);
   // Reset Check sub-pane for the new hunt
@@ -1498,8 +1547,7 @@ renderSimilarHunts('041');
 renderLearnPastHunts();
 renderPostingAs();
 
-// ── Init repo list ──
-renderRepo(repoData);
+// ── Init repo list — called from kb-tab.js after all scripts load ──
 
 // ── Live progress ──
 let rv = 67;
