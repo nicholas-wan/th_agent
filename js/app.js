@@ -74,7 +74,7 @@ function updateSubTabGating() {
 const checkHuntMeta = {
   '041': {
     cti: 'CISA AA24-038A — Volt Typhoon',
-    ttpCount: '14 extracted · 4 prioritized',
+    ttpCount: '8 extracted · 4 selected',
     hypCount: '4 hypotheses under test',
     statusClass: 'chip-red', statusText: 'Volt Typhoon · Active',
     active: true,
@@ -275,14 +275,137 @@ function closeMobileNav() {
 
 // ── Intelligence Repository ──
 const repoData = [
-  { id: 'r1', icon: '🇺🇸', title: 'CISA AA24-038A — Volt Typhoon', source: 'CISA', actor: 'Volt Typhoon', date: '2024-02-07', ttps: 14, tags: ['APT', 'ICS/OT', 'Living off the Land'], techniques: ['T1078.002','T1570','T1003.001','T1558.003','T1071.001','T1041'] },
-  { id: 'r2', icon: '🔴', title: 'Mandiant APT41 — Dual Espionage & Crimeware', source: 'Mandiant', actor: 'APT41', date: '2023-11-14', ttps: 22, tags: ['APT', 'Ransomware', 'Supply Chain'], techniques: ['T1195.002','T1059.001','T1055','T1486','T1562.001'] },
-  { id: 'r3', icon: '🇰🇵', title: 'Lazarus Group — 3CX Supply Chain Attack', source: 'CrowdStrike', actor: 'Lazarus Group', date: '2023-04-20', ttps: 18, tags: ['Supply Chain', 'macOS', 'Windows'], techniques: ['T1195.002','T1547.001','T1059.004','T1071.001','T1041'] },
-  { id: 'r4', icon: '🐻', title: 'FANCY BEAR — Credential Harvest Campaign', source: 'Recorded Future', actor: 'FANCY BEAR', date: '2024-01-09', ttps: 11, tags: ['APT', 'Phishing', 'Credential Access'], techniques: ['T1566.001','T1078','T1003','T1558','T1071'] },
-  { id: 'r5', icon: '🕷️', title: 'SCATTERED SPIDER — Social Engineering TTPs', source: 'CISA', actor: 'SCATTERED SPIDER', date: '2023-11-16', ttps: 16, tags: ['Social Engineering', 'MFA Bypass', 'Cloud'], techniques: ['T1566','T1621','T1078.004','T1530','T1657'] },
-  { id: 'r6', icon: '🇷🇺', title: 'Sandworm — Ukraine Power Grid Intrusion', source: 'ESET', actor: 'Sandworm', date: '2023-12-21', ttps: 20, tags: ['ICS/OT', 'Destructive', 'Ukraine'], techniques: ['T1078','T1059','T1485','T1565.003','T1498'] },
-  { id: 'r7', icon: '💎', title: 'BlackCat/ALPHV — Healthcare Sector Targeting', source: 'HHS HC3', actor: 'BlackCat/ALPHV', date: '2024-02-27', ttps: 13, tags: ['Ransomware', 'Healthcare', 'Double Extortion'], techniques: ['T1486','T1490','T1070','T1078','T1071.001'] },
+  { id: 'r1', icon: '🇺🇸', title: 'CISA AA24-038A — Volt Typhoon', source: 'CISA', actor: 'Volt Typhoon', date: '2024-02-07', ttps: 8, tags: ['APT', 'ICS/OT', 'Living off the Land'], techniques: ['T1078.002','T1570','T1003.001','T1558.003','T1071.001','T1547.001','T1053.005','T1041'] },
+  { id: 'r2', icon: '🔴', title: 'Mandiant APT41 — Dual Espionage & Crimeware', source: 'Mandiant', actor: 'APT41', date: '2023-11-14', ttps: 5, tags: ['APT', 'Ransomware', 'Supply Chain'], techniques: ['T1195.002','T1059.001','T1055','T1486','T1562.001'] },
+  { id: 'r3', icon: '🇰🇵', title: 'Lazarus Group — 3CX Supply Chain Attack', source: 'CrowdStrike', actor: 'Lazarus Group', date: '2023-04-20', ttps: 5, tags: ['Supply Chain', 'macOS', 'Windows'], techniques: ['T1195.002','T1547.001','T1059.004','T1071.001','T1041'] },
+  { id: 'r4', icon: '🐻', title: 'FANCY BEAR — Credential Harvest Campaign', source: 'Recorded Future', actor: 'FANCY BEAR', date: '2024-01-09', ttps: 5, tags: ['APT', 'Phishing', 'Credential Access'], techniques: ['T1566.001','T1078','T1003','T1558','T1071'] },
+  { id: 'r5', icon: '🕷️', title: 'SCATTERED SPIDER — Social Engineering TTPs', source: 'CISA', actor: 'SCATTERED SPIDER', date: '2023-11-16', ttps: 5, tags: ['Social Engineering', 'MFA Bypass', 'Cloud'], techniques: ['T1566','T1621','T1078.004','T1530','T1657'] },
+  { id: 'r6', icon: '🇷🇺', title: 'Sandworm — Ukraine Power Grid Intrusion', source: 'ESET', actor: 'Sandworm', date: '2023-12-21', ttps: 5, tags: ['ICS/OT', 'Destructive', 'Ukraine'], techniques: ['T1078','T1059','T1485','T1565.003','T1498'] },
+  { id: 'r7', icon: '💎', title: 'BlackCat/ALPHV — Healthcare Sector Targeting', source: 'HHS HC3', actor: 'BlackCat/ALPHV', date: '2024-02-27', ttps: 5, tags: ['Ransomware', 'Healthcare', 'Double Extortion'], techniques: ['T1486','T1490','T1070','T1078','T1071.001'] },
 ];
+
+// ── Per-report TTP detail rows (drives Stage 1 table) ──
+const reportTTPDetails = {
+  'r1': [
+    { id:'T1078.002', name:'Valid Accounts: Domain',      detail:null, tactic:'Def. Evasion', tacticClass:'chip-yellow', prior:3, rules:'2 live',  rulesColor:'green',  sid:'s01' },
+    { id:'T1570',     name:'Lateral Tool Transfer',       detail:'Confirmed in TH-2026-038 · jsmith pivot chain scoped', tactic:'Lateral Mvmt', tacticClass:'chip-red',    prior:2, rules:'2 live',  rulesColor:'green',  sid:'s02' },
+    { id:'T1003.001', name:'LSASS Credential Dumping',    detail:'Follows lateral movement to WIN-DC01 · SK-029 exclusion list pre-loaded', tactic:'Cred. Access',  tacticClass:'chip-red',    prior:2, rules:'1 live',  rulesColor:'yellow', sid:'s04' },
+    { id:'T1558.003', name:'Kerberoasting',               detail:'147 SPN exclusions loaded · RC4 threshold tuned to 15/hr · FP rate <2%', tactic:'Cred. Access',  tacticClass:'chip-red',    prior:2, rules:'1 tuned', rulesColor:'yellow', sid:'s05' },
+    { id:'T1071.001', name:'C2 Beacon via HTTPS',         detail:'Net-new cert-chain path · JA3 fingerprint detection available', tactic:'C&C',          tacticClass:'chip-indigo', prior:3, rules:'1 live',  rulesColor:'yellow', sid:'s06' },
+    { id:'T1547.001', name:'Registry Run Keys',           detail:null, tactic:'Persistence',   tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:'s08' },
+    { id:'T1053.005', name:'Scheduled Task',              detail:null, tactic:'Persistence',   tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:'s08' },
+    { id:'T1041',     name:'Exfil Over C2 Channel',       detail:null, tactic:'Exfiltration',  tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:'s07' },
+  ],
+  'r2': [
+    { id:'T1195.002', name:'Supply Chain Compromise',     detail:null, tactic:'Initial Access', tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1059.001', name:'PowerShell Execution',        detail:null, tactic:'Execution',      tacticClass:'chip-yellow', prior:2, rules:'2 live',  rulesColor:'green',  sid:null },
+    { id:'T1055',     name:'Process Injection',           detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1486',     name:'Data Encrypted for Impact',   detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1562.001', name:'Disable Security Tools',      detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+  ],
+  'r3': [
+    { id:'T1195.002', name:'Supply Chain Compromise',     detail:null, tactic:'Initial Access', tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1547.001', name:'Registry Run Keys / Startup', detail:null, tactic:'Persistence',   tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1059.004', name:'Unix Shell Execution',        detail:null, tactic:'Execution',      tacticClass:'chip-yellow', prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1071.001', name:'C2 Beacon via HTTPS',         detail:null, tactic:'C&C',            tacticClass:'chip-indigo', prior:2, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1041',     name:'Exfil Over C2 Channel',       detail:null, tactic:'Exfiltration',   tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+  ],
+  'r4': [
+    { id:'T1566.001', name:'Spearphishing Attachment',    detail:null, tactic:'Initial Access', tacticClass:'chip-red',    prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1078',     name:'Valid Accounts',              detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:2, rules:'2 live',  rulesColor:'green',  sid:null },
+    { id:'T1003',     name:'Credential Dumping',          detail:null, tactic:'Cred. Access',   tacticClass:'chip-red',    prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1558',     name:'Steal Kerberos Tickets',      detail:null, tactic:'Cred. Access',   tacticClass:'chip-red',    prior:1, rules:'1 tuned', rulesColor:'yellow', sid:null },
+    { id:'T1071',     name:'C2 via App Layer Protocol',   detail:null, tactic:'C&C',            tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+  ],
+  'r5': [
+    { id:'T1566',     name:'Phishing',                    detail:null, tactic:'Initial Access', tacticClass:'chip-red',    prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1621',     name:'MFA Request Generation',      detail:null, tactic:'Cred. Access',   tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1078.004', name:'Valid Cloud Accounts',        detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1530',     name:'Data from Cloud Storage',     detail:null, tactic:'Collection',     tacticClass:'chip-indigo', prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1657',     name:'Financial Theft',             detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+  ],
+  'r6': [
+    { id:'T1078',     name:'Valid Accounts',              detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:2, rules:'2 live',  rulesColor:'green',  sid:null },
+    { id:'T1059',     name:'Command & Scripting Interp.', detail:null, tactic:'Execution',      tacticClass:'chip-yellow', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1485',     name:'Data Destruction',            detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1565.003', name:'Runtime Data Manipulation',   detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1498',     name:'Network DoS',                 detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+  ],
+  'r7': [
+    { id:'T1486',     name:'Data Encrypted for Impact',   detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1490',     name:'Inhibit System Recovery',     detail:null, tactic:'Impact',         tacticClass:'chip-red',    prior:0, rules:'none',    rulesColor:'muted',  sid:null },
+    { id:'T1070',     name:'Indicator Removal',           detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+    { id:'T1078',     name:'Valid Accounts',              detail:null, tactic:'Def. Evasion',   tacticClass:'chip-yellow', prior:2, rules:'2 live',  rulesColor:'green',  sid:null },
+    { id:'T1071.001', name:'C2 Beacon via HTTPS',         detail:null, tactic:'C&C',            tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:null },
+  ],
+};
+
+// ── Analyst TTP selection (set in Stage 1) ──
+let selectedTTPIds = new Set();
+
+function renderTTPTable(reportId) {
+  const tbody = document.getElementById('ttp-tbody');
+  if (!tbody) return;
+  const rows = reportTTPDetails[reportId] || [];
+  selectedTTPIds = new Set();
+  tbody.innerHTML = rows.map(t => {
+    const safeId = t.id.replace(/\./g, '_');
+    const priorColor = t.prior > 1 ? 'green' : t.prior === 1 ? 'yellow' : 'muted';
+    return `<tr class="ttp-row-selectable" id="ttp-row-${safeId}" onclick="toggleTTPRow('${t.id}')">
+      <td class="ttp-sel-col"><span class="ttp-chk" id="ttp-chk-${safeId}">☐</span></td>
+      <td class="ttp-id">${t.id}</td>
+      <td>${t.name}${t.detail ? `<div style="font-size:10px;color:var(--blue);margin-top:2px;">${t.detail}</div>` : ''}</td>
+      <td><span class="chip ${t.tacticClass}" style="font-size:9px;">${t.tactic}</span></td>
+      <td style="font-size:11px;color:var(--${priorColor});font-weight:600;">${t.prior}</td>
+      <td style="font-size:11px;color:var(--${t.rulesColor});font-weight:600;">${t.rules}</td>
+      ${t.sid ? `<td><span class="sent-badge" data-sid="${t.sid}">${t.sid.toUpperCase()}</span></td>` : '<td style="color:var(--muted);font-size:11px;">—</td>'}
+    </tr>`;
+  }).join('');
+  updateTTPSelectionUI();
+}
+
+function toggleTTPRow(ttpId) {
+  if (selectedTTPIds.has(ttpId)) {
+    selectedTTPIds.delete(ttpId);
+  } else {
+    selectedTTPIds.add(ttpId);
+  }
+  const safeId = ttpId.replace(/\./g, '_');
+  const row = document.getElementById('ttp-row-' + safeId);
+  if (row) row.classList.toggle('ttp-row-selected', selectedTTPIds.has(ttpId));
+  const chk = document.getElementById('ttp-chk-' + safeId);
+  if (chk) chk.textContent = selectedTTPIds.has(ttpId) ? '☑' : '☐';
+  updateTTPSelectionUI();
+}
+
+function updateTTPSelectionUI() {
+  const n     = selectedTTPIds.size;
+  const total = (reportTTPDetails[activeReportId] || []).length;
+  const chips = document.getElementById('stage1-report-chips');
+  if (chips) {
+    chips.innerHTML = `<span class="chip chip-blue">${total} extracted</span>`
+      + (n > 0 ? `<span class="chip chip-green">${n} selected</span>` : `<span class="chip chip-gray" style="font-size:10px;">none selected</span>`)
+      + `<span class="chip chip-indigo">ATT&amp;CK v14</span>`;
+  }
+  const btn = document.getElementById('ttp-confirm-btn');
+  if (btn) {
+    btn.disabled  = n === 0;
+    btn.style.opacity = n === 0 ? '0.4' : '';
+    btn.style.cursor  = n === 0 ? 'not-allowed' : '';
+    btn.textContent   = n > 0
+      ? `Generate Hypotheses for ${n} TTP${n !== 1 ? 's' : ''} →`
+      : 'Select TTPs to continue →';
+  }
+}
+
+function confirmTTPSelection() {
+  if (selectedTTPIds.size === 0) return;
+  const n     = selectedTTPIds.size;
+  const total = (reportTTPDetails[activeReportId] || []).length;
+  const lhcTtps = document.getElementById('lhc-ttps');
+  if (lhcTtps) lhcTtps.textContent = total + ' extracted · ' + n + ' selected';
+  setStep(2);
+}
 
 let repoSelected = null;
 
@@ -335,7 +458,7 @@ function selectReport(id) {
     if (s0sum) s0sum.innerHTML = `${r.icon} <b>${r.title}</b> · <span style="color:var(--green);font-weight:600;">${r.ttps} TTPs</span> · ${r.source}`;
     document.getElementById('lhc-hunt').textContent = 'TH-2026-041';
     document.getElementById('lhc-cti').textContent = r.title.replace(/^[^ ]+ /, '');
-    document.getElementById('lhc-ttps').textContent = r.id === 'r1' ? '14 extracted · 4 prioritized' : r.ttps + ' extracted';
+    document.getElementById('lhc-ttps').textContent = r.ttps + ' extracted';
     document.getElementById('lhc-hyp').textContent = '—';
     document.getElementById('lhc-hyp').style.color = 'var(--muted)';
     document.getElementById('lhc-stage').textContent = 'Learn · Select Intel';
@@ -350,6 +473,8 @@ function selectReport(id) {
     setStep(1);
     // Restore report mode visuals in Stage 1
     applyStage1Mode(false);
+    // Render selectable TTP table (no pre-selection) + sentence evidence panel
+    renderTTPTable(id);
     renderSentencePanel(id);
   }, 400);
 }

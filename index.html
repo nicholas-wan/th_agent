@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
 <title>PrimeTH</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1623'/%3E%3Cpolygon points='18,3 9,18 15,18 14,29 23,14 17,14' fill='%233b82f6'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css">
@@ -307,7 +308,7 @@
           <div class="card-head" onclick="toggleStage('stage-1', event)">
             <span class="card-title" id="stage1-title">🧬 Extracted TTPs<span class="stage-chevron">▾</span></span>
             <div style="display:flex;gap:6px;align-items:center;">
-              <span id="stage1-report-chips"><span class="chip chip-blue">14 extracted</span><span class="chip chip-indigo">4 prioritized</span><span class="chip chip-indigo">ATT&amp;CK v14</span></span>
+              <span id="stage1-report-chips"></span>
               <span id="stage1-custom-chip" class="chip chip-indigo" style="display:none;">✏️ Custom TTPs</span>
               <button class="btn btn-outline btn-sm" onclick="setStep(0)">← Back</button>
             </div>
@@ -315,20 +316,14 @@
           <div class="card-body" style="padding:0;">
             <!-- shown when a CTI report is loaded -->
             <div id="report-ttp-section">
-              <div class="info-bar" style="margin:10px 12px 6px;"><span class="ib-icon">📌</span><span>TTPs were pre-extracted by the upstream CTI pipeline and mapped to MITRE ATT&amp;CK v14. The Data Engineering Agent has made the relevant Splunk data available. <b>Prior hunts</b> and <b>rules</b> are drawn from your hunt history — TTPs already covered by existing rules are flagged so the Detection Logic Agent skips them.</span></div>
+              <div class="info-bar" style="margin:10px 12px 6px;"><span class="ib-icon">📌</span><span>These techniques were identified in the CTI report and mapped to MITRE ATT&amp;CK v14. <b>Click rows to select</b> the ones you want to hunt for — your selection drives hypothesis generation and detection logic. <b>Prior hunts</b> and <b>rules</b> are shown so you can prioritise net-new coverage.</span></div>
               <table class="ttp-table">
-                <thead><tr><th>ID</th><th>Technique</th><th>Tactic</th><th>Prior hunts</th><th>Rules</th><th>Source</th></tr></thead>
-                <tbody id="ttp-tbody">
-                  <tr><td class="ttp-id">T1078.002</td><td>Valid Accounts: Domain</td><td><span class="chip chip-yellow">Def. Evasion</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">3</td><td style="font-size:11px;color:var(--green);font-weight:600;">2 live</td><td><span class="sent-badge" data-sid="s01">S01</span></td></tr>
-                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1570<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>Lateral Tool Transfer</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">Confirmed in TH-2026-038 · jsmith pivot chain scoped · T1078.002 supporting signal merged</div></td><td><span class="chip chip-red">Lateral Mvmt</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">2</td><td style="font-size:11px;color:var(--green);font-weight:600;">2 live</td><td><span class="sent-badge" data-sid="s02">S02</span></td></tr>
-                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1003.001<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>LSASS Credential Dumping</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">Follows lateral movement to WIN-DC01 · SK-029 exclusion list pre-loaded</div></td><td><span class="chip chip-red">Cred. Access</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">2</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s04">S04</span></td></tr>
-                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1558.003<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>Kerberoasting</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">147 SPN exclusions loaded · RC4 threshold tuned to 15/hr · FP rate &lt;2%</div></td><td><span class="chip chip-red">Cred. Access</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">2</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 tuned</td><td><span class="sent-badge" data-sid="s05">S05</span></td></tr>
-                  <tr class="ttp-row-prioritized"><td class="ttp-id">T1071.001<span class="ttp-pri-badge">🎯 Selected</span></td><td><div>C2 Beacon via HTTPS</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">Net-new cert-chain path · JA3 fingerprint detection available</div></td><td><span class="chip chip-indigo">C&amp;C</span></td><td style="font-size:11px;color:var(--green);font-weight:600;">3</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s06">S06</span></td></tr>
-                  <tr><td class="ttp-id">T1547.001</td><td>Registry Run Keys</td><td><span class="chip chip-indigo">Persistence</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s08">S08</span></td></tr>
-                  <tr><td class="ttp-id">T1053.005</td><td>Scheduled Task</td><td><span class="chip chip-indigo">Persistence</span></td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1</td><td style="font-size:11px;color:var(--yellow);font-weight:600;">1 live</td><td><span class="sent-badge" data-sid="s08">S08</span></td></tr>
-                  <tr><td class="ttp-id">T1041</td><td>Exfil Over C2 Channel</td><td><span class="chip chip-red">Exfiltration</span></td><td style="font-size:11px;color:var(--muted);font-weight:600;">0</td><td style="font-size:11px;color:var(--muted);font-weight:600;">none</td><td><span class="sent-badge" data-sid="s07">S07</span></td></tr>
-                </tbody>
+                <thead><tr><th class="ttp-sel-col"></th><th>ID</th><th>Technique</th><th>Tactic</th><th>Prior hunts</th><th>Rules</th><th>Source</th></tr></thead>
+                <tbody id="ttp-tbody"></tbody>
               </table>
+              <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;">
+                <button class="btn btn-primary btn-sm" id="ttp-confirm-btn" onclick="confirmTTPSelection()" disabled style="opacity:0.4;cursor:not-allowed;">Select TTPs to continue →</button>
+              </div>
             </div>
             <!-- shown when analyst starts without a CTI report -->
             <div id="custom-only-notice" style="display:none;margin:12px 12px 0;">
@@ -401,7 +396,7 @@
                   <span class="chip chip-indigo" style="font-size:9px;">recommendation</span>
                 </div>
                 <div class="agent-gate-reasoning">
-                  I've analysed the 14 TTPs from the CTI report and cross-referenced 147 past hunts via the Past Hunts MCP tool. 3 techniques carry high confidence and prior confirmation — T1078.002, T1570, and T1003.001 — matched in TH-2026-038. I recommend scoping hypothesis generation to these 3 techniques first. The remaining 11 are retained as secondary indicators and can be promoted to primary scope at any time.
+                  I've analysed the 8 TTPs from the CTI report and cross-referenced 3 past hunts via the Past Hunts MCP tool. 4 techniques carry high confidence and prior confirmation — T1570, T1003.001, T1558.003, and T1071.001 — all matched to prior activity in TH-2026-038. I recommend scoping hypothesis generation to these 4 techniques. The remaining 4 are retained as secondary indicators and can be promoted to primary scope at any time.
                 </div>
                 <div class="agent-gate-prompt"><span class="agent-gate-prompt-dot"></span>Pipeline paused — your decision needed to continue</div>
                 <div class="agent-gate-actions">
@@ -412,9 +407,9 @@
                 <div class="agent-gate-modify-panel" id="gate-1-modify">
                   <div>
                     <div class="gate-field-label">TTP scope for hypothesis generation</div>
-                    <label class="gate-option"><input type="radio" name="g1-scope" checked> High confidence only — T1078.002, T1570, T1003.001 <span style="color:var(--muted);">(3 TTPs)</span></label>
-                    <label class="gate-option"><input type="radio" name="g1-scope"> Include medium confidence — add T1558.003, T1071.001, T1053.005 <span style="color:var(--muted);">(6 TTPs)</span></label>
-                    <label class="gate-option"><input type="radio" name="g1-scope"> All extracted TTPs <span style="color:var(--muted);">(14 TTPs)</span></label>
+                    <label class="gate-option"><input type="radio" name="g1-scope" checked> Analyst selection — T1570, T1003.001, T1558.003, T1071.001 <span style="color:var(--muted);">(4 TTPs)</span></label>
+                    <label class="gate-option"><input type="radio" name="g1-scope"> Expand with supporting signals — add T1078.002, T1547.001 <span style="color:var(--muted);">(6 TTPs)</span></label>
+                    <label class="gate-option"><input type="radio" name="g1-scope"> All extracted TTPs from report <span style="color:var(--muted);">(8 TTPs)</span></label>
                   </div>
                   <div style="display:flex;justify-content:flex-end;">
                     <button class="btn btn-primary btn-sm" onclick="agentApplyModify(2,'gate-1')">Apply & Continue →</button>
@@ -1138,7 +1133,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
     <span style="font-size:11px;color:var(--muted);">CTI</span>
     <span id="check-hunt-cti" style="font-size:11px;color:var(--sub);">CISA AA24-038A — Volt Typhoon</span>
     <span style="width:1px;height:14px;background:var(--border2);margin:0 4px;flex-shrink:0;"></span>
-    <span id="check-hunt-ttps" style="font-size:11px;color:var(--muted);">14 TTPs</span>
+    <span id="check-hunt-ttps" style="font-size:11px;color:var(--muted);">8 TTPs</span>
     <span style="width:1px;height:14px;background:var(--border2);margin:0 4px;flex-shrink:0;"></span>
     <span id="check-hunt-hyps" style="font-size:11px;color:var(--muted);">3 hypotheses under test</span>
     <span style="width:1px;height:14px;background:var(--border2);margin:0 4px;flex-shrink:0;"></span>

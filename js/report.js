@@ -8,7 +8,7 @@ function renderHuntReport(id) {
   if (!d || !d.report) return;
   const r = d.report;
   const lock = d.lock;
-  const ttpFilter = activeKeepTTP; // read current TTP scope
+  const ttpFilter = 'all'; // TTP selector removed — always show full hunt scope
 
   const chip = document.getElementById('report-status-chip');
   chip.textContent = r.status;
