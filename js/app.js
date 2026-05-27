@@ -246,6 +246,9 @@ function openHunt(id) {
   }
   // Sync Keep sub-pane to the selected hunt
   switchKeepHunt(keepId);
+  // Re-apply pipeline gating — switchKeepHunt restores Keep tab opacity for hunts
+  // with data, which would undo the grey set by resetPipeline. Gate wins.
+  updateSubTabGating();
   // Reset Check sub-pane for the new hunt
   resetCheckForHunt(id);
   // For closed hunts — populate Learn pipeline with pre-baked archived state
