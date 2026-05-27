@@ -222,8 +222,13 @@ function openHunt(id) {
   const safePreserved = (preservedTab === 'keep' && !hasKeepData) ? null : preservedTab;
   const targetTab = safePreserved || m.defaultTab || 'learn';
   goSubTab(targetTab, document.getElementById('subtab-' + targetTab));
-  // Render subhunt sidebar for this hunt
+  // Render subhunt sidebar for this hunt — hide immediately for active hunts
+  // (shown once hypotheses are generated at pipeline step 2)
   renderSubhuntSidebar(id);
+  if (!m.status || !m.status.includes('Closed')) {
+    const sidebar = document.getElementById('subhunt-sidebar');
+    if (sidebar) sidebar.style.display = 'none';
+  }
   // Sync Keep sub-pane to the selected hunt
   switchKeepHunt(keepId);
   // Reset Check sub-pane for the new hunt

@@ -639,6 +639,9 @@ function setStep(i) {
     if (hypEl) { hypEl.textContent = '4 generated'; hypEl.style.color = ''; }
     const pastCard = document.getElementById('learn-past-card');
     if (pastCard) pastCard.style.display = '';
+    // Reveal subhunt sidebar — hypotheses are now generated
+    const huntId = document.getElementById('hd-id')?.textContent || '';
+    if (huntId && typeof renderSubhuntSidebar === 'function') renderSubhuntSidebar(huntId);
   }
   if (isForward) playFeedStep(i);
   // Scroll to the target stage (auto-expand if collapsed)
@@ -676,6 +679,9 @@ function resetPipeline() {
   if (hypEl) { hypEl.textContent = '—'; hypEl.style.color = 'var(--muted)'; }
   const pastCard = document.getElementById('learn-past-card');
   if (pastCard) pastCard.style.display = 'none';
+  // Hide subhunt sidebar until hypotheses are generated (step 2)
+  const sidebar = document.getElementById('subhunt-sidebar');
+  if (sidebar) sidebar.style.display = 'none';
   const feedStatus = document.getElementById('feed-status');
   if (feedStatus) feedStatus.textContent = 'idle';
 
