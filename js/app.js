@@ -55,6 +55,21 @@ function goSubTab(name, el) {
   if (el) el.classList.add('on');
 }
 
+function updateSubTabGating() {
+  const locked = typeof pipelineLocked !== 'undefined' && pipelineLocked;
+  const step   = typeof maxStep !== 'undefined' ? maxStep : -1;
+  // Thresholds: observe=step1, check=step3, keep=step4
+  const gates  = { observe: 1, check: 3, keep: 4 };
+  Object.entries(gates).forEach(([tab, threshold]) => {
+    const el = document.getElementById('subtab-' + tab);
+    if (!el) return;
+    const open = locked || step >= threshold;
+    el.style.opacity       = open ? '' : '0.38';
+    el.style.pointerEvents = open ? '' : 'none';
+    el.title               = open ? '' : 'Complete earlier pipeline stages to unlock';
+  });
+}
+
 // ── Per-hunt Check tab metadata ──
 const checkHuntMeta = {
   '041': {

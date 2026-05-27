@@ -644,6 +644,7 @@ function setStep(i) {
     if (huntId && typeof renderSubhuntSidebar === 'function') renderSubhuntSidebar(huntId);
   }
   if (isForward) playFeedStep(i);
+  if (typeof updateSubTabGating === 'function') updateSubTabGating();
   // Scroll to the target stage (auto-expand if collapsed)
   const stageTarget = document.getElementById('stage-' + i);
   if (stageTarget) {
@@ -682,6 +683,8 @@ function resetPipeline() {
   // Hide subhunt sidebar until hypotheses are generated (step 2)
   const sidebar = document.getElementById('subhunt-sidebar');
   if (sidebar) sidebar.style.display = 'none';
+  // Re-gate sub-tabs for fresh active hunt
+  if (typeof updateSubTabGating === 'function') updateSubTabGating();
   const feedStatus = document.getElementById('feed-status');
   if (feedStatus) feedStatus.textContent = 'idle';
 
@@ -880,6 +883,7 @@ function loadClosedPipeline(huntId, keepId) {
 
   // ── Lock pipeline stepper ──
   pipelineLocked = true;
+  if (typeof updateSubTabGating === 'function') updateSubTabGating();
   const pipelineEl = document.querySelector('.pipeline');
   if (pipelineEl) pipelineEl.classList.add('pipeline-locked');
 
