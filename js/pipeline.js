@@ -65,7 +65,13 @@ const feedSteps = {
     { type:'tool',   agent:'data', msg:'authenticating to Splunk ES via service token · enumerating indices…' },
     { type:'relay',  agent:'data', to:'orch', msg:'connected · 4 indices confirmed · sysmon(7d) windows(30d) network(14d) security(90d) · CIM normalisation verified',
       detail:'Auth via service account token. All 4 indices ingested and CIM-normalised. Baseline window set to 30 days. Ready for query workload.' },
-    { type:'relay',  agent:'orch', to:'hyp',  msg:'stand by — loading 8 TTPs from CISA AA24-038A upstream pipeline · pre-load environment topology to scope hypotheses' },
+    { type:'relay',  agent:'orch', to:'hyp',  get msg() {
+        const r = (typeof repoData !== 'undefined' && typeof activeReportId !== 'undefined')
+          ? repoData.find(x => x.id === activeReportId) : null;
+        const count = r ? r.ttps : 8;
+        const title = r ? r.title : 'CISA AA24-038A — Volt Typhoon';
+        return `stand by — loading ${count} TTPs from ${title} upstream pipeline · pre-load environment topology to scope hypotheses`;
+      } },
     { type:'relay',  agent:'hyp',  to:'orch', msg:'acknowledged · fetching environment topology now · will have context ready before gather phase begins' },
     { type:'env',    agent:'orch', msg:'get_topology() → 8 network segments · 10.0.0.0/8 scope · 2,412 endpoints · Tier-0 isolation active' },
     { type:'done',   agent:'orch', msg:'8 TTPs loaded · confidence scored · T1570(87%) T1003.001(82%) T1558.003(74%) T1071.001(78%) · 4 hypotheses flagged · routing to Stage 1',

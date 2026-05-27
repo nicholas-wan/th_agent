@@ -404,7 +404,185 @@ function confirmTTPSelection() {
   const total = (reportTTPDetails[activeReportId] || []).length;
   const lhcTtps = document.getElementById('lhc-ttps');
   if (lhcTtps) lhcTtps.textContent = total + ' extracted · ' + n + ' selected';
+  renderHypothesisAgentCard();
+  renderHypothesisBranchRows();
+  renderHypothesisCards();
+  updateRefDataBanner();
   setStep(2);
+}
+
+// ── Dynamic Stage-2 rendering (hypothesis agent card, branch rows, hypothesis cards) ──
+
+function renderHypothesisAgentCard() {
+  const el = document.getElementById('hyp-agent-reasoning');
+  if (!el) return;
+  const r = repoData.find(x => x.id === activeReportId);
+  if (!r) return;
+
+  const allTTPs    = reportTTPDetails[activeReportId] || [];
+  const selArr     = allTTPs.filter(t => selectedTTPIds.has(t.id));
+  const highConf   = selArr.filter(t => t.prior >= 1);
+  const pastCount  = selArr.reduce((s, t) => s + t.prior, 0);
+  const confIds    = highConf.map(t => t.id);
+
+  let ttpList;
+  if (confIds.length === 0)       ttpList = 'none carry prior confirmation';
+  else if (confIds.length === 1)  ttpList = confIds[0];
+  else ttpList = confIds.slice(0, -1).join(', ') + ', and ' + confIds[confIds.length - 1];
+
+  let text;
+  if (highConf.length > 0) {
+    text = `I've analysed the ${allTTPs.length} TTPs from ${r.title} and cross-referenced ${pastCount} past hunt${pastCount !== 1 ? 's' : ''} via the Past Hunts tool. `
+         + `${highConf.length} technique${highConf.length !== 1 ? 's' : ''} carry high confidence and prior confirmation — ${ttpList} — matched to prior activity in recent hunts. `
+         + `I recommend scoping hypothesis generation to these ${highConf.length} technique${highConf.length !== 1 ? 's' : ''} first. `
+         + `The remaining ${selArr.length - highConf.length} are retained as secondary indicators and can be promoted to primary scope at any time.`;
+  } else {
+    text = `I've analysed the ${allTTPs.length} TTPs from ${r.title} and cross-referenced past hunts via the Past Hunts tool. `
+         + `No prior confirmations found for the ${selArr.length} selected technique${selArr.length !== 1 ? 's' : ''} — all are net-new. `
+         + `I recommend generating hypotheses for all ${selArr.length} selected technique${selArr.length !== 1 ? 's' : ''} with baseline confidence. `
+         + `Prior hunt context will be gathered during the Observe phase.`;
+  }
+  el.textContent = text;
+
+  // Update gate modify panel radio options to match current selection
+  const allTTPsCount = allTTPs.length;
+  const highIds = highConf.length ? highConf.map(t => t.id).join(', ') : selArr.map(t => t.id).join(', ');
+  const allSelIds = selArr.map(t => t.id).join(', ');
+  const panel = document.getElementById('gate-1-modify');
+  if (panel) {
+    const opts = panel.querySelectorAll('.gate-option');
+    if (opts.length >= 3) {
+      const highN = highConf.length || selArr.length;
+      opts[0].innerHTML = `<input type="radio" name="g1-scope" checked> Analyst selection — ${highIds} <span style="color:var(--muted);">(${highN} TTP${highN !== 1 ? 's' : ''})</span>`;
+      opts[1].innerHTML = `<input type="radio" name="g1-scope"> All selected TTPs — ${allSelIds} <span style="color:var(--muted);">(${selArr.length} TTP${selArr.length !== 1 ? 's' : ''})</span>`;
+      opts[2].innerHTML = `<input type="radio" name="g1-scope"> All extracted TTPs from report <span style="color:var(--muted);">(${allTTPsCount} TTP${allTTPsCount !== 1 ? 's' : ''})</span>`;
+    }
+  }
+}
+
+function renderHypothesisBranchRows() {
+  const wrap = document.getElementById('hyp-branch-wrap');
+  if (!wrap) return;
+
+  const allTTPs  = reportTTPDetails[activeReportId] || [];
+  const selArr   = allTTPs.filter(t => selectedTTPIds.has(t.id)).sort((a, b) => b.prior - a.prior);
+  if (selArr.length === 0) { wrap.innerHTML = ''; return; }
+
+  const tactCtx = {
+    'Lateral Mvmt':   { desc:'pivot chain pattern',                    action:'host-hop threshold pre-applied · segment scope set' },
+    'Cred. Access':   { desc:'credential access on high-value host',   action:'exclusion list pre-loaded · process filter applied' },
+    'C&C':            { desc:'beacon interval anomaly in egress',       action:'JA3 hash list loaded · beacon stdev threshold set' },
+    'Persistence':    { desc:'persistence artefact detected',           action:'known-good baseline exclusions applied' },
+    'Def. Evasion':   { desc:'security tooling interference noted',     action:'baseline-deviation threshold tuned' },
+    'Initial Access': { desc:'initial access indicator identified',     action:'net-new detection path scoped' },
+    'Execution':      { desc:'script interpreter invocation chain',     action:'LOLBin filter and parent-process chain applied' },
+    'Exfiltration':   { desc:'unusual outbound volume pattern',         action:'egress baseline applied · destination scoring enabled' },
+    'Impact':         { desc:'destructive artefact identified',         action:'critical asset scope pre-applied' },
+    'Collection':     { desc:'cloud storage access pattern',            action:'identity-based access scope applied' },
+  };
+  const huntRefs = ['TH-2026-038', 'TH-2025-091', 'TH-2025-087', 'TH-2025-079', 'TH-2026-035'];
+
+  wrap.innerHTML = selArr.map((t, i) => {
+    const hNum  = `H-0${i + 1}`;
+    const ctx   = tactCtx[t.tactic] || { desc:'technique pattern noted', action:'scope and threshold pre-applied' };
+    let icon, labelClass, labelText, huntRef, bodyText, actionText;
+
+    if (t.prior >= 2) {
+      icon = '🎯'; labelClass = 'hbl-confirmed'; labelText = 'Confirmed';
+      huntRef  = huntRefs[i % huntRefs.length];
+      bodyText = `${t.name} — ${ctx.desc} confirmed in prior hunt · ${t.prior} hunt${t.prior !== 1 ? 's' : ''} with matching activity detected in this environment.`;
+      actionText = `↳ Confidence elevated to High · ${ctx.action}`;
+    } else if (t.prior === 1) {
+      const isFP = (i % 2 === 1);
+      icon = isFP ? '🔔' : '❄️'; labelClass = isFP ? 'hbl-fp' : 'hbl-clean';
+      labelText = isFP ? 'FPs in prior run' : 'Clean prior run';
+      huntRef  = huntRefs[(i + 2) % huntRefs.length];
+      bodyText = isFP
+        ? `${t.name} — ${ctx.desc} showed elevated FP rate in prior run. Signal recoverable with tuning parameters pre-applied.`
+        : `${t.name} — ${ctx.desc} returned no hits in prior run. Technique variant possible or threat actor was not active at hunt time.`;
+      actionText = `↳ ${ctx.action} · confidence Medium`;
+    } else {
+      icon = '🔵'; labelClass = ''; labelText = 'Net-new'; huntRef = '';
+      bodyText = `${t.name} — no prior hunt data available for this environment. First time this technique has been in scope.`;
+      actionText = `↳ Baseline detection path scoped from CTI report · confidence Low`;
+    }
+
+    return `<div class="hyp-branch-row">
+      <div class="hyp-branch-top">
+        <span class="hyp-branch-num">${hNum}</span>
+        <span class="hyp-branch-icon">${icon}</span>
+        <span class="hyp-branch-label${labelClass ? ' ' + labelClass : ''}">${labelText}</span>
+        ${huntRef ? `<span class="hyp-branch-hunt">${huntRef}</span>` : ''}
+      </div>
+      <div class="hyp-branch-body">${bodyText}</div>
+      <div class="hyp-branch-action">${actionText}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHypothesisCards() {
+  const wrap = document.getElementById('hyp-cards-main');
+  if (!wrap) return;
+
+  const allTTPs = reportTTPDetails[activeReportId] || [];
+  const selArr  = allTTPs.filter(t => selectedTTPIds.has(t.id)).sort((a, b) => b.prior - a.prior);
+  if (selArr.length === 0) { wrap.innerHTML = ''; return; }
+
+  const stmtFn = {
+    'Lateral Mvmt':   t => `Adversary is performing lateral movement via ${t.name} targeting high-value systems within the network.`,
+    'Cred. Access':   t => `Attacker is harvesting credentials using ${t.name} from high-value hosts following initial compromise.`,
+    'C&C':            t => `A C2 implant is maintaining communications via ${t.name}, identified through beacon interval and traffic anomalies.`,
+    'Persistence':    t => `Adversary has established persistence via ${t.name} on targeted endpoints to survive defensive actions.`,
+    'Def. Evasion':   t => `Adversary is evading defenses via ${t.name} to maintain access without triggering deployed analytics.`,
+    'Initial Access': t => `Adversary gained initial access via ${t.name} targeting users or supplier systems in this environment.`,
+    'Execution':      t => `Adversary is executing code via ${t.name} to deploy and run payloads on compromised endpoints.`,
+    'Exfiltration':   t => `Adversary is exfiltrating collected data via ${t.name} over the established command channel.`,
+    'Impact':         t => `Adversary is executing an impact operation via ${t.name} against critical data or infrastructure assets.`,
+    'Collection':     t => `Adversary is collecting sensitive data via ${t.name} from enterprise or cloud storage resources.`,
+  };
+  const ratFn = {
+    'Lateral Mvmt':   t => `CTI report documents ${t.id} usage. ${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} with confirmed activity — pivot chain scope pre-applied.` : 'Net-new technique — host-hop baseline detection path scoped.'}`,
+    'Cred. Access':   t => `${t.prior >= 1 ? `Prior hunt data available — ${t.rules} deployed.` : 'No prior hunt data.'} Exclusion list pre-loaded to reduce FP rate. Scoped to high-value hosts.`,
+    'C&C':            t => `${t.prior >= 1 ? 'Prior hunt signal available.' : 'Net-new detection path.'} JA3 fingerprint and beacon interval analysis enabled. Cert-chain anomaly path also scoped.`,
+    'Persistence':    t => `${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} — known-good baseline loaded.` : 'No prior data — baseline being established.'} Registry and scheduled task artefacts in scope.`,
+    'Def. Evasion':   t => `${t.prior >= 1 ? 'Prior hunt flagged this technique.' : 'Net-new evasion path.'} Security tooling interference pattern scoped. Baseline-deviation threshold applied.`,
+    'Initial Access': t => `CTI report identifies ${t.id} as entry vector. ${t.prior >= 1 ? 'Prior data available — signal tuning applied.' : 'Net-new — baseline detection path scoped.'}`,
+    'Execution':      t => `${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} confirmed activity.` : 'No prior data.'} Parent-process chain and LOLBin filter applied. Script interpreter scope set.`,
+    'Exfiltration':   t => `${t.prior >= 1 ? 'Prior hunt data available.' : 'Net-new path.'} Egress baseline applied. Destination scoring and volume anomaly threshold set.`,
+    'Impact':         t => `${t.prior >= 1 ? 'Prior hunt data available.' : 'Net-new impact path — no prior hunt data.'} Critical asset scope pre-applied. Destructive artefact pattern scoped.`,
+    'Collection':     t => `${t.prior >= 1 ? 'Prior hunt flagged cloud access pattern.' : 'Net-new — first time in scope.'} Identity-based scope applied.`,
+  };
+  const defaultStmt = t => `Adversary technique ${t.id} (${t.name}) detected in environment — hypothesis scoped from CTI report.`;
+  const defaultRat  = t => `Prior hunt data: ${t.prior} hunt${t.prior !== 1 ? 's' : ''}. Rules: ${t.rules}. Detection path scoped from CTI advisory.`;
+
+  wrap.innerHTML = selArr.map((t, i) => {
+    const hNum      = `H-0${i + 1}`;
+    const confClass = t.prior >= 2 ? 'chip-yellow' : t.prior === 1 ? 'chip-blue' : 'chip-gray';
+    const confText  = t.prior >= 2 ? 'High confidence' : t.prior === 1 ? 'Medium confidence' : 'Low confidence';
+    const ttpChip   = ['chip-red','chip-orange'].includes(t.tacticClass) ? 'chip-red' : t.tacticClass;
+    const selCls    = i === 0 ? ' sel' : '';
+    const stmt      = (stmtFn[t.tactic] || defaultStmt)(t);
+    const rat       = (ratFn[t.tactic]  || defaultRat)(t);
+    return `<div class="hyp-card${selCls}" onclick="selHyp(this)">
+      <div class="hyp-head"><span class="hyp-num">${hNum}</span><div class="hyp-text">${stmt}</div></div>
+      <div class="hyp-meta"><span class="chip ${ttpChip}" style="font-size:10px;">${t.id}</span><span class="chip ${confClass}" style="font-size:10px;">${confText}</span></div>
+      <div class="hyp-rationale">${rat}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateRefDataBanner() {
+  const isNonR1 = activeReportId && activeReportId !== 'r1';
+  const r = isNonR1 ? repoData.find(x => x.id === activeReportId) : null;
+  const msg = r
+    ? `<span class="ib-icon">📋</span><span><b>Reference view</b> — Observe, Check, and Keep panels show data from the reference Volt Typhoon hunt (TH-2026-041). Findings for <b>${r.title}</b> will populate here once detections are run with your selected TTPs.</span>`
+    : '';
+  ['ref-data-banner-observe', 'ref-data-banner-check', 'ref-data-banner-keep'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = isNonR1 ? '' : 'none';
+    if (isNonR1) el.innerHTML = msg;
+  });
 }
 
 let repoSelected = null;

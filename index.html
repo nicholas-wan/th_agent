@@ -395,8 +395,8 @@
                   <span style="font-size:15px;">💡</span><span>Hypothesis Agent</span>
                   <span class="chip chip-indigo" style="font-size:9px;">recommendation</span>
                 </div>
-                <div class="agent-gate-reasoning">
-                  I've analysed the 8 TTPs from the CTI report and cross-referenced 3 past hunts via the Past Hunts MCP tool. 4 techniques carry high confidence and prior confirmation — T1570, T1003.001, T1558.003, and T1071.001 — all matched to prior activity in TH-2026-038. I recommend scoping hypothesis generation to these 4 techniques. The remaining 4 are retained as secondary indicators and can be promoted to primary scope at any time.
+                <div class="agent-gate-reasoning" id="hyp-agent-reasoning">
+                  I've analysed the 8 TTPs from the CTI report and cross-referenced 3 past hunts via the Past Hunts tool. 4 techniques carry high confidence and prior confirmation — T1570, T1003.001, T1558.003, and T1071.001 — all matched to prior activity in TH-2026-038. I recommend scoping hypothesis generation to these 4 techniques. The remaining 4 are retained as secondary indicators and can be promoted to primary scope at any time.
                 </div>
                 <div class="agent-gate-prompt"><span class="agent-gate-prompt-dot"></span>Pipeline paused — your decision needed to continue</div>
                 <div class="agent-gate-actions">
@@ -446,6 +446,7 @@
                 <div class="hyp-recall-env-row"><span class="hyp-recall-env-icon">🖥</span><span><b style="color:var(--sub);">WIN-DC01</b> — Tier-0 DC · 10.0.1.10 · DC VLAN · CrowdStrike 7.1 · high-value asset</span></div>
                 <div class="hyp-recall-env-row"><span class="hyp-recall-env-icon">👤</span><span><b style="color:var(--sub);">jsmith</b> — Corp Workstations · <span style="color:var(--yellow);">off-hours anomaly flagged</span> · MFA enrolled · lateral movement surface</span></div>
               </div>
+              <div id="hyp-branch-wrap">
               <!-- H-01: Confirmed -->
               <div class="hyp-branch-row">
                 <div class="hyp-branch-top">
@@ -490,7 +491,9 @@
                 <div class="hyp-branch-body">No JA3 fingerprint match in prior run — technique variant possible or implant not present at time of hunt. Alice Chen flagged cert chain gap.</div>
                 <div class="hyp-branch-action">↳ Net-new cert-chain detection path added · short-lived LE cert + non-browser UA + beacon interval · confidence Medium</div>
               </div>
+              </div><!-- /hyp-branch-wrap -->
             </div>
+            <div id="hyp-cards-main">
             <div class="hyp-card sel" onclick="selHyp(this)">
               <div class="hyp-head"><span class="hyp-num">H-01</span><div class="hyp-text">Adversary has compromised a valid domain account (CORP\jsmith) and is performing east-west lateral movement via PsExec ADMIN$ file drop across 10.0.0.0/8.</div></div>
               <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1570</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
@@ -511,6 +514,7 @@
               <div class="hyp-meta"><span class="chip chip-indigo" style="font-size:10px;">T1071.001</span><span class="chip chip-blue" style="font-size:10px;">Medium confidence</span></div>
               <div class="hyp-rationale">Prior run (TH-2025-091) found zero JA3 hits — net-new cert-chain path added. Short-lived LE certs + non-browser user-agent + regular beacon interval (stdev &lt;5s).</div>
             </div>
+            </div><!-- /hyp-cards-main -->
             <!-- Custom hypotheses rendered here -->
             <div id="custom-hyp-list"></div>
 
@@ -1115,6 +1119,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 
   <!-- ── Observe sub-pane ── -->
   <div id="subpane-observe" class="sub-pane">
+    <div id="ref-data-banner-observe" class="info-bar" style="display:none;margin:12px 16px 0;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25);flex-shrink:0;"></div>
     <div class="obs-wrap">
       <div class="obs-main" id="obs-main-body"><!-- populated by renderHuntObserve() --></div>
       <div class="obs-side" id="obs-side-body"><!-- populated by renderHuntObserve() --></div>
@@ -1140,6 +1145,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
     <span class="chip chip-blue" style="font-size:10px;">⚡ Splunk ES</span>
   </div>
 
+  <div id="ref-data-banner-check" class="info-bar" style="display:none;margin:10px 16px 0;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25);flex-shrink:0;"></div>
   <!-- Check Summary — prominent full-width card, always visible -->
   <div class="card check-summary-prominent" id="check-summary-card" style="display:none;"></div>
 
@@ -1172,6 +1178,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   <div class="hunt-creator" id="keep-hunt-creator">
     <!-- populated by renderKeepHunt() -->
   </div>
+  <div id="ref-data-banner-keep" class="info-bar" style="display:none;margin:10px 16px 0;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25);flex-shrink:0;"></div>
 
   <!-- ── LOCK Record — prominent summary (always visible) ── -->
   <div class="card lock-prominent" id="keep-lock-card">
