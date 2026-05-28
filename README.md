@@ -45,7 +45,7 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 | HTML structure | `index.html` | Grep `#region PANE: <name>` |
 | Add platform skill | `kb/skills.md` + `kb/skills-fallback.js` | Copy any `## SK-…` block; keep both files in sync |
 | Add TTP runbook | `kb/runbooks.md` | Copy any `## T…` block, fill fields |
-| Add artefact / IOC | `kb/iocs.js` | Append to `iocRepository[]` |
+| Add IOC | `kb/iocs.js` | Append to `iocRepository[]` |
 | Edit environment | `kb/environment.md` | Copy `## Segment:` or `## Asset:` block |
 | Gate decision log | `kb/gate-decisions.js` | Append to hunt's array |
 | Edit FAQ content | `index.html` | Grep `#region PANE: FAQ` |
@@ -83,7 +83,7 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 | `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'domain'` (platform attack skills only) |
 | `runbookData{}` | `kb/runbooks-fallback.js` | Keyed by TTP ID e.g. `'T1003.001'` |
 | `envData{}` / `crownJewels{}` | `kb/environment-fallback.js` | Segments, assets, accounts |
-| `iocRepository[]` | `kb/iocs.js` | Artefacts/IOCs — displayed as "Artefacts Repository" in UI |
+| `iocRepository[]` | `kb/iocs.js` | IOCs — displayed as "IOC Repository" in UI |
 | `observeData{}` | `js/observe.js` | Normal/suspicious/observables per hunt; editable in-place |
 | `gateDecisionLog{}` | `kb/gate-decisions.js` | Keyed by short hunt ID e.g. `'041'` |
 | `agentData{}` | `js/agents.js` | Drawer content keyed by agent key |

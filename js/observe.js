@@ -71,7 +71,7 @@ const observeData = {
         observables: {
           'Key Events': ['Sysmon EventCode=10 · TargetImage=lsass.exe · GrantedAccess=0x1fffff · SourceImage ∉ AV baseline', 'EventCode 4673 — sensitive privilege use (SeDebugPrivilege) on WIN-DC01'],
           Processes: ['rundll32.exe (PID 7340) — PROCESS_ALL_ACCESS on lsass.exe at 01:38:22 UTC', 'Process chain: explorer.exe → cmd.exe (4812) → rundll32.exe (7340)'],
-          Files: ['lsass.dmp / sekurlsa.log artefact in %TEMP% or C:\\ProgramData\\', 'Mimikatz or reflective DLL in non-standard path'],
+          Files: ['lsass.dmp / sekurlsa.log artifact in %TEMP% or C:\\ProgramData\\', 'Mimikatz or reflective DLL in non-standard path'],
           Host: ['WIN-DC01 (10.0.1.10) — Tier-0 DC · primary target · SK-029 exclusions scoped to this host'],
         }
       },
@@ -142,20 +142,20 @@ const observeData = {
   },
   '039': {
     normal: [
-      { text: 'CI/CD build artefacts signed by the corporate code-signing certificate — verified against artefact registry on publish' },
+      { text: 'CI/CD build artifacts signed by the corporate code-signing certificate — verified against artifact registry on publish' },
       { text: 'Scheduled build tasks created by the CI/CD service account (svc-build) from the approved build server only' },
-      { text: 'DLL loads on downstream hosts matching the signed artefact registry hash list' },
+      { text: 'DLL loads on downstream hosts matching the signed artifact registry hash list' },
       { text: 'Outbound HTTPS from SRV-BUILD01 to known package registries (npm, PyPI, Maven) during build windows' },
     ],
     suspicious: [
-      { text: 'Unsigned binaries published to the artefact repository — does not match any registered build output hash' },
+      { text: 'Unsigned binaries published to the artifact repository — does not match any registered build output hash' },
       { text: 'Scheduled task named svchost or similar system-sounding name created by the build service account' },
-      { text: 'DLL load on downstream host not matching the signed artefact hash — potential sideload payload' },
+      { text: 'DLL load on downstream host not matching the signed artifact hash — potential sideload payload' },
       { text: 'Outbound HTTPS from SRV-BUILD01 to non-registry endpoints with beacon-like intervals' },
       { text: 'Cobalt Strike JA3 fingerprint on outbound connections from build or downstream hosts' },
     ],
     observables: {
-      Processes: ['Unsigned build artefact binary', 'svchost-wrapper scheduled task', 'DLL sideload via legitimate Windows binary'],
+      Processes: ['Unsigned build artifact binary', 'svchost-wrapper scheduled task', 'DLL sideload via legitimate Windows binary'],
       Network: ['JA3 match to Cobalt Strike (update.cdn-cache[.]net)', 'HTTPS beacon from build/downstream hosts', 'Exfil over C2 channel (T1041)'],
       Files: ['Unsigned binary introduced Apr 10', 'svchost-wrapper scheduled task XML', 'DLL sideload files on downstream hosts (10 hosts)'],
       Authentication: ['svc-build account used outside build windows', 'Downstream host auth anomalies post-infection'],
@@ -392,7 +392,7 @@ function renderHuntObserve(id) {
   main.innerHTML = `
     ${subhuntBannerHTML}
     ${editToggleHTML}
-    <div class="info-bar"><span class="ib-icon">ℹ️</span><span>The <b>Observe</b> stage defines your environment baseline for this hunt — what normal looks like, what adversary activity looks like, and what artefacts to watch for. This informs agent thresholds and exclusions applied in Learn and Check.</span></div>
+    <div class="info-bar"><span class="ib-icon">ℹ️</span><span>The <b>Observe</b> stage defines your environment baseline for this hunt — what normal looks like, what adversary activity looks like, and what artifacts to watch for. This informs agent thresholds and exclusions applied in Learn and Check.</span></div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">✅ What Normal Looks Like</span>

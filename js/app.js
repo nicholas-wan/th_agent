@@ -492,12 +492,12 @@ function renderHypothesisBranchRows() {
     'Lateral Mvmt':   { desc:'pivot chain pattern',                    action:'host-hop threshold pre-applied · segment scope set' },
     'Cred. Access':   { desc:'credential access on high-value host',   action:'exclusion list pre-loaded · process filter applied' },
     'C&C':            { desc:'beacon interval anomaly in egress',       action:'JA3 hash list loaded · beacon stdev threshold set' },
-    'Persistence':    { desc:'persistence artefact detected',           action:'known-good baseline exclusions applied' },
+    'Persistence':    { desc:'persistence artifact detected',           action:'known-good baseline exclusions applied' },
     'Def. Evasion':   { desc:'security tooling interference noted',     action:'baseline-deviation threshold tuned' },
     'Initial Access': { desc:'initial access indicator identified',     action:'net-new detection path scoped' },
     'Execution':      { desc:'script interpreter invocation chain',     action:'LOLBin filter and parent-process chain applied' },
     'Exfiltration':   { desc:'unusual outbound volume pattern',         action:'egress baseline applied · destination scoring enabled' },
-    'Impact':         { desc:'destructive artefact identified',         action:'critical asset scope pre-applied' },
+    'Impact':         { desc:'destructive artifact identified',         action:'critical asset scope pre-applied' },
     'Collection':     { desc:'cloud storage access pattern',            action:'identity-based access scope applied' },
   };
   const huntRefs = ['TH-2026-038', 'TH-2025-091', 'TH-2025-087', 'TH-2025-079', 'TH-2026-035'];
@@ -564,12 +564,12 @@ function renderHypothesisCards() {
     'Lateral Mvmt':   t => `CTI report documents ${t.id} usage. ${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} with confirmed activity — pivot chain scope pre-applied.` : 'Net-new technique — host-hop baseline detection path scoped.'}`,
     'Cred. Access':   t => `${t.prior >= 1 ? `Prior hunt data available — ${t.rules} deployed.` : 'No prior hunt data.'} Exclusion list pre-loaded to reduce FP rate. Scoped to high-value hosts.`,
     'C&C':            t => `${t.prior >= 1 ? 'Prior hunt signal available.' : 'Net-new detection path.'} JA3 fingerprint and beacon interval analysis enabled. Cert-chain anomaly path also scoped.`,
-    'Persistence':    t => `${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} — known-good baseline loaded.` : 'No prior data — baseline being established.'} Registry and scheduled task artefacts in scope.`,
+    'Persistence':    t => `${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} — known-good baseline loaded.` : 'No prior data — baseline being established.'} Registry and scheduled task artifacts in scope.`,
     'Def. Evasion':   t => `${t.prior >= 1 ? 'Prior hunt flagged this technique.' : 'Net-new evasion path.'} Security tooling interference pattern scoped. Baseline-deviation threshold applied.`,
     'Initial Access': t => `CTI report identifies ${t.id} as entry vector. ${t.prior >= 1 ? 'Prior data available — signal tuning applied.' : 'Net-new — baseline detection path scoped.'}`,
     'Execution':      t => `${t.prior >= 1 ? `${t.prior} prior hunt${t.prior !== 1 ? 's' : ''} confirmed activity.` : 'No prior data.'} Parent-process chain and LOLBin filter applied. Script interpreter scope set.`,
     'Exfiltration':   t => `${t.prior >= 1 ? 'Prior hunt data available.' : 'Net-new path.'} Egress baseline applied. Destination scoring and volume anomaly threshold set.`,
-    'Impact':         t => `${t.prior >= 1 ? 'Prior hunt data available.' : 'Net-new impact path — no prior hunt data.'} Critical asset scope pre-applied. Destructive artefact pattern scoped.`,
+    'Impact':         t => `${t.prior >= 1 ? 'Prior hunt data available.' : 'Net-new impact path — no prior hunt data.'} Critical asset scope pre-applied. Destructive artifact pattern scoped.`,
     'Collection':     t => `${t.prior >= 1 ? 'Prior hunt flagged cloud access pattern.' : 'Net-new — first time in scope.'} Identity-based scope applied.`,
   };
   const defaultStmt = t => `Adversary technique ${t.id} (${t.name}) detected in environment — hypothesis scoped from CTI report.`;
@@ -1139,12 +1139,12 @@ const reportSentences = {
     { id:'s04', text:'Credential access has been achieved through LSASS memory dumping using tools such as Mimikatz and comsvcs.dll, specifically targeting domain controller hosts.' },
     { id:'s05', text:'Kerberoasting has been observed — Service Principal Names (SPNs) are targeted to harvest service account password hashes offline for privilege escalation.' },
     { id:'s06', text:'Command and control is conducted over HTTPS using custom profiles designed to blend with legitimate web traffic; JA3 fingerprints match known Cobalt Strike malleable C2 profiles.' },
-    { id:'s07', text:'Data is exfiltrated through the established C2 channel, avoiding dedicated exfiltration tools to minimise the forensic artefact footprint and reduce network anomaly signatures.' },
+    { id:'s07', text:'Data is exfiltrated through the established C2 channel, avoiding dedicated exfiltration tools to minimise the forensic artifact footprint and reduce network anomaly signatures.' },
     { id:'s08', text:'Actors establish persistence via scheduled tasks and registry Run keys, using names that mimic legitimate software entries (e.g. MicrosoftEdgeUpdate) to blend with environment baseline.' },
   ],
   'r2': [
     { id:'s01', text:'APT41 gains initial access via supply chain compromise, inserting malicious code into trusted software build environments to distribute implants via legitimate update channels.' },
-    { id:'s02', text:'The group executes payloads through PowerShell and WMI to run code in-memory, avoiding disk-based artefacts that would be detected by endpoint security tools.' },
+    { id:'s02', text:'The group executes payloads through PowerShell and WMI to run code in-memory, avoiding disk-based artifacts that would be detected by endpoint security tools.' },
     { id:'s03', text:'APT41 encrypts victim files and deletes Volume Shadow Copies to maximise ransomware impact and prevent recovery in financially motivated operations.' },
   ],
   'r3': [
@@ -1818,7 +1818,7 @@ const ttpInfo = {
   'T1003.001': { tactic: 'Credential Access', name: 'LSASS Memory', desc: 'Adversaries access LSASS process memory to extract credentials. Common tools: Mimikatz, ProcDump. Detected via anomalous process handle access to lsass.exe with suspicious access masks (0x1fffff, 0x1410).' },
   'T1018':     { tactic: 'Discovery', name: 'Remote System Discovery', desc: 'Adversaries enumerate other systems on the network via ping sweeps, ARP, LDAP/AD queries, or net view.' },
   'T1021':     { tactic: 'Lateral Movement', name: 'Remote Services', desc: 'Adversaries use valid accounts to log into remote services (RDP, SMB, WinRM) to move laterally across the network.' },
-  'T1027':     { tactic: 'Defense Evasion', name: 'Obfuscated Files or Information', desc: 'Adversaries encode, encrypt, or otherwise obfuscate artefacts to make detection more difficult.' },
+  'T1027':     { tactic: 'Defense Evasion', name: 'Obfuscated Files or Information', desc: 'Adversaries encode, encrypt, or otherwise obfuscate artifacts to make detection more difficult.' },
   'T1041':     { tactic: 'Exfiltration', name: 'Exfiltration Over C2 Channel', desc: 'Adversaries steal data by exfiltrating it over an existing command-and-control channel, blending exfil with normal C2 traffic.' },
   'T1046':     { tactic: 'Discovery', name: 'Network Service Discovery', desc: 'Adversaries scan for services running on remote hosts, often via port scanning or protocol-specific probes.' },
   'T1053':     { tactic: 'Persistence / Execution', name: 'Scheduled Task / Job', desc: 'Adversaries abuse task scheduling to execute malicious code at initial access or on a recurring basis.' },

@@ -122,7 +122,7 @@ Detection patterns for Ivanti Connect Secure (ICS) VPN exploitation — covering
 ### Patterns
 - REST API auth bypass: requests to /api/v1/totp/user-backup-code or /api/v1/license without valid session cookie
 - Admin UI access from external IPs not in the approved jump-host range
-- Web shell artefacts: new .cgi or .pl files written to /home/webserver/htdocs/ outside patch windows
+- Web shell artifacts: new .cgi or .pl files written to /home/webserver/htdocs/ outside patch windows
 - Outbound connections from the ICS appliance to non-Ivanti IPs on port 443 or 4444 (beacon indicator)
 - debug.log entries containing plaintext credential strings (password=, pwd=) from failed SAML assertions
 - Single VPN session authenticating as multiple different users within a 10-minute window (session token replay)
@@ -179,7 +179,7 @@ index=wineventlog (EventCode=7036 OR EventCode=7045)
 
 ### Attack Paths
 - T1562.002 | Disable Windows Event Logging | critical | Without Sysmon and Windows event logs, the attack chain becomes invisible to Splunk ES — attacker has free rein to perform lateral movement and exfil undetected
-- T1070.004 | File Deletion | high | Log clearing typically paired with file deletion of staging directories to remove forensic artefacts before IR engagement
+- T1070.004 | File Deletion | high | Log clearing typically paired with file deletion of staging directories to remove forensic artifacts before IR engagement
 - T1486 | Data Encrypted for Impact | high | EDR tamper is a direct ransomware precursor — disabling CrowdStrike removes the primary runtime prevention control before encryption begins
 
 ---

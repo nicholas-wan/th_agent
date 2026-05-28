@@ -926,7 +926,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
                   <span class="tool-tile-chevron">▼</span>
                 </div>
                 <div class="tool-tile-detail">
-                  <div class="tool-tile-row"><span>Contents</span><span>6 skills · 5 runbooks</span></div>
+                  <div class="tool-tile-row"><span>Contents</span><span>6 techniques · 5 runbooks</span></div>
                   <div class="tool-tile-fn-section">Functions</div>
                   <div class="tool-tile-fn-list">
                     <div class="tool-tile-fn">
@@ -936,7 +936,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
                     </div>
                     <div class="tool-tile-fn">
                       <div class="tool-tile-fn-sig">load_skills(ttp_list)</div>
-                      <div class="tool-tile-fn-desc">Match TTPs to hunter-authored skill files and load into agent context</div>
+                      <div class="tool-tile-fn-desc">Match TTPs to hunter-authored technique files and load into agent context</div>
                       <div class="tool-tile-fn-out">Matched skill IDs · patterns · SPL templates · FP exclusions</div>
                     </div>
                     <div class="tool-tile-fn">
@@ -947,7 +947,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
                     <div class="tool-tile-fn">
                       <div class="tool-tile-fn-sig">search_kb(query)</div>
                       <div class="tool-tile-fn-desc">Full-text search across skills, runbooks, and analyst notes</div>
-                      <div class="tool-tile-fn-out">Matching entries · type (skill/runbook) · relevance scores</div>
+                      <div class="tool-tile-fn-out">Matching entries · type (technique/runbook) · relevance scores</div>
                     </div>
                     <div class="tool-tile-fn">
                       <div class="tool-tile-fn-sig">list_ttps()</div>
@@ -1948,7 +1948,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
                   </div>
                   <div class="tool-tile-fn">
                     <div class="tool-tile-fn-sig">load_skills(ttp_list)</div>
-                    <div class="tool-tile-fn-desc">Match TTPs to hunter-authored skill files and load into agent context</div>
+                    <div class="tool-tile-fn-desc">Match TTPs to hunter-authored technique files and load into agent context</div>
                     <div class="tool-tile-fn-out">Matched skill IDs · patterns · SPL templates · FP exclusions</div>
                   </div>
                   <div class="tool-tile-fn">
@@ -1959,7 +1959,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
                   <div class="tool-tile-fn">
                     <div class="tool-tile-fn-sig">search_kb(query)</div>
                     <div class="tool-tile-fn-desc">Full-text search across skills, runbooks, and analyst notes</div>
-                    <div class="tool-tile-fn-out">Matching entries · type (skill/runbook) · relevance scores</div>
+                    <div class="tool-tile-fn-out">Matching entries · type (technique/runbook) · relevance scores</div>
                   </div>
                   <div class="tool-tile-fn">
                     <div class="tool-tile-fn-sig">list_ttps()</div>
@@ -2686,7 +2686,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   <!-- KB global search -->
   <div class="kb-search-bar">
     <span class="search-icon">🔍</span>
-    <input type="text" id="kb-global-search" placeholder="Search skills, runbooks, IOCs…" oninput="kbSearch(this.value)" autocomplete="off">
+    <input type="text" id="kb-global-search" placeholder="Search techniques, runbooks, IOCs…" oninput="kbSearch(this.value)" autocomplete="off">
     <button class="kb-search-clear" id="kb-search-clear" onclick="clearKbSearch()" style="display:none;">✕</button>
   </div>
 
@@ -2697,7 +2697,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   <div class="kb-subtab-bar" id="kb-subtab-bar">
     <div class="kb-stab on" id="kb-stab-tradecraft" onclick="switchKbTab('tradecraft')">📚 Tradecraft</div>
     <div class="kb-stab"    id="kb-stab-env"        onclick="switchKbTab('env')">🏗️ Environment</div>
-    <div class="kb-stab"    id="kb-stab-ioc"        onclick="switchKbTab('ioc')">🗂️ Artefacts Repository</div>
+    <div class="kb-stab"    id="kb-stab-ioc"        onclick="switchKbTab('ioc')">🗂️ IOC Repository</div>
   </div>
 
   <!-- ── Tradecraft pane (skills + runbooks) ── -->
@@ -2706,7 +2706,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 
       <!-- Inner tab bar: Domain | TTP Runbooks | Propose Edit -->
       <div class="kb-sk-stab-bar">
-        <div class="kb-sk-stab on" id="kb-tc-stab-domain"   onclick="switchTradecraftTab('domain')">🔌 Platform Attack Skills</div>
+        <div class="kb-sk-stab on" id="kb-tc-stab-domain"   onclick="switchTradecraftTab('domain')">🔌 Platform Attack Techniques</div>
         <div class="kb-sk-stab"    id="kb-tc-stab-runbooks" onclick="switchTradecraftTab('runbooks')">📖 TTP Runbooks</div>
         <div class="kb-sk-stab"    id="kb-tc-stab-author"   onclick="switchTradecraftTab('author')">✏️ Propose Edit</div>
       </div>
@@ -2734,7 +2734,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
           <div class="sk-author-form">
             <div class="sk-field">
-              <label class="sk-field-lbl">Skill Name</label>
+              <label class="sk-field-lbl">Technique Name</label>
               <input class="sk-finput" id="kb-draft-name" placeholder="e.g. LSASS Memory Access via Task Manager">
             </div>
             <div class="sk-field">
@@ -2967,7 +2967,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
       <details class="faq-item">
         <summary class="faq-q">What is the Observe stage used for — can I skip it?</summary>
         <div class="faq-a">
-          <p>The Observe stage is your <b>hunt-specific baseline document</b>. It tells the agents (and the team) what "normal" looks like in this environment for the scope of this hunt, and what adversary artefacts to watch for.</p>
+          <p>The Observe stage is your <b>hunt-specific baseline document</b>. It tells the agents (and the team) what "normal" looks like in this environment for the scope of this hunt, and what adversary artifacts to watch for.</p>
           <p>You can technically skip it, but agents in the Check stage use Observe data to calibrate thresholds, choose exclusions, and interpret RAA findings. Skipping it means agents fall back to generic defaults, which increases false positives.</p>
           <p>Click <b>✏ Edit</b> in the Observe tab to update any item — existing entries become inline text fields, and you can add or remove entries per section.</p>
         </div>
@@ -3064,28 +3064,28 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
       <div class="faq-cat-label">Knowledge Base</div>
 
       <details class="faq-item">
-        <summary class="faq-q">What is the difference between Platform Attack Skills and Runbooks?</summary>
+        <summary class="faq-q">What is the difference between Platform Attack Techniques and Runbooks?</summary>
         <div class="faq-a">
-          <p><b>Platform Attack Skills</b> are detection packages tied to a specific technology platform or log source not yet fully onboarded into the environment — for example, VMware vCenter, Ivanti Connect Secure, or SolarWinds Orion. Each skill includes detection patterns, an SPL template, FP exclusions, and attack path context for that platform.</p>
+          <p><b>Platform Attack Techniques</b> are detection packages tied to a specific technology platform or log source not yet fully onboarded into the environment — for example, VMware vCenter, Ivanti Connect Secure, or SolarWinds Orion. Each skill includes detection patterns, an SPL template, FP exclusions, and attack path context for that platform.</p>
           <p><b>Runbooks</b> are technique-level playbooks keyed to MITRE ATT&CK TTP IDs (e.g. <code>T1003.001</code>). They are platform-agnostic and cover the full investigation procedure: data sources, SPL queries, triage steps, and response actions.</p>
-          <p>Use Platform Attack Skills when onboarding a new log source; use Runbooks as the step-by-step investigation guide during an active hunt.</p>
+          <p>Use Platform Attack Techniques when onboarding a new log source; use Runbooks as the step-by-step investigation guide during an active hunt.</p>
         </div>
       </details>
 
       <details class="faq-item">
-        <summary class="faq-q">What is the Artefacts Repository?</summary>
+        <summary class="faq-q">What is the IOC Repository?</summary>
         <div class="faq-a">
-          <p>The <b>Artefacts Repository</b> (previously IOC Repository) in the Knowledge Base stores indicators and artefacts associated with past and active hunts — IP addresses, file hashes, domain names, JA3 fingerprints, registry keys, and similar forensic artefacts.</p>
-          <p>Artefacts are defined in <code>kb/iocs.js</code> and are searchable from the KB search bar. They can be referenced in hunt findings and linked to specific TTPs or adversary campaigns.</p>
+          <p>The <b>IOC Repository</b> (previously IOC Repository) in the Knowledge Base stores indicators and artifacts associated with past and active hunts — IP addresses, file hashes, domain names, JA3 fingerprints, registry keys, and similar forensic artifacts.</p>
+          <p>Artifacts are defined in <code>kb/iocs.js</code> and are searchable from the KB search bar. They can be referenced in hunt findings and linked to specific TTPs or adversary campaigns.</p>
         </div>
       </details>
 
       <details class="faq-item">
-        <summary class="faq-q">How do I add a new Platform Skill or Runbook?</summary>
+        <summary class="faq-q">How do I add a new Platform Technique or Runbook?</summary>
         <div class="faq-a">
           <p>Both are defined in Markdown source files that serve as the runtime source of truth:</p>
           <ul>
-            <li><b>Platform Skill</b>: Open <code>kb/skills.md</code>, copy any existing <code>## SK-XXX —</code> block, paste it above the final <code>---</code>, fill in the fields, then mirror the entry in <code>kb/skills-fallback.js</code> (used for local <code>file://</code> development).</li>
+            <li><b>Platform Technique</b>: Open <code>kb/skills.md</code>, copy any existing <code>## SK-XXX —</code> block, paste it above the final <code>---</code>, fill in the fields, then mirror the entry in <code>kb/skills-fallback.js</code> (used for local <code>file://</code> development).</li>
             <li><b>Runbook</b>: Open <code>kb/runbooks.md</code>, copy any existing <code>## T…</code> block, paste it, and fill in the TTP ID, data sources, SPL, and triage steps.</li>
           </ul>
           <p>Required fields for a skill: <code>type</code>, <code>category</code>, <code>category-label</code>, <code>ttps</code>, <code>author</code>. No build step is required — changes are picked up on next page load when serving over HTTP.</p>
@@ -3320,13 +3320,13 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
     </div>
   </div>
 </div>
-<!-- ── Tradecraft Skills Repository Modal ── -->
+<!-- ── Tradecraft Techniques Repository Modal ── -->
 <div class="sk-overlay" id="sk-overlay" onclick="if(event.target===this)closeSkillsRepo()">
   <div class="sk-modal">
     <div class="sk-modal-head">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
         <div>
-          <div class="sk-modal-title">📚 Tradecraft Skills Repository</div>
+          <div class="sk-modal-title">📚 Tradecraft Techniques Repository</div>
           <div class="sk-modal-sub">Hunter-authored domain expertise — VMware behaviours, firewall anomalies, credential access patterns — version-controlled and consumed by agents at invocation time. Institutional knowledge as a system input, not a person dependency.</div>
         </div>
         <button class="btn btn-ghost" style="flex-shrink:0;font-size:16px;padding:2px 8px;" onclick="closeSkillsRepo()">✕</button>
@@ -3338,7 +3338,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
     </div>
     <div class="sk-modal-body" id="sk-browse-pane">
       <div class="sk-stats-bar">
-        <div class="sk-stat"><div class="sk-stat-val">6</div><div class="sk-stat-lbl">Skills indexed</div></div>
+        <div class="sk-stat"><div class="sk-stat-val">6</div><div class="sk-stat-lbl">Techniques indexed</div></div>
         <div class="sk-stat"><div class="sk-stat-val">4</div><div class="sk-stat-lbl">Categories</div></div>
         <div class="sk-stat"><div class="sk-stat-val">3</div><div class="sk-stat-lbl">Contributors</div></div>
         <div class="sk-stat"><div class="sk-stat-val" style="font-size:14px;">v2.0</div><div class="sk-stat-lbl">Latest version</div></div>
@@ -3359,11 +3359,11 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         <div class="sk-author-form">
           <div style="font-size:12px;color:var(--sub);margin-bottom:6px;line-height:1.6;">Propose a new skill or an edit to an existing one. Submissions are reviewed by senior hunters before being merged into the repository.</div>
           <div class="sk-field">
-            <label class="sk-field-lbl">Skill ID <span style="color:var(--muted);font-weight:400;text-transform:none;">(auto-generated on submit)</span></label>
+            <label class="sk-field-lbl">Technique ID <span style="color:var(--muted);font-weight:400;text-transform:none;">(auto-generated on submit)</span></label>
             <input class="sk-finput" id="sk-draft-id" placeholder="SK-0XX — assigned on review" readonly style="opacity:.5;cursor:default;">
           </div>
           <div class="sk-field">
-            <label class="sk-field-lbl">Skill Name</label>
+            <label class="sk-field-lbl">Technique Name</label>
             <input class="sk-finput" id="sk-draft-name" placeholder="e.g. LSASS Memory Access via Task Manager">
           </div>
           <div class="sk-field">

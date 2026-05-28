@@ -755,7 +755,7 @@ function goToHuntKeep(huntId) {
 
 // ── Tradecraft inner tab switch ──
 const _tcDesc = {
-  domain:   '<span class="ib-icon">🔌</span><span><b>Platform Attack Skills</b> are detection patterns tied to specific platforms or log sources not currently in the environment — EDR telemetry, cloud audit logs, proxy data, network sensors. Use these to assess coverage gaps or onboard new data sources.</span>',
+  domain:   '<span class="ib-icon">🔌</span><span><b>Platform Attack Techniques</b> are detection patterns tied to specific platforms or log sources not currently in the environment — EDR telemetry, cloud audit logs, proxy data, network sensors. Use these to assess coverage gaps or onboard new data sources.</span>',
   runbooks: '<span class="ib-icon">📖</span><span><b>TTP Runbooks</b> are technique-level hunt guides, one per ATT&CK technique. Each covers adversary evidence indicators, hunting SPL, prior hunt notes from this environment, and known false positives. The Hypothesis Agent pulls these via <code style="font-size:10px;">get_runbook(ttp_id)</code> when generating hypotheses.</span>',
   author:   '<span class="ib-icon">✏️</span><span>Propose a new skill or an edit to an existing one. Fill in the form on the left — include behavioural patterns, an SPL template, and known FP exclusions. Submissions go into the draft queue for senior hunter review before being merged into the live knowledge base.</span>',
 };
