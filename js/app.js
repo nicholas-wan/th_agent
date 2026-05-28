@@ -2239,8 +2239,6 @@ function openEnvContext(tab) {
   renderEcOverview();
   renderEcTools();
   renderEcStack();
-  renderEcGaps();
-  renderEcMaint();
   renderCrownJewels();
   switchEcTab(tab || 'overview');
   document.getElementById('ec-overlay').classList.add('open');

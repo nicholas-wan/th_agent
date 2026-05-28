@@ -1432,60 +1432,6 @@ function renderKbEnvPane() {
       ${card('Databases & Data Stores', '🗄️', dbContent, null, null)}
     </div>`;
 
-  } else if (activeEnvTab === 'gaps') {
-    const gaps = d.gaps || [];
-    const ttps = d.priorityTtps || {};
-
-    const gapsContent = gaps.length
-      ? `<table class="kb-table"><thead><tr><th>Area</th><th>Status / Notes</th></tr></thead><tbody>
-          ${gaps.map(g => `<tr>
-            <td style="font-weight:600;color:var(--sub);">${g.label}</td>
-            <td>${g.value || '<span class="env-ph">Not configured</span>'}</td>
-          </tr>`).join('')}
-        </tbody></table>`
-      : `<span class="env-ph">No gaps documented.</span>`;
-
-    const tacticColors = { TA0006:'red', TA0008:'orange', TA0004:'yellow', TA0003:'indigo', TA0010:'blue' };
-    const ttpsContent = (ttps.tactics||[]).length
-      ? `<table class="kb-table"><thead><tr><th>ID</th><th>Tactic</th><th>Focus Areas</th></tr></thead><tbody>
-          ${(ttps.tactics).map(t => `<tr>
-            <td>${pill(t.id)}</td>
-            <td style="font-weight:600;color:var(--sub);">${t.name}</td>
-            <td style="color:var(--muted);font-size:10.5px;">${t.desc || '—'}</td>
-          </tr>`).join('')}
-        </tbody></table>`
-      : `<span class="env-ph">No priority TTPs configured.</span>`;
-
-    const tmContent = (ttps.threatModel||[]).length
-      ? (ttps.threatModel).map(t => `<div class="env-list-item">⚠ ${t}</div>`).join('')
-      : `<span class="env-ph">No threat model configured.</span>`;
-
-    body.innerHTML = `<div class="kb-env-1col">
-      ${card('Known Gaps & Blind Spots', '⚠', gapsContent, gaps.filter(g=>!g.value).length + ' unconfigured', 'yellow')}
-      ${card('Priority Tactics', '🎯', ttpsContent, (ttps.tactics||[]).length + ' tactics', 'red')}
-      ${card('Threat Model Focus', '🔍', tmContent, null, null)}
-    </div>`;
-
-  } else if (activeEnvTab === 'maint') {
-    const maint = d.maintenance || {};
-    const cl = maint.checklist || [];
-    const log = maint.changeLog || [];
-
-    const checklistContent = cl.length
-      ? cl.map(item => `<div class="env-checklist-item"><span class="env-check-box">☐</span><span>${item}</span></div>`).join('')
-      : `<span class="env-ph">No checklist configured.</span>`;
-
-    const changelogContent = log.length
-      ? log.map(e => `<div class="env-changelog-item">
-          <span class="env-changelog-date">${e.date}</span>
-          <span class="env-changelog-note">${e.note}</span>
-        </div>`).join('')
-      : `<span class="env-ph">No change log entries.</span>`;
-
-    body.innerHTML = `<div class="kb-env-1col">
-      ${card('Quarterly Review Checklist', '📋', checklistContent, cl.length + ' items', 'blue')}
-      ${card('Change Log', '📝', changelogContent, null, null)}
-    </div>`;
   }
 }
 
