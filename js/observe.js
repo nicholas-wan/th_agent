@@ -1,6 +1,10 @@
-﻿/* ── observe.js ───────────────────────────────────────────────────────────
+/* ── observe.js ───────────────────────────────────────────────────────────
    Hunt Observe stage functions. Loaded after app.js.
    ──────────────────────────────────────────────────────────────────────── */
+
+// ── Observe edit state ──
+let observeEditMode = false;
+let observeCurrentHunt = null;
 
 // ── Hunt Observe ──
 const observeData = {
@@ -180,7 +184,146 @@ const observeData = {
   },
 };
 
+// ── Helpers ──
+function _obsTarget(id) {
+  const huntData = observeData[id];
+  if (!huntData) return null;
+  const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+  const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
+  return { huntData, shData, d: shData || huntData };
+}
+
+function _catDomId(cat) {
+  return 'obs-add-obs-' + cat.replace(/[^a-zA-Z0-9]/g, '-');
+}
+
+// ── Save all in-progress input edits back to data before any re-render ──
+function saveObserveEdits(id) {
+  const t = _obsTarget(id);
+  if (!t) return;
+  // Normal inputs
+  document.querySelectorAll('.obs-normal-input').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx, 10);
+    if (!isNaN(idx) && t.d.normal[idx]) {
+      const v = inp.value.trim();
+      if (v) t.d.normal[idx].text = v;
+    }
+  });
+  // Suspicious inputs
+  document.querySelectorAll('.obs-susp-input').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx, 10);
+    if (!isNaN(idx) && t.d.suspicious[idx]) {
+      const v = inp.value.trim();
+      if (v) t.d.suspicious[idx].text = v;
+    }
+  });
+  // Observable inputs
+  document.querySelectorAll('.obs-obs-input').forEach(inp => {
+    const cat = inp.dataset.cat;
+    const idx = parseInt(inp.dataset.idx, 10);
+    if (cat && !isNaN(idx) && t.d.observables[cat] && t.d.observables[cat][idx] !== undefined) {
+      const v = inp.value.trim();
+      if (v) t.d.observables[cat][idx] = v;
+    }
+  });
+}
+
+// ── Toggle edit mode ──
+function toggleObserveEdit(id) {
+  if (observeEditMode) saveObserveEdits(id); // commit edits on Done
+  observeEditMode = !observeEditMode;
+  renderHuntObserve(id);
+}
+
+// ── Normal item CRUD ──
+function obsDeleteNormal(id, idx) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t) return;
+  t.d.normal.splice(idx, 1);
+  renderHuntObserve(id);
+}
+
+function obsAddNormal(id) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t) return;
+  const input = document.getElementById('obs-add-normal-input');
+  const val = input && input.value.trim();
+  if (!val) return;
+  t.d.normal.push({ text: val });
+  renderHuntObserve(id);
+}
+
+// ── Suspicious item CRUD ──
+function obsDeleteSuspicious(id, idx) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t) return;
+  t.d.suspicious.splice(idx, 1);
+  renderHuntObserve(id);
+}
+
+function obsAddSuspicious(id) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t) return;
+  const input = document.getElementById('obs-add-susp-input');
+  const val = input && input.value.trim();
+  if (!val) return;
+  t.d.suspicious.push({ text: val });
+  renderHuntObserve(id);
+}
+
+// ── Observable item CRUD ──
+function obsDeleteObservable(id, cat, idx) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t || !t.d.observables[cat]) return;
+  t.d.observables[cat].splice(idx, 1);
+  renderHuntObserve(id);
+}
+
+function obsAddObservable(id, cat) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t) return;
+  const input = document.getElementById(_catDomId(cat));
+  const val = input && input.value.trim();
+  if (!val) return;
+  if (!t.d.observables[cat]) t.d.observables[cat] = [];
+  t.d.observables[cat].push(val);
+  renderHuntObserve(id);
+}
+
+function obsDeleteCategory(id, cat) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t || !t.d.observables) return;
+  delete t.d.observables[cat];
+  renderHuntObserve(id);
+}
+
+function obsAddCategory(id) {
+  saveObserveEdits(id);
+  const t = _obsTarget(id);
+  if (!t) return;
+  const input = document.getElementById('obs-add-cat-input');
+  // Strip single quotes to keep inline onclick safe
+  const val = input && input.value.trim().replace(/'/g, '');
+  if (!val) return;
+  if (!t.d.observables[val]) t.d.observables[val] = [];
+  input.value = '';
+  renderHuntObserve(id);
+}
+
 function renderHuntObserve(id) {
+  // Reset edit mode when the user navigates to a different hunt
+  if (id !== observeCurrentHunt) {
+    observeEditMode = false;
+    observeCurrentHunt = id;
+  }
+
   const huntData = observeData[id];
   const main = document.getElementById('obs-main-body');
   const side = document.getElementById('obs-side-body');
@@ -195,44 +338,113 @@ function renderHuntObserve(id) {
   const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
   const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
   const d = shData || huntData;
+  const em = observeEditMode;
 
-  // Subhunt context banner (shown when a specific subhunt is active)
+  // Subhunt context banner
   const subhuntBannerHTML = shData ? `
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius-sm);margin-bottom:10px;">
       <span style="font-size:11px;color:var(--muted);">Observe profile for</span>
       <span class="chip ${shData.ttpChip}" style="font-size:10px;">${shData.label}</span>
     </div>` : '';
 
-  const normalHTML = d.normal.map(n => `
+  // Edit/Done toggle button
+  const editToggleHTML = `
+    <div class="obs-edit-bar">
+      <button class="obs-edit-toggle${em ? ' active' : ''}" onclick="toggleObserveEdit('${id}')">
+        ${em ? '✔ Done' : '✏ Edit'}
+      </button>
+    </div>`;
+
+  // ── Normal items ──
+  const normalItemsHTML = d.normal.map((n, idx) => `
     <div class="obs-item">
       <span class="obs-item-icon" style="color:var(--green);">✓</span>
-      <span>${n.text}</span>
-    </div>`).join('');
-  const suspHTML = d.suspicious.map(s => `
+      ${em
+        ? `<input type="text" class="obs-edit-input obs-normal-input" value="${n.text.replace(/"/g, '&quot;')}" data-idx="${idx}">`
+        : `<span style="flex:1;">${n.text}</span>`}
+      ${em ? `<button class="obs-delete-btn" onclick="obsDeleteNormal('${id}',${idx})" title="Remove">✕</button>` : ''}
+    </div>`).join('') || `<div class="obs-empty-state">No baseline patterns yet.</div>`;
+
+  const normalAddHTML = em ? `
+    <div class="obs-add-row">
+      <input class="obs-add-input" id="obs-add-normal-input" placeholder="Add baseline pattern…"
+             onkeydown="if(event.key==='Enter')obsAddNormal('${id}')">
+      <button class="obs-add-btn" onclick="obsAddNormal('${id}')">+ Add</button>
+    </div>` : '';
+
+  // ── Suspicious items ──
+  const suspItemsHTML = d.suspicious.map((s, idx) => `
     <div class="obs-item">
       <span class="obs-item-icon" style="color:var(--yellow);">⚠</span>
-      <span>${s.text}</span>
-    </div>`).join('');
+      ${em
+        ? `<input type="text" class="obs-edit-input obs-susp-input" value="${s.text.replace(/"/g, '&quot;')}" data-idx="${idx}">`
+        : `<span style="flex:1;">${s.text}</span>`}
+      ${em ? `<button class="obs-delete-btn" onclick="obsDeleteSuspicious('${id}',${idx})" title="Remove">✕</button>` : ''}
+    </div>`).join('') || `<div class="obs-empty-state">No adversary patterns yet.</div>`;
+
+  const suspAddHTML = em ? `
+    <div class="obs-add-row">
+      <input class="obs-add-input" id="obs-add-susp-input" placeholder="Add adversary pattern…"
+             onkeydown="if(event.key==='Enter')obsAddSuspicious('${id}')">
+      <button class="obs-add-btn" onclick="obsAddSuspicious('${id}')">+ Add</button>
+    </div>` : '';
+
   main.innerHTML = `
     ${subhuntBannerHTML}
+    ${editToggleHTML}
     <div class="info-bar"><span class="ib-icon">ℹ️</span><span>The <b>Observe</b> stage defines your environment baseline for this hunt — what normal looks like, what adversary activity looks like, and what artefacts to watch for. This informs agent thresholds and exclusions applied in Learn and Check.</span></div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">✅ What Normal Looks Like</span>
-        <span class="chip chip-green" style="font-size:10px;">${d.normal.length} baseline patterns</span>
+        <span class="chip chip-green" style="font-size:10px;">${d.normal.length} baseline pattern${d.normal.length !== 1 ? 's' : ''}</span>
       </div>
-      <div class="card-body" style="padding:8px 14px;">${normalHTML}</div>
+      <div class="card-body" style="padding:8px 14px;">${normalItemsHTML}${normalAddHTML}</div>
     </div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">⚠ What Suspicious Looks Like</span>
-        <span class="chip chip-yellow" style="font-size:10px;">${d.suspicious.length} adversary patterns</span>
+        <span class="chip chip-yellow" style="font-size:10px;">${d.suspicious.length} adversary pattern${d.suspicious.length !== 1 ? 's' : ''}</span>
       </div>
-      <div class="card-body" style="padding:8px 14px;">${suspHTML}</div>
+      <div class="card-body" style="padding:8px 14px;">${suspItemsHTML}${suspAddHTML}</div>
     </div>`;
-  const obsHTML = Object.entries(d.observables).map(([cat, items]) => `
-    <div class="obs-cat-label">${cat}</div>
-    ${items.map(item => `<div class="obs-observable">${item}</div>`).join('')}`).join('');
+
+  // ── Observables (side panel) ──
+  const obsHTML = Object.entries(d.observables).map(([cat, items]) => {
+    const catInputId = _catDomId(cat);
+    const deleteCatBtn = em
+      ? ` <button class="obs-delete-cat-btn" onclick="obsDeleteCategory('${id}','${cat}')" title="Delete category">✕</button>`
+      : '';
+
+    const itemsHTML = items.map((item, idx) =>
+      em
+        ? `<div class="obs-observable obs-observable-edit">
+             <input type="text" class="obs-edit-input obs-obs-input" value="${item.replace(/"/g, '&quot;')}" data-cat="${cat.replace(/"/g, '&quot;')}" data-idx="${idx}">
+             <button class="obs-delete-btn" onclick="obsDeleteObservable('${id}','${cat}',${idx})" title="Remove">✕</button>
+           </div>`
+        : `<div class="obs-observable">${item}</div>`
+    ).join('') || `<div class="obs-empty-state" style="font-size:10px;">No observables yet.</div>`;
+
+    const addRowHTML = em ? `
+      <div class="obs-add-row">
+        <input class="obs-add-input" id="${catInputId}" placeholder="Add observable…"
+               onkeydown="if(event.key==='Enter')obsAddObservable('${id}','${cat}')">
+        <button class="obs-add-btn" onclick="obsAddObservable('${id}','${cat}')">+ Add</button>
+      </div>` : '';
+
+    return `
+      <div class="obs-cat-label">${cat}${deleteCatBtn}</div>
+      ${itemsHTML}${addRowHTML}`;
+  }).join('');
+
+  const catAddHTML = em ? `
+    <div class="obs-cat-add-section">
+      <div class="obs-cat-label" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);">New Category</div>
+      <div class="obs-add-row">
+        <input class="obs-add-input" id="obs-add-cat-input" placeholder="Category name…"
+               onkeydown="if(event.key==='Enter')obsAddCategory('${id}')">
+        <button class="obs-add-btn" onclick="obsAddCategory('${id}')">+ Add</button>
+      </div>
+    </div>` : '';
 
   const topoSVG = `<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
     <defs>
@@ -282,7 +494,6 @@ function renderHuntObserve(id) {
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">🔭 Expected Observables</span></div>
-      <div class="card-body" style="padding:8px 14px;">${obsHTML}</div>
+      <div class="card-body" style="padding:8px 14px;">${obsHTML}${catAddHTML}</div>
     </div>`;
 }
-

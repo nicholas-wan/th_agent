@@ -1,0 +1,6 @@
+node_modules/
+*.pptx
+gen_pptx.js
+package.json
+package-lock.json
+.claude/

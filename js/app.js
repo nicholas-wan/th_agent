@@ -272,6 +272,26 @@ function closeMobileNav() {
   document.getElementById('nav-toggle-chevron').textContent = '▾';
 }
 
+// ── FAQ search filter ──
+function filterFaq(q) {
+  const term = q.toLowerCase().trim();
+  // Show/hide individual FAQ items
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const match = term === '' || item.textContent.toLowerCase().includes(term);
+    item.classList.toggle('faq-hidden', !match);
+  });
+  // Hide category labels that have no visible items beneath them
+  document.querySelectorAll('.faq-cat-label').forEach(label => {
+    if (term === '') { label.classList.remove('faq-hidden'); return; }
+    let sibling = label.nextElementSibling;
+    let hasVisible = false;
+    while (sibling && !sibling.classList.contains('faq-cat-label')) {
+      if (!sibling.classList.contains('faq-hidden')) { hasVisible = true; break; }
+      sibling = sibling.nextElementSibling;
+    }
+    label.classList.toggle('faq-hidden', !hasVisible);
+  });
+}
 
 // ── Intelligence Repository ──
 const repoData = [
@@ -1896,166 +1916,237 @@ setInterval(() => {
 // envData + crownJewels — defined at top of this file; overwritten at runtime from kb/environment.md
 
 // ── Render helpers ──
+function _ecPh(v) {
+  return (v && String(v).trim()) ? String(v) : '<span style="color:var(--muted);font-style:italic;">not configured</span>';
+}
+function _ecKv(label, val) {
+  return `<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--sub);width:150px;flex-shrink:0;">${label}</span><span style="color:var(--text);word-break:break-all;">${_ecPh(val)}</span></div>`;
+}
+function _ecCard(title, icon, content) {
+  return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;">
+    <div class="rb-section-head" style="margin-bottom:10px;"><span class="rb-section-icon">${icon}</span>${title}</div>
+    ${content}
+  </div>`;
+}
+
 function renderEcOverview() {
-  // Stats strip
-  document.getElementById('ec-overview-stats').innerHTML = envData.stats.map(s => `
-    <div class="stat-card c-${s.color}" style="padding:12px 14px;">
-      <div class="label">${s.label}</div>
-      <div class="val" style="font-size:22px;">${s.value}</div>
-      <div class="note">${s.note}</div>
-    </div>`).join('');
+  const m    = envData.meta || {};
+  const mon  = envData.monitoring || {};
+  const siem = mon.siem || {};
+  const identity = mon.identity || {};
+  const ttps = envData.priorityTtps || {};
+  const ts   = envData.techStack || {};
 
-  // Domain info
-  const d = envData.domain;
-  document.getElementById('ec-domain-info').innerHTML = `
-    <div class="ec-detail-grid" style="background:var(--s2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
-      <span class="ec-detail-k">Domain</span><span class="ec-detail-v">${d.name}</span>
-      <span class="ec-detail-k">NetBIOS</span><span class="ec-detail-v">${d.netbios}</span>
-      <span class="ec-detail-k">Forest</span><span class="ec-detail-v">${d.forest}</span>
-      <span class="ec-detail-k">FL</span><span class="ec-detail-v plain">${d.functionalLevel}</span>
-      <span class="ec-detail-k">DCs</span><span class="ec-detail-v plain">${d.dcs.join('<br>')}</span>
-      <span class="ec-detail-k">Sites</span><span class="ec-detail-v plain">${d.sites.join('<br>')}</span>
-      <span class="ec-detail-k">Trusts</span><span class="ec-detail-v plain">${d.trusts.join('<br>')}</span>
-      <span class="ec-detail-k">AD Sync</span><span class="ec-detail-v plain">${d.adSync}</span>
+  document.getElementById('ec-overview-meta').innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;background:var(--s2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
+      <div style="font-size:11px;color:var(--sub);">Last Updated <span style="color:var(--text);font-weight:600;">${m.lastUpdated || '—'}</span></div>
+      <div style="font-size:11px;color:var(--sub);">Review Cadence <span style="color:var(--text);font-weight:600;">${m.reviewCadence || '—'}</span></div>
+      <div style="font-size:11px;color:var(--sub);">Maintained by <span style="color:var(--text);font-weight:600;">${m.maintainedBy || '—'}</span></div>
     </div>`;
 
-  // Anomalies
-  const sevMap = { crit:['rb-tip-crit','🔴','crit'], high:['rb-tip-high','🟡','high'], med:['rb-tip-info','🔵','info'] };
-  document.getElementById('ec-anomalies').innerHTML = envData.anomalies.map(a => {
-    const [cls, icon, lbl] = sevMap[a.sev] || sevMap.med;
-    return `<div class="rb-tip ${cls}" style="margin-bottom:6px;">
-      <span class="rb-tip-icon">${icon}</span>
-      <div class="rb-tip-body"><div class="rb-tip-text">${a.text}</div></div>
+  const siemName  = siem.platform || 'SIEM';
+  const idxCount  = (siem.indexes || []).length;
+  const eids      = (identity.eventIds || []).length;
+  const tactics   = (ttps.tactics || []).length;
+  const gapsCount = (envData.gaps || []).filter(g => g.value && g.value.trim()).length;
+  const osServers = ((ts.os || {}).servers || []).length;
+  const retention = siem.retention ? siem.retention.split(',')[0] : '—';
+
+  document.getElementById('ec-overview-cards').innerHTML = `
+    <div class="stat-card c-blue" style="padding:12px 14px;">
+      <div class="label">SIEM Indexes</div>
+      <div class="val" style="font-size:22px;">${idxCount}</div>
+      <div class="note">${siemName.length > 38 ? siemName.slice(0,38)+'…' : siemName}</div>
+    </div>
+    <div class="stat-card c-teal" style="padding:12px 14px;">
+      <div class="label">Identity Event IDs</div>
+      <div class="val" style="font-size:22px;">${eids}</div>
+      <div class="note">${identity.provider || 'Identity provider'}</div>
+    </div>
+    <div class="stat-card c-yellow" style="padding:12px 14px;">
+      <div class="label">Priority Tactics</div>
+      <div class="val" style="font-size:22px;">${tactics}</div>
+      <div class="note">Active threat model</div>
+    </div>
+    <div class="stat-card c-${gapsCount > 0 ? 'red' : 'green'}" style="padding:12px 14px;">
+      <div class="label">Documented Gaps</div>
+      <div class="val" style="font-size:22px;">${gapsCount}</div>
+      <div class="note">${gapsCount > 0 ? 'Blind spots identified' : 'None documented'}</div>
+    </div>
+    <div class="stat-card c-indigo" style="padding:12px 14px;">
+      <div class="label">Server OS Variants</div>
+      <div class="val" style="font-size:22px;">${osServers}</div>
+      <div class="note">Monitored OS types</div>
+    </div>
+    <div class="stat-card c-green" style="padding:12px 14px;">
+      <div class="label">Log Retention</div>
+      <div class="val" style="font-size:16px;margin-top:4px;line-height:1.2;">${retention}</div>
+      <div class="note">Hot/warm storage</div>
     </div>`;
-  }).join('');
 }
 
-function renderEcSegments(filter) {
-  const q = (filter || '').toLowerCase();
-  const segs = q ? envData.segments.filter(s =>
-    s.name.toLowerCase().includes(q) || s.cidr.includes(q) ||
-    s.desc.toLowerCase().includes(q) || s.tags.some(t => t.toLowerCase().includes(q))
-  ) : envData.segments;
+function renderEcTools() {
+  const mon      = envData.monitoring || {};
+  const siem     = mon.siem || {};
+  const edr      = mon.edr || {};
+  const net      = mon.network || {};
+  const cloud    = mon.cloud || {};
+  const identity = mon.identity || {};
+  const other    = mon.other || {};
+  let html = '';
 
-  document.getElementById('ec-seg-grid').innerHTML = segs.map(s => `
-    <div class="ec-seg-card sens-${s.sensitivity}">
-      <div class="ec-seg-card-head">
-        <span class="ec-seg-icon">${s.icon}</span>
-        <div style="flex:1;min-width:0;">
-          <div class="ec-seg-name">${s.name}</div>
-          <div class="ec-seg-subnet">${s.cidr} · VLAN ${s.vlan}</div>
-        </div>
-        <span class="chip chip-${s.sensitivity==='critical'?'red':s.sensitivity==='high'?'yellow':s.sensitivity==='medium'?'blue':'green'}" style="font-size:10px;">${s.sensitivity}</span>
-      </div>
-      <div class="ec-seg-body">
-        <div style="margin-bottom:6px;">${s.desc}</div>
-        <div style="color:var(--muted);margin-bottom:3px;font-size:10px;">ACLs</div>
-        ${s.acls.map(a => `<div style="font-size:10px;color:var(--sub);">› ${a}</div>`).join('')}
-        <div class="ec-seg-tags">${s.tags.map(t => `<span class="chip chip-gray" style="font-size:10px;padding:1px 6px;">${t}</span>`).join('')}
-          <span class="chip chip-gray" style="font-size:10px;padding:1px 6px;">${s.hosts} hosts</span></div>
-      </div>
-    </div>`).join('') || '<div style="color:var(--muted);font-size:12px;">No segments match filter.</div>';
+  // SIEM
+  let siemContent = _ecKv('Platform', siem.platform) + _ecKv('Version', siem.version) + _ecKv('Retention', siem.retention);
+  if ((siem.queryAccess || []).length) {
+    siemContent += `<div style="font-size:11px;color:var(--sub);margin-top:8px;margin-bottom:4px;">Query Access</div>`;
+    siemContent += siem.queryAccess.map(q => `<div style="font-size:11px;color:var(--text);padding:2px 0;">› ${q}</div>`).join('');
+  }
+  if ((siem.indexes || []).length) {
+    siemContent += `<div style="font-size:11px;color:var(--sub);margin-top:8px;margin-bottom:4px;">Indexes</div>`;
+    siemContent += siem.indexes.map(ix => `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);"><code style="color:var(--indigo);">${ix.name}</code><span style="color:var(--muted);">${ix.desc}</span></div>`).join('');
+  }
+  if (siem.fields && Object.keys(siem.fields).length) {
+    siemContent += `<div style="font-size:11px;color:var(--sub);margin-top:8px;margin-bottom:4px;">Key Fields</div>`;
+    Object.entries(siem.fields).forEach(([src, fields]) => {
+      siemContent += `<div style="font-size:11px;margin-bottom:4px;"><span style="color:var(--text);font-weight:600;">${src}: </span><span style="color:var(--muted);font-family:monospace;">${fields.join(', ')}</span></div>`;
+    });
+  }
+  html += _ecCard('SIEM / Log Aggregation', '🟠', siemContent);
+
+  // Identity
+  let idContent = _ecKv('Provider', identity.provider) + _ecKv('Domain Controllers', identity.dcs) + _ecKv('MFA', identity.mfa) + _ecKv('PAM', identity.pam);
+  if ((identity.eventIds || []).length) {
+    idContent += `<div style="font-size:11px;color:var(--sub);margin-top:8px;margin-bottom:4px;">Monitored Event IDs</div>`;
+    idContent += identity.eventIds.map(e => `<div style="display:flex;gap:8px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);"><code style="color:var(--indigo);width:40px;flex-shrink:0;">${e.id}</code><span style="color:var(--sub);">${e.desc}</span></div>`).join('');
+  }
+  html += _ecCard('Identity & Active Directory', '🆔', idContent);
+
+  // EDR
+  html += _ecCard('Endpoint Detection & Response', '🖥️',
+    _ecKv('Product', edr.product) + _ecKv('Version', edr.version) + _ecKv('Deployment', edr.deployment) + _ecKv('Telemetry', edr.telemetry));
+
+  // Network
+  html += _ecCard('Network Monitoring', '🌐',
+    _ecKv('Firewalls', net.firewalls) + _ecKv('IDS/IPS', net.idsIps) + _ecKv('Flow Data', net.flowData) + _ecKv('PCAP', net.pcap));
+
+  // Cloud
+  html += _ecCard('Cloud Coverage', '☁️',
+    _ecKv('Providers', cloud.providers) + _ecKv('Services', cloud.services));
+
+  // Other
+  html += _ecCard('Other Tools', '🔧',
+    _ecKv('Vuln Scanners', other.vulnScanners) + _ecKv('Asset Mgmt', other.assetMgmt) + _ecKv('Threat Intel', other.threatIntel) + _ecKv('SOAR', other.soar));
+
+  document.getElementById('ec-tools-body').innerHTML = html;
 }
 
-let ecAssetFilter = '';
-function renderEcAssets(filter) {
-  ecAssetFilter = filter || '';
-  const q = ecAssetFilter.toLowerCase();
-  const assets = q ? envData.assets.filter(a =>
-    a.hostname.toLowerCase().includes(q) || a.ip.includes(q) ||
-    a.os.toLowerCase().includes(q) || a.role.includes(q) ||
-    a.segment.toLowerCase().includes(q) || a.owner.toLowerCase().includes(q)
-  ) : envData.assets;
+function renderEcStack() {
+  const ts    = envData.techStack || {};
+  const os    = ts.os || {};
+  const net   = ts.networking || {};
+  const infra = ts.infrastructure || {};
+  const apps  = ts.apps || {};
+  const dev   = ts.dev || {};
+  const dbs   = ts.databases || {};
+  let html = '';
 
-  const roleLabel = { dc:'Domain Controller', srv:'Server', ws:'Workstation', net:'Network/Jump', sec:'Security' };
-  const roleCls   = { dc:'ec-role-dc', srv:'ec-role-srv', ws:'ec-role-ws', net:'ec-role-net', sec:'ec-role-sec' };
-  const statusDot = s => s === 'online'
-    ? `<span style="color:var(--green);font-size:10px;font-weight:600;">● Online</span>`
-    : `<span style="color:var(--red);font-size:10px;font-weight:600;">● Offline</span>`;
+  // OS
+  let osContent = '';
+  if ((os.servers || []).length) {
+    osContent += `<div style="font-size:11px;color:var(--sub);margin-bottom:4px;">Servers</div>`;
+    osContent += os.servers.map(s => `<div style="font-size:11px;padding:2px 0;color:var(--text);">› ${s}</div>`).join('');
+    osContent += '<div style="margin-bottom:8px;"></div>';
+  }
+  if ((os.workstations || []).length) {
+    osContent += `<div style="font-size:11px;color:var(--sub);margin-bottom:4px;">Workstations</div>`;
+    osContent += os.workstations.map(s => `<div style="font-size:11px;padding:2px 0;color:var(--text);">› ${s}</div>`).join('');
+    osContent += '<div style="margin-bottom:8px;"></div>';
+  }
+  if (!osContent) osContent = _ecKv('Servers', '') + _ecKv('Workstations', '');
+  osContent += _ecKv('Mobile', os.mobile);
+  html += _ecCard('Operating Systems', '🖥️', osContent);
 
-  document.getElementById('ec-asset-tbody').innerHTML = assets.map(a => `
-    <tr>
-      <td><span class="ec-hostname" onclick="showAssetDetail('${a.hostname}')">${a.hostname}</span></td>
-      <td style="font-family:monospace;color:var(--sub);font-size:11px;">${a.ip}</td>
-      <td><span class="ec-role-badge ${roleCls[a.role]}">${roleLabel[a.role]||a.role}</span></td>
-      <td style="color:var(--sub);font-size:11px;">${a.os}</td>
-      <td style="font-size:11px;color:var(--muted);">${a.segment}</td>
-      <td style="font-size:11px;color:var(--sub);">${a.owner}</td>
-      <td style="font-size:11px;color:var(--muted);">${a.lastSeen}</td>
-      <td>${statusDot(a.status)}</td>
-    </tr>`).join('') || '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:14px;">No assets match filter.</td></tr>';
+  // Networking
+  html += _ecCard('Networking', '🌐',
+    _ecKv('Architecture', net.architecture) + _ecKv('Load Balancers', net.loadBalancers) + _ecKv('DNS', net.dns) + _ecKv('VPN', net.vpn) + _ecKv('Jump Boxes', net.jumpBoxes));
+
+  // Infrastructure
+  html += _ecCard('Infrastructure', '🏗️',
+    _ecKv('Cloud', infra.cloud) + _ecKv('Containers', infra.containers) + _ecKv('CI/CD', infra.cicd));
+
+  // Apps
+  html += _ecCard('Applications', '📱',
+    _ecKv('Email', apps.email) + _ecKv('Collaboration', apps.collaboration) + _ecKv('File Sharing', apps.fileSharing) + _ecKv('Version Control', apps.versionControl) + _ecKv('Project Mgmt', apps.projectMgmt) + _ecKv('Business Apps', apps.business));
+
+  // Dev
+  html += _ecCard('Development', '💻',
+    _ecKv('Languages', dev.languages) + _ecKv('Web Frameworks', dev.webFrameworks) + _ecKv('API Frameworks', dev.apiFrameworks));
+
+  // Databases
+  html += _ecCard('Databases', '🗄️',
+    _ecKv('Relational', dbs.relational) + _ecKv('NoSQL', dbs.nosql) + _ecKv('Caching', dbs.caching) + _ecKv('Warehouse', dbs.warehouse));
+
+  document.getElementById('ec-stack-body').innerHTML = html;
 }
 
-function showAssetDetail(hostname) {
-  const a = envData.assets.find(x => x.hostname === hostname);
-  if (!a) return;
-  const slot = document.getElementById('ec-asset-detail-slot');
-  const roleLabel = { dc:'Domain Controller', srv:'Server', ws:'Workstation', net:'Network/Jump', sec:'Security' };
-  slot.innerHTML = `
-    <div class="ec-asset-detail" style="margin-bottom:12px;">
-      <div class="ec-asset-detail-head">
-        <span style="font-weight:700;font-size:13px;font-family:monospace;">${a.hostname}</span>
-        <span style="font-family:monospace;font-size:11px;color:var(--indigo);">${a.ip}</span>
-        <span style="font-size:11px;color:var(--muted);">· ${a.segment}</span>
-        <button onclick="document.getElementById('ec-asset-detail-slot').innerHTML=''" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;">✕</button>
-      </div>
-      <div class="ec-detail-grid">
-        <span class="ec-detail-k">FQDN</span><span class="ec-detail-v">${a.details.fqdn}</span>
-        <span class="ec-detail-k">MAC</span><span class="ec-detail-v">${a.details.mac}</span>
-        <span class="ec-detail-k">CPU</span><span class="ec-detail-v plain">${a.details.cpu}</span>
-        <span class="ec-detail-k">RAM</span><span class="ec-detail-v plain">${a.details.ram}</span>
-        <span class="ec-detail-k">Disk</span><span class="ec-detail-v plain">${a.details.disk}</span>
-        <span class="ec-detail-k">Uptime</span><span class="ec-detail-v plain">${a.details.uptime}</span>
-        <span class="ec-detail-k">Sysmon</span><span class="ec-detail-v plain">${a.details.sysmon}</span>
-        <span class="ec-detail-k">EDR</span><span class="ec-detail-v plain">${a.details.edr}</span>
-        <span class="ec-detail-k">Last patch</span><span class="ec-detail-v plain">${a.details.patch}</span>
-        <span class="ec-detail-k">Criticality</span><span class="ec-detail-v plain">${a.details.criticality}</span>
-        <span class="ec-detail-k">Notes</span><span class="ec-detail-v plain" style="font-family:inherit;">${a.details.notes}</span>
-      </div>
-    </div>`;
-  slot.scrollIntoView({ behavior:'smooth', block:'nearest' });
+function renderEcGaps() {
+  const gaps        = envData.gaps || [];
+  const ttps        = envData.priorityTtps || {};
+  const tactics     = ttps.tactics || [];
+  const threatModel = ttps.threatModel || [];
+  let html = '';
+
+  const gapsContent = gaps.length
+    ? gaps.map(g => {
+        const hasVal = g.value && g.value.trim();
+        return `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:flex-start;">
+          <span style="color:var(--sub);width:160px;flex-shrink:0;">${g.label}</span>
+          <span style="color:${hasVal ? 'var(--red)' : 'var(--muted)'};font-style:${hasVal ? 'normal' : 'italic'};">${hasVal ? g.value : 'none documented'}</span>
+        </div>`;
+      }).join('')
+    : '<span style="color:var(--muted);font-style:italic;font-size:12px;">No gaps configured</span>';
+  html += _ecCard('Gaps & Blind Spots', '🕳️', gapsContent);
+
+  const tacticsContent = tactics.length
+    ? tactics.map(t => `<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
+        <code style="color:var(--indigo);font-size:11px;width:58px;flex-shrink:0;">${t.id}</code>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:1px;">${t.name}</div><div style="font-size:11px;color:var(--sub);">${t.desc}</div></div>
+      </div>`).join('')
+    : '<span style="color:var(--muted);font-style:italic;font-size:12px;">No tactics configured</span>';
+  html += _ecCard('Priority Tactics (MITRE ATT&CK)', '🎯', tacticsContent);
+
+  const tmContent = threatModel.length
+    ? threatModel.map(t => `<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border);">
+        <span style="color:var(--red);flex-shrink:0;">›</span><span style="color:var(--text);">${t}</span>
+      </div>`).join('')
+    : '<span style="color:var(--muted);font-style:italic;font-size:12px;">No threat model configured</span>';
+  html += _ecCard('Threat Model', '⚔️', tmContent);
+
+  document.getElementById('ec-gaps-body').innerHTML = html;
 }
 
-function renderEcAccounts(filter) {
-  const q = (filter || '').toLowerCase();
-  const accs = q ? envData.accounts.filter(a =>
-    a.name.toLowerCase().includes(q) || a.type.toLowerCase().includes(q) ||
-    a.groups.some(g => g.toLowerCase().includes(q)) || a.status.includes(q)
-  ) : envData.accounts;
+function renderEcMaint() {
+  const maint     = envData.maintenance || {};
+  const checklist = maint.checklist || [];
+  const changeLog = maint.changeLog || [];
+  let html = '';
 
-  const typeChip = t => t === 'Admin' ? 'chip-red' : t === 'Service' ? 'chip-yellow' : 'chip-blue';
-  document.getElementById('ec-accounts-list').innerHTML = accs.map(a => `
-    <div class="ec-acc-row">
-      <div class="ec-acc-head">
-        <span class="ec-acc-name">CORP\\${a.name}</span>
-        <span class="chip ${typeChip(a.type)}" style="font-size:10px;">${a.type}</span>
-        ${a.status === 'active'
-          ? '<span class="chip chip-green" style="font-size:10px;">Active</span>'
-          : '<span class="chip chip-gray" style="font-size:10px;">Disabled</span>'}
-        <span style="font-size:10px;color:var(--muted);margin-left:auto;">Groups: ${a.groups.join(' · ')}</span>
-      </div>
-      <div class="ec-acc-body">
-        <span class="ec-acc-k">Normal logon</span><span>${a.normal}</span>
-        <span class="ec-acc-k">Last logon</span><span>${a.lastLogon}</span>
-        <span class="ec-acc-k">Pwd age</span><span>${a.pwdAge}</span>
-        <span class="ec-acc-k">MFA</span><span>${a.mfa}</span>
-      </div>
-      ${a.anomaly ? `<div class="ec-acc-anomaly"><span class="ec-acc-anomaly-icon">⚠️</span>${a.anomaly}</div>` : ''}
-    </div>`).join('') || '<div style="color:var(--muted);font-size:12px;">No accounts match filter.</div>';
-}
+  const checkContent = checklist.length
+    ? checklist.map(item => `<div style="display:flex;align-items:flex-start;gap:9px;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border);">
+        <span style="color:var(--muted);flex-shrink:0;">☐</span><span style="color:var(--text);">${item}</span>
+      </div>`).join('')
+    : '<span style="color:var(--muted);font-style:italic;font-size:12px;">No checklist items</span>';
+  html += _ecCard('Maintenance Checklist', '✅', checkContent);
 
-function renderEcTopology() {
-  document.getElementById('ec-topo-map').innerHTML = envData.topology;
-  document.getElementById('ec-infra-list').innerHTML = envData.infrastructure.map(i => `
-    <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;font-size:11px;">
-      <span style="font-size:16px;flex-shrink:0;">${i.icon}</span>
-      <div style="flex:1;">
-        <span style="font-weight:700;">${i.name}</span>
-        <span style="color:var(--muted);margin-left:8px;">${i.role}</span>
-      </div>
-      <span style="font-family:monospace;font-size:10px;color:var(--indigo);">${i.ip}</span>
-      <span class="chip chip-${i.crit==='Critical'||i.crit==='Tier-0'?'red':i.crit==='High'?'yellow':'blue'}" style="font-size:10px;">${i.crit}</span>
-    </div>`).join('');
+  const clContent = changeLog.length
+    ? changeLog.map(e => `<div style="display:flex;gap:12px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
+        <span style="color:var(--indigo);font-family:monospace;white-space:nowrap;flex-shrink:0;">${e.date}</span>
+        <span style="color:var(--sub);">${e.note}</span>
+      </div>`).join('')
+    : '<span style="color:var(--muted);font-style:italic;font-size:12px;">No changes logged</span>';
+  html += _ecCard('Change Log', '📋', clContent);
+
+  document.getElementById('ec-maint-body').innerHTML = html;
 }
 
 // ── Crown Jewels ──
@@ -2146,10 +2237,10 @@ function renderCrownJewels() {
 // ── Open / close / tab switch ──
 function openEnvContext(tab) {
   renderEcOverview();
-  renderEcSegments();
-  renderEcAssets();
-  renderEcAccounts();
-  renderEcTopology();
+  renderEcTools();
+  renderEcStack();
+  renderEcGaps();
+  renderEcMaint();
   renderCrownJewels();
   switchEcTab(tab || 'overview');
   document.getElementById('ec-overlay').classList.add('open');
@@ -2159,8 +2250,10 @@ function openEnvContext(tab) {
   if (agentFeed) {
     const el = document.createElement('div');
     el.className = 'feed-entry fe-env';
+    const _idxN = (((envData.monitoring || {}).siem || {}).indexes || []).length;
+    const _tacN = ((envData.priorityTtps || {}).tactics || []).length;
     el.innerHTML = `<span class="fe-prefix">🏗️</span>
-      <div class="fe-body"><b>EnvCtx</b> → <code style="font-size:10px;color:var(--indigo);">get_topology()</code> — ${envData.segments.length} segments · ${envData.assets.length} key assets · ${envData.accounts.length} accounts loaded</div>`;
+      <div class="fe-body"><b>EnvCtx</b> → <code style="font-size:10px;color:var(--indigo);">get_environment()</code> — ${_idxN} SIEM indexes · ${_tacN} priority tactics loaded</div>`;
     agentFeed.appendChild(el);
     agentFeed.scrollTop = agentFeed.scrollHeight;
   }
@@ -2175,9 +2268,9 @@ function switchEcTab(tab) {
   document.querySelectorAll('.ec-pane').forEach(p => p.classList.toggle('on', p.id === `ec-pane-${tab}`));
 }
 
-function filterEcSegments(v) { renderEcSegments(v); }
-function filterEcAssets(v)   { renderEcAssets(v); }
-function filterEcAccounts(v) { renderEcAccounts(v); }
+function filterEcSegments(v) {}
+function filterEcAssets(v)   {}
+function filterEcAccounts(v) {}
 
 // ════════════════════════════════════════
 // TECHNIQUE RUNBOOK  (MCP tool)

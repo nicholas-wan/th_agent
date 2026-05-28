@@ -7,7 +7,7 @@
 //  KNOWLEDGE BASE TAB
 // ─────────────────────────────────────────────
 let activeKbTab         = 'tradecraft';
-let activeTradecraftTab = 'tactic';
+let activeTradecraftTab = 'domain';
 let activeKbSkCat       = 'all';
 let activeKbRbTactic    = 'all';
 let kbEnvEditMode  = false;
@@ -174,10 +174,245 @@ function _parseMdRunbooks(text) {
 }
 
 function _parseMdEnvironment(text) {
+  // Parses the new environment.md template format into the envData structure.
   const norm = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-  const env = { domain:{}, stats:[], anomalies:[], segments:[], assets:[], accounts:[], topology:'', infrastructure:[] };
-  const cj  = { assets:[], accounts:[] };
+  const lines = norm.split('\n');
+  const env = {
+    meta: { lastUpdated:'', reviewCadence:'', maintainedBy:'' },
+    monitoring: {
+      siem: { platform:'', version:'', retention:'', queryAccess:[], indexes:[], fields:{} },
+      edr:  { product:'', version:'', deployment:'', telemetry:'' },
+      network: { firewalls:'', idsIps:'', flowData:'', pcap:'' },
+      cloud: { providers:'', services:'' },
+      identity: { provider:'', dcs:'', mfa:'', pam:'', eventIds:[] },
+      other: { vulnScanners:'', assetMgmt:'', threatIntel:'', soar:'' },
+    },
+    techStack: {
+      os: { servers:[], workstations:[], mobile:'' },
+      dev: { languages:'', webFrameworks:'', apiFrameworks:'' },
+      databases: { relational:'', nosql:'', caching:'', warehouse:'' },
+      infrastructure: { cloud:'', containers:'', cicd:'' },
+      networking: { architecture:'', loadBalancers:'', dns:'', vpn:'', jumpBoxes:'' },
+      apps: { email:'', collaboration:'', fileSharing:'', versionControl:'', projectMgmt:'', business:'' },
+    },
+    gaps: [],
+    priorityTtps: { tactics:[], threatModel:[] },
+    maintenance: { checklist:[], changeLog:[] },
+  };
+  const cj = { assets:[], accounts:[] };
 
+  // Helper: extract bullet list from lines between two indices
+  const bullets = (arr, start, end) => arr.slice(start, end)
+    .filter(l => /^\s*[-*]\s/.test(l))
+    .map(l => l.replace(/^\s*[-*]\s/, '').trim())
+    .filter(l => l && !l.startsWith('[To be'));
+
+  // Extract meta from top of file
+  for (const ln of lines.slice(0, 10)) {
+    const lm = ln.match(/\*\*Last Updated:\*\*\s*(.+)/);  if (lm) env.meta.lastUpdated = lm[1].trim();
+    const rm = ln.match(/\*\*Review Cadence:\*\*\s*(.+)/); if (rm) env.meta.reviewCadence = rm[1].trim();
+    const mm = ln.match(/\*\*Maintained By:\*\*\s*(.+)/);  if (mm) env.meta.maintainedBy = mm[1].trim();
+  }
+
+  // Split into ## sections
+  const sections = [];
+  let cur = null;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('## ')) {
+      if (cur) cur.end = i;
+      cur = { title: lines[i].slice(3).trim(), start: i, end: lines.length };
+      sections.push(cur);
+    }
+  }
+  if (cur) cur.end = lines.length;
+
+  for (const sec of sections) {
+    const sLines = lines.slice(sec.start, sec.end);
+    const title  = sec.title;
+
+    // Split section into ### subsections
+    const subs = [];
+    let csub = null;
+    for (let i = 0; i < sLines.length; i++) {
+      if (sLines[i].startsWith('### ')) {
+        if (csub) csub.end = i;
+        csub = { title: sLines[i].slice(4).trim(), start: i, end: sLines.length };
+        subs.push(csub);
+      }
+    }
+    if (csub) csub.end = sLines.length;
+
+    const subMap = {};
+    for (const s of subs) subMap[s.title] = sLines.slice(s.start, s.end);
+
+    const getVal = (subTitle, key) => {
+      const sl = subMap[subTitle] || [];
+      for (const l of sl) {
+        const m = l.match(new RegExp(`\\*\\*${key}:\\*\\*\\s*(.+)`));
+        if (m && !m[1].includes('[To be')) return m[1].trim();
+        const m2 = l.match(new RegExp(`- \\*\\*${key}:\\*\\*\\s*(.+)`));
+        if (m2 && !m2[1].includes('[To be')) return m2[1].trim();
+      }
+      return '';
+    };
+
+    if (title === 'Security & Monitoring Tools') {
+      // SIEM
+      env.monitoring.siem.platform  = getVal('SIEM / Log Aggregation', 'Platform');
+      env.monitoring.siem.version   = getVal('SIEM / Log Aggregation', 'Version');
+      env.monitoring.siem.retention = getVal('SIEM / Log Aggregation', 'Retention');
+      // Indexes: lines matching `- \`name\` - desc`
+      const siemLines = subMap['SIEM / Log Aggregation'] || [];
+      for (const l of siemLines) {
+        const m = l.match(/^\s*-\s*`([^`]+)`\s*[-–]\s*(.+)/);
+        if (m) env.monitoring.siem.indexes.push({ name: m[1], desc: m[2].trim() });
+      }
+      // Identity
+      env.monitoring.identity.provider = getVal('Identity & Access', 'Identity Provider') || 'Active Directory (on-premises)';
+      env.monitoring.identity.mfa      = getVal('Identity & Access', 'MFA Solutions');
+      env.monitoring.identity.pam      = getVal('Identity & Access', 'PAM Tools');
+      // Identity event IDs
+      const idLines = subMap['Identity & Access'] || [];
+      for (const l of idLines) {
+        const m = l.match(/(\d{4})\s*[-–]\s*(.+)/);
+        if (m) env.monitoring.identity.eventIds.push({ id: m[1], desc: m[2].trim() });
+      }
+      // EDR
+      env.monitoring.edr.product    = getVal('EDR / Endpoint Security', 'Product');
+      env.monitoring.edr.version    = getVal('EDR / Endpoint Security', 'Version');
+      env.monitoring.edr.deployment = getVal('EDR / Endpoint Security', 'Deployment');
+      // Network
+      env.monitoring.network.firewalls = getVal('Network Security', 'Firewalls');
+      env.monitoring.network.idsIps    = getVal('Network Security', 'IDS/IPS');
+      env.monitoring.network.flowData  = getVal('Network Security', 'Flow Data');
+      // Cloud
+      env.monitoring.cloud.providers = getVal('Cloud Security', 'Cloud Providers');
+      env.monitoring.cloud.services  = getVal('Cloud Security', 'Security Services');
+      // Other
+      env.monitoring.other.vulnScanners = getVal('Other Security Tools', 'Vulnerability Scanners');
+      env.monitoring.other.assetMgmt    = getVal('Other Security Tools', 'Asset Management');
+      env.monitoring.other.threatIntel  = getVal('Other Security Tools', 'Threat Intelligence');
+      env.monitoring.other.soar         = getVal('Other Security Tools', 'SOAR/Automation');
+
+    } else if (title === 'Technology Stack') {
+      // OS
+      const osLines = subMap['Operating Systems'] || [];
+      let inServers = false, inWS = false;
+      for (const l of osLines) {
+        if (l.includes('**Servers:**')) inServers = true;
+        if (l.includes('**Workstations:**')) { inServers = false; inWS = true; }
+        if (l.includes('**Mobile:**') || l.includes('**Development')) { inWS = false; }
+        const bm = l.match(/^\s*[-*]\s+(.+)/);
+        if (bm && !bm[1].startsWith('[To be')) {
+          if (inServers) env.techStack.os.servers.push(bm[1].trim());
+          else if (inWS)  env.techStack.os.workstations.push(bm[1].trim());
+        }
+      }
+      // Networking
+      env.techStack.networking.vpn       = getVal('Networking', 'VPN/Remote Access');
+      env.techStack.networking.jumpBoxes = getVal('Networking', 'Jump Boxes');
+      env.techStack.networking.dns       = getVal('Networking', 'DNS');
+      // Apps
+      env.techStack.apps.email         = getVal('Applications & Services', 'Email');
+      env.techStack.apps.versionControl= getVal('Version Control', 'Version Control');
+
+    } else if (title === 'Known Gaps & Blind Spots') {
+      const gapLabels = ['Unmonitored Systems','Data Source Gaps','Tool Limitations','Third-Party Services','RDP Visibility'];
+      for (const label of gapLabels) {
+        const val = getVal(title, label) || '';
+        env.gaps.push({ label, value: val });
+      }
+      if (env.gaps.length === 0) {
+        gapLabels.forEach(label => env.gaps.push({ label, value: '' }));
+      }
+
+    } else if (title === 'Priority TTPs (Based on Threat Model)') {
+      const tacticLines = subMap['High Priority Tactics'] || sLines;
+      for (const l of tacticLines) {
+        const m = l.match(/TA(\d{4})\s*[-–]\s*(.+?)\s*\(([^)]+)\)/);
+        if (m) env.priorityTtps.tactics.push({ id:`TA${m[1]}`, name: m[2].trim(), desc: m[3].trim() });
+        else {
+          const m2 = l.match(/(TA\d{4})\s*[-–]\s*(.+)/);
+          if (m2) env.priorityTtps.tactics.push({ id: m2[1], name: m2[2].trim(), desc: '' });
+        }
+      }
+      const tmLines = subMap['Threat Model Focus'] || [];
+      env.priorityTtps.threatModel = bullets(tmLines, 0, tmLines.length);
+
+    } else if (title === 'Maintenance Notes') {
+      const clLines = subMap['Review Checklist'] || [];
+      env.maintenance.checklist = clLines
+        .filter(l => /\[[ x]\]/.test(l))
+        .map(l => l.replace(/^\s*[-*]\s*\[[ x]\]\s*/, '').trim());
+      // Change log
+      const logLines = subMap['Change Log'] || [];
+      for (const l of logLines) {
+        const m = l.match(/\*\*([^*]+)\*\*[:\s]*(.+)/);
+        if (m) env.maintenance.changeLog.push({ date: m[1].trim(), note: m[2].trim() });
+      }
+    }
+  }
+
+  // Fill in gaps if not parsed
+  if (env.gaps.length === 0) {
+    ['Unmonitored Systems','Data Source Gaps','Tool Limitations','Third-Party Services','RDP Visibility']
+      .forEach(label => env.gaps.push({ label, value: '' }));
+  }
+  // Fill in default event IDs if not parsed
+  if (env.monitoring.identity.eventIds.length === 0) {
+    env.monitoring.identity.eventIds = [
+      { id:'4624', desc:'Successful logon' }, { id:'4625', desc:'Failed logon' },
+      { id:'4648', desc:'Logon using explicit credentials' },
+      { id:'4768', desc:'Kerberos TGT requested' }, { id:'4769', desc:'Kerberos service ticket requested' },
+      { id:'4771', desc:'Kerberos pre-authentication failed' },
+    ];
+  }
+  if (env.monitoring.siem.indexes.length === 0) {
+    env.monitoring.siem.indexes = [
+      { name:'security_events', desc:'Primary security telemetry' },
+      { name:'windows_logs',    desc:'Windows Event Logs' },
+      { name:'endpoint_data',   desc:'EDR/endpoint telemetry' },
+      { name:'network_logs',    desc:'Network flow and firewall logs' },
+      { name:'auth_logs',       desc:'Authentication events across all sources' },
+    ];
+  }
+  // Fallback priority TTPs
+  if (env.priorityTtps.tactics.length === 0) {
+    env.priorityTtps.tactics = [
+      { id:'TA0006', name:'Credential Access',   desc:'Password spraying, credential dumping' },
+      { id:'TA0008', name:'Lateral Movement',    desc:'RDP abuse, pass-the-hash, pass-the-ticket' },
+      { id:'TA0004', name:'Privilege Escalation',desc:'Token manipulation, UAC bypass' },
+      { id:'TA0003', name:'Persistence',         desc:'Scheduled tasks, services, registry run keys' },
+      { id:'TA0010', name:'Exfiltration',        desc:'Data staging, exfil over C2 channel' },
+    ];
+  }
+  if (env.priorityTtps.threatModel.length === 0) {
+    env.priorityTtps.threatModel = [
+      'Ransomware operators (initial access → lateral movement → encryption)',
+      'Insider threats (data exfiltration, sabotage)',
+      'External attackers (phishing → credential theft → lateral movement)',
+    ];
+  }
+  if (env.maintenance.checklist.length === 0) {
+    env.maintenance.checklist = [
+      'Verify SIEM data collections and data sources are current',
+      'Add new log sources integrated into SIEM',
+      'Remove decommissioned systems',
+      'Update tool coverage percentages',
+      'Refresh internal documentation links',
+      'Validate SIEM API access still works',
+      'Update jump box allowlist for RDP hunts',
+      'Review priority TTPs based on recent incidents',
+    ];
+  }
+
+  return { env, cj };
+}
+
+// ── (deleted old _parseMdEnvironment body that followed) ──
+function _parseMdEnvironment_OLD_UNUSED(text) {
+  const norm = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const env = {}; const cj = { assets:[], accounts:[] };
   for (const sec of norm.split(/\n---\n/)) {
     const lines = sec.trim().split('\n');
     const head  = lines.find(l => l.startsWith('## '));
@@ -436,9 +671,8 @@ function _kbSearchRender(q) {
     html += `<div class="kb-search-group-head">🎯 Skills <span>${skills.length}</span></div>`;
     html += skills.map(s => {
       const ttps = s.ttps.slice(0,3).join(', ') + (s.ttps.length > 3 ? '…' : '');
-      const dest = s.skillType === 'domain' ? 'domain' : 'tactic';
-      return `<div class="kb-search-row" onclick="clearKbSearch();switchKbTab('tradecraft');switchTradecraftTab('${dest}');setTimeout(()=>{const c=document.querySelector('[data-skillid=&quot;${s.id}&quot;]');if(c){c.classList.add('open');c.scrollIntoView({behavior:'smooth',block:'start'});}},120)">
-        <span class="kb-sr-badge kb-sr-skill">${s.skillType==='domain'?'Domain':'Tactic'}</span>
+      return `<div class="kb-search-row" onclick="clearKbSearch();switchKbTab('tradecraft');switchTradecraftTab('domain');setTimeout(()=>{const c=document.querySelector('[data-skillid=&quot;${s.id}&quot;]');if(c){c.classList.add('open');c.scrollIntoView({behavior:'smooth',block:'start'});}},120)">
+        <span class="kb-sr-badge kb-sr-skill">Platform</span>
         <span class="kb-sr-name">${s.name}</span>
         <span class="kb-sr-meta">${ttps}</span>
         <span class="kb-sr-action">Open →</span>
@@ -483,7 +717,7 @@ function jumpToSkill(skillId, evt) {
   if (evt && evt.stopPropagation) evt.stopPropagation();
   const sk = typeof skillsData !== 'undefined' ? skillsData.find(s => s.id === skillId) : null;
   switchKbTab('tradecraft');
-  switchTradecraftTab(sk?.skillType === 'domain' ? 'domain' : 'tactic');
+  switchTradecraftTab('domain');
   setTimeout(() => {
     const card = document.querySelector(`[data-skillid="${skillId}"]`);
     if (card) { card.classList.add('open'); card.scrollIntoView({ behavior:'smooth', block:'start' }); }
@@ -498,19 +732,20 @@ function goToHuntKeep(huntId) {
 
 // ── Tradecraft inner tab switch ──
 const _tcDesc = {
-  tactic:   '<span class="ib-icon">🎯</span><span><b>Tactic Skills</b> are generic ATT&CK technique patterns that apply across any organisation. They encode hunter intuition as SPL templates, detection logic, and FP exclusion lists — use these as a starting point when hunting a technique you haven\'t seen in this environment before.</span>',
-  domain:   '<span class="ib-icon">🏢</span><span><b>Domain Skills</b> are tuned to <em>this</em> environment. They encode your team\'s knowledge of this network\'s topology, tooling, service accounts, and known-good baselines — the exclusions, thresholds, and naming conventions that cut false positives in your specific org.</span>',
+  domain:   '<span class="ib-icon">🔌</span><span><b>Platform Skills</b> are detection patterns tied to specific platforms or log sources not currently in the environment — EDR telemetry, cloud audit logs, proxy data, network sensors. Use these to assess coverage gaps or onboard new data sources.</span>',
   runbooks: '<span class="ib-icon">📖</span><span><b>TTP Runbooks</b> are technique-level hunt guides, one per ATT&CK technique. Each covers adversary evidence indicators, hunting SPL, prior hunt notes from this environment, and known false positives. The Hypothesis Agent pulls these via <code style="font-size:10px;">get_runbook(ttp_id)</code> when generating hypotheses.</span>',
   author:   '<span class="ib-icon">✏️</span><span>Propose a new skill or an edit to an existing one. Fill in the form on the left — include behavioural patterns, an SPL template, and known FP exclusions. Submissions go into the draft queue for senior hunter review before being merged into the live knowledge base.</span>',
 };
 
 function switchTradecraftTab(tab) {
+  // 'tactic' tab removed — redirect to domain
+  if (tab === 'tactic') tab = 'domain';
   activeTradecraftTab = tab;
-  ['tactic','domain','runbooks','author'].forEach(k => {
+  ['domain','runbooks','author'].forEach(k => {
     const stab = document.getElementById('kb-tc-stab-' + k);
     if (stab) stab.classList.toggle('on', k === tab);
   });
-  const isSkills = tab === 'tactic' || tab === 'domain';
+  const isSkills = tab === 'domain';
   const catBar  = document.getElementById('kb-tc-cat-bar');
   const skillsP = document.getElementById('kb-tc-pane-skills');
   const rbP     = document.getElementById('kb-tc-pane-runbooks');
@@ -732,102 +967,81 @@ function closeKbMarkdown() {
   if (modal) modal.classList.remove('kb-md-single');
 }
 
-// Reconstructs environment.md markdown from the in-memory envData / crownJewels objects.
-// Used as a fallback when the server cannot serve .md files directly.
+// Reconstructs environment.md from in-memory envData.
+// Used as a fallback by openEnvSource() when the server cannot serve .md files directly.
 function _buildEnvMd() {
-  const d = envData, cj = crownJewels;
+  const d = envData;
   const L = [];
-  const sep = () => { L.push('', '---', ''); };
+  const m = d.meta || {};
+  const mon = d.monitoring || {};
+  const st = d.techStack || {};
 
-  L.push('# Environment Context', '', '---', '');
+  L.push('# Environment Profile', '');
+  if (m.lastUpdated)   L.push(`**Last Updated:** ${m.lastUpdated}`);
+  if (m.reviewCadence) L.push(`**Review Cadence:** ${m.reviewCadence}`);
+  if (m.maintainedBy)  L.push(`**Maintained By:** ${m.maintainedBy}`);
+  L.push('', '---', '', '## Security & Monitoring Tools', '');
 
-  // Domain
-  const dom = d.domain || {};
-  L.push('## Domain', '');
-  L.push(`> name: ${dom.name||''} | netbios: ${dom.netbios||''} | forest: ${dom.forest||''} | level: ${dom.functionalLevel||''}`);
-  L.push(`> adfs: ${dom.adfsUrl||''} | ad-sync: ${dom.adSync||''}`);
-  if (dom.dcs?.length)    { L.push('', '### Domain Controllers'); dom.dcs.forEach(s   => L.push(`- ${s}`)); }
-  if (dom.sites?.length)  { L.push('', '### Sites');               dom.sites.forEach(s => L.push(`- ${s}`)); }
-  if (dom.trusts?.length) { L.push('', '### Trusts');              dom.trusts.forEach(s => L.push(`- ${s}`)); }
-  sep();
-
-  // Stats
-  if (d.stats?.length) {
-    L.push('## Stats', '');
-    d.stats.forEach(s => L.push(`> label: ${s.label} | value: ${s.value} | note: ${s.note} | color: ${s.color}`));
-    sep();
+  // SIEM
+  const siem = mon.siem || {};
+  L.push('### SIEM / Log Aggregation', '');
+  if (siem.platform)  L.push(`- **Platform:** ${siem.platform}`);
+  if (siem.retention) L.push(`- **Retention:** ${siem.retention}`);
+  if (siem.indexes?.length) {
+    L.push('- **Data Collections/Indexes:**');
+    siem.indexes.forEach(ix => L.push(`  - \`${ix.name}\` - ${ix.desc}`));
   }
-
-  // Anomalies
-  if (d.anomalies?.length) {
-    L.push('## Anomalies', '');
-    d.anomalies.forEach(a => L.push(`- ${a.sev} | ${a.text}`));
-    sep();
+  if (siem.fields && Object.keys(siem.fields).length) {
+    L.push('- **Common Fields:**');
+    Object.entries(siem.fields).forEach(([cat, flds]) => L.push(`  - ${cat}: ${flds.join(', ')}`));
   }
+  L.push('');
 
-  // Segments
-  (d.segments||[]).forEach(s => {
-    L.push(`## Segment: ${s.name}`, '');
-    L.push(`> id: ${s.id} | sensitivity: ${s.sensitivity} | cidr: ${s.cidr} | vlan: ${s.vlan} | gateway: ${s.gateway} | hosts: ${s.hosts} | icon: ${s.icon}`);
-    if (s.desc) L.push('', s.desc);
-    if (s.tags?.length) { L.push('', '### Tags'); s.tags.forEach(t => L.push(`- ${t}`)); }
-    if (s.acls?.length) { L.push('', '### ACLs'); s.acls.forEach(a => L.push(`- ${a}`)); }
-    sep();
-  });
+  // EDR
+  const edr = mon.edr || {};
+  L.push('### EDR / Endpoint Security', '');
+  if (edr.product)    L.push(`- **Product:** ${edr.product}`);
+  if (edr.version)    L.push(`- **Version:** ${edr.version}`);
+  if (edr.deployment) L.push(`- **Deployment:** ${edr.deployment}`);
+  if (edr.telemetry)  L.push(`- **Telemetry:** ${edr.telemetry}`);
+  L.push('');
 
-  // Assets
-  (d.assets||[]).forEach(a => {
-    const det = a.details || {};
-    L.push(`## Asset: ${a.hostname}`, '');
-    L.push(`> ip: ${a.ip} | role: ${a.role} | os: ${a.os} | segment: ${a.segment} | owner: ${a.owner} | status: ${a.status} | last-seen: ${a.lastSeen||''}`);
-    if (det.fqdn) L.push(`> fqdn: ${det.fqdn} | mac: ${det.mac||''} | cpu: ${det.cpu||''} | ram: ${det.ram||''} | disk: ${det.disk||''}`);
-    L.push(`> uptime: ${det.uptime||''} | sysmon: ${det.sysmon||''} | edr: ${det.edr||''} | patch: ${det.patch||''} | criticality: ${det.criticality||''}`);
-    if (det.notes) L.push('', det.notes);
-    sep();
-  });
-
-  // Accounts
-  (d.accounts||[]).forEach(a => {
-    L.push(`## Account: ${a.name}`, '');
-    L.push(`> type: ${a.type} | status: ${a.status} | last-logon: ${a.lastLogon||''} | pwd-age: ${a.pwdAge||''} | mfa: ${a.mfa||''}`);
-    if (a.groups?.length) L.push(`> groups: ${a.groups.join(', ')}`);
-    if (a.normal)  L.push('', `Normal: ${a.normal}`);
-    if (a.anomaly) L.push(`Anomaly: ${a.anomaly}`);
-    sep();
-  });
-
-  // Topology
-  if (d.topology) {
-    L.push('## Topology', '', '```');
-    L.push(d.topology);
-    L.push('```');
-    sep();
+  // Identity
+  const id = mon.identity || {};
+  L.push('### Identity & Access', '');
+  if (id.provider) L.push(`- **Identity Provider:** ${id.provider}`);
+  if (id.mfa)      L.push(`- **MFA Solutions:** ${id.mfa}`);
+  if (id.pam)      L.push(`- **PAM Tools:** ${id.pam}`);
+  if (id.eventIds?.length) {
+    L.push('- **Key Event IDs:**');
+    id.eventIds.forEach(e => L.push(`  - ${e.id} - ${e.desc}`));
   }
+  L.push('', '---', '', '## Technology Stack', '');
 
-  // Infrastructure
-  if (d.infrastructure?.length) {
-    L.push('## Infrastructure', '');
-    d.infrastructure.forEach(i => L.push(`- ${i.icon} | ${i.name} | ${i.role} | ${i.ip} | ${i.crit}`));
-    sep();
-  }
+  // OS
+  const os = st.os || {};
+  L.push('### Operating Systems', '');
+  if (os.servers?.length)      { L.push('- **Servers:**'); os.servers.forEach(s => L.push(`  - ${s}`)); }
+  if (os.workstations?.length) { L.push('- **Workstations:**'); os.workstations.forEach(s => L.push(`  - ${s}`)); }
+  L.push('');
 
-  // Crown Jewels
-  (cj.assets||[]).forEach(a => {
-    L.push(`## Crown Jewel: ${a.name}`, '');
-    const ttpPart = a.ttp ? ` | ttp: ${a.ttp}` : '';
-    L.push(`> tier: ${a.tier} | ip: ${a.ip} | segment: ${a.segment} | exposure: ${a.exposure}${ttpPart} | icon: ${a.icon}`);
-    L.push('', `Role: ${a.role}`, `Blast: ${a.blast}`);
-    sep();
-  });
+  // Networking
+  const net = st.networking || {};
+  L.push('### Networking', '');
+  if (net.vpn)       L.push(`- **VPN/Remote Access:** ${net.vpn}`);
+  if (net.jumpBoxes) L.push(`- **Jump Boxes:** ${net.jumpBoxes}`);
+  L.push('', '---', '', '## Known Gaps & Blind Spots', '');
+  (d.gaps || []).forEach(g => L.push(`- **${g.label}:** ${g.value || '[To be configured]'}`));
 
-  // Crown Accounts
-  (cj.accounts||[]).forEach(a => {
-    L.push(`## Crown Account: ${a.name}`, '');
-    const ttpPart = a.ttp ? ` | ttp: ${a.ttp}` : '';
-    L.push(`> type: ${a.type} | group: ${a.group} | exposure: ${a.exposure}${ttpPart} | icon: ${a.icon}`);
-    L.push('', `Desc: ${a.desc}`);
-    sep();
-  });
+  L.push('', '---', '', '## Priority TTPs (Based on Threat Model)', '', '**High Priority Tactics:**');
+  (d.priorityTtps?.tactics || []).forEach(t => L.push(`- ${t.id} - ${t.name} (${t.desc})`));
+  L.push('', '**Threat Model Focus:**');
+  (d.priorityTtps?.threatModel || []).forEach(t => L.push(`- ${t}`));
+
+  L.push('', '---', '', '## Maintenance Notes', '', '### Review Checklist', '');
+  (d.maintenance?.checklist || []).forEach(item => L.push(`- [ ] ${item}`));
+  L.push('', '### Change Log', '');
+  (d.maintenance?.changeLog || []).forEach(e => L.push(`- **${e.date}:** ${e.note}`));
 
   return L.join('\n');
 }
@@ -879,8 +1093,7 @@ const _catMeta = [
 function renderKbCatBar() {
   const bar = document.getElementById('kb-tc-cat-bar');
   if (!bar) return;
-  const type = activeTradecraftTab === 'domain' ? 'domain' : 'tactic';
-  const relevant = skillsData.filter(s => s.skillType === type);
+  const relevant = skillsData;
   const counts = {};
   relevant.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
 
@@ -904,9 +1117,6 @@ function renderKbSkillList(cat) {
   // Rebuild the filter bar so counts stay in sync.
   renderKbCatBar();
   let filtered = cat === 'all' ? skillsData : skillsData.filter(s => s.cat === cat);
-  // Filter to the active inner tab type (tactic or domain)
-  const type = activeTradecraftTab === 'domain' ? 'domain' : 'tactic';
-  filtered = filtered.filter(s => s.skillType === type);
   if (!filtered.length) {
     el.innerHTML = '<div style="text-align:center;padding:30px 0;font-size:12px;color:var(--muted);">No skills match this filter.</div>';
     return;
@@ -1049,154 +1259,240 @@ function submitKbDraft() {
 }
 
 // ── KB Environment pane ──
+let activeEnvTab = 'tools';
+
+function switchEnvTab(tab, el) {
+  activeEnvTab = tab;
+  document.querySelectorAll('.kb-env-itab').forEach(t => t.classList.remove('on'));
+  if (el) el.classList.add('on');
+  renderKbEnvPane();
+}
+
 function renderKbEnvPane() {
   const d = envData;
   if (!d) return;
 
-  // Overview fields
-  const set = (id, val) => { const e = document.getElementById(id); if(e) e.value = val ?? ''; };
-  const getStat = label => (d.stats||[]).find(s=>s.label===label)?.value || '';
-  set('kb-env-domain',    d.domain?.name || 'CORP.LOCAL');
-  set('kb-env-endpoints', getStat('Endpoints')  || '2,412');
-  set('kb-env-servers',   getStat('Servers')    || '34');
-  set('kb-env-scope',     d.domain?.sites?.join(' · ') || '10.0.0.0/8 · 8 segments');
-  set('kb-env-siem',      'Splunk Enterprise Security 7.3');
-  set('kb-env-edr',       'CrowdStrike Falcon 7.1');
-  set('kb-env-topo',      d.topology ? d.topology.replace(/<[^>]+>/g,'') : '');
-
-  // Segments table
-  const segs = d.segments || [];
-  const segCount = document.getElementById('kb-seg-count');
-  if (segCount) segCount.textContent = segs.length + ' segments';
-  const segBody = document.getElementById('kb-seg-body');
-  if (segBody) {
-    segBody.innerHTML = segs.map((s,i) => {
-      const cls = kbEnvEditMode ? 'kb-cell-input' : '';
-      const attr = kbEnvEditMode ? '' : ' readonly style="background:transparent;border:none;color:var(--sub);font-size:11px;font-family:inherit;width:100%;outline:none;"';
-      return `<tr>
-        <td><input class="${cls}" data-seg="${i}" data-field="name" value="${s.name}"${attr}></td>
-        <td><input class="${cls}" data-seg="${i}" data-field="cidr" value="${s.cidr||''}"${attr}></td>
-        <td><input class="${cls}" data-seg="${i}" data-field="sensitivity" value="${s.sensitivity||''}"${attr}></td>
-      </tr>`;
-    }).join('');
+  // Meta bar
+  const metaEl = document.getElementById('kb-env-meta');
+  if (metaEl && d.meta) {
+    const m = d.meta;
+    metaEl.innerHTML = `
+      <span class="env-meta-item">📅 <b>${m.lastUpdated || '—'}</b></span>
+      <span class="env-meta-dot">·</span>
+      <span class="env-meta-item">🔄 ${m.reviewCadence || '—'}</span>
+      <span class="env-meta-dot">·</span>
+      <span class="env-meta-item">👤 ${m.maintainedBy || '—'}</span>`;
   }
 
-  // Assets table
-  const assets = d.assets || [];
-  const assetCount = document.getElementById('kb-asset-count');
-  if (assetCount) assetCount.textContent = assets.length + ' assets';
-  const assetBody = document.getElementById('kb-asset-body');
-  if (assetBody) {
-    assetBody.innerHTML = assets.map((a,i) => {
-      const cls = kbEnvEditMode ? 'kb-cell-input' : '';
-      const attr = kbEnvEditMode ? '' : ' readonly style="background:transparent;border:none;color:var(--sub);font-size:11px;font-family:inherit;width:100%;outline:none;"';
-      return `<tr>
-        <td><input class="${cls}" data-asset="${i}" data-field="hostname" value="${a.hostname}"${attr}></td>
-        <td><input class="${cls}" data-asset="${i}" data-field="ip"       value="${a.ip}"${attr}></td>
-        <td><input class="${cls}" data-asset="${i}" data-field="role"     value="${a.role||''}"${attr}></td>
-        <td><input class="${cls}" data-asset="${i}" data-field="os"       value="${a.os||''}"${attr}></td>
-        <td><input class="${cls}" data-asset="${i}" data-field="segment"  value="${a.segment||''}"${attr}></td>
-        <td><input class="${cls}" data-asset="${i}" data-field="owner"    value="${a.owner||''}"${attr}></td>
-      </tr>`;
-    }).join('');
-  }
+  const body = document.getElementById('kb-env-body');
+  if (!body) return;
 
-  // Accounts table
-  const accounts = d.accounts || [];
-  const acctCount = document.getElementById('kb-acct-count');
-  if (acctCount) acctCount.textContent = accounts.length + ' accounts';
-  const acctBody = document.getElementById('kb-acct-body');
-  if (acctBody) {
-    acctBody.innerHTML = accounts.map((a,i) => {
-      const cls = kbEnvEditMode ? 'kb-cell-input' : '';
-      const attr = kbEnvEditMode ? '' : ' readonly style="background:transparent;border:none;color:var(--sub);font-size:11px;font-family:inherit;width:100%;outline:none;"';
-      return `<tr>
-        <td><input class="${cls}" data-acct="${i}" data-field="name"   value="${a.name}"${attr}></td>
-        <td><input class="${cls}" data-acct="${i}" data-field="type"   value="${a.type||''}"${attr}></td>
-        <td><input class="${cls}" data-acct="${i}" data-field="status" value="${a.status||''}"${attr}></td>
-        <td><input class="${cls}" data-acct="${i}" data-field="normal" value="${(a.normal||'').replace(/'/g,"&#39;")}"${attr}></td>
-      </tr>`;
-    }).join('');
+  // ── helpers ──
+  const ph = v => v ? `<span>${v}</span>` : `<span class="env-ph">Not configured</span>`;
+  const kv = (label, val) => val
+    ? `<div class="env-kv"><span class="env-kv-lbl">${label}</span><span class="env-kv-val">${val}</span></div>`
+    : `<div class="env-kv"><span class="env-kv-lbl">${label}</span><span class="env-ph">Not configured</span></div>`;
+  const pill = v => `<code class="env-pill">${v}</code>`;
+  const card = (title, icon, content, chipText, chipColor) => `
+    <div class="kb-card">
+      <div class="kb-card-head">
+        <span class="kb-card-title">${icon} ${title}</span>
+        ${chipText ? `<span class="chip chip-${chipColor||'gray'}" style="font-size:10px;">${chipText}</span>` : ''}
+      </div>
+      <div class="kb-card-body">${content}</div>
+    </div>`;
+
+  if (activeEnvTab === 'tools') {
+    const m = d.monitoring || {};
+    const siem = m.siem || {};
+    const identity = m.identity || {};
+    const edr = m.edr || {};
+    const net = m.network || {};
+    const cloud = m.cloud || {};
+    const other = m.other || {};
+
+    const siemContent = `
+      ${kv('Platform', siem.platform)}
+      ${kv('Version', siem.version)}
+      ${kv('Retention', siem.retention)}
+      ${(siem.indexes||[]).length ? `
+        <div class="env-kv-section">Indexes</div>
+        ${(siem.indexes).map(ix => `
+          <div class="env-kv">
+            <span class="env-kv-lbl">${pill(ix.name)}</span>
+            <span class="env-kv-val">${ix.desc}</span>
+          </div>`).join('')}` : ''}
+      ${Object.keys(siem.fields||{}).length ? `
+        <div class="env-kv-section">Common Fields</div>
+        ${Object.entries(siem.fields).map(([cat, flds]) => `
+          <div class="env-kv env-kv-fields">
+            <span class="env-kv-lbl">${cat}</span>
+            <span class="env-kv-val">${flds.map(f => pill(f)).join(' ')}</span>
+          </div>`).join('')}` : ''}`;
+
+    const idContent = `
+      ${kv('Provider', identity.provider)}
+      ${kv('Domain Controllers', identity.dcs)}
+      ${kv('MFA', identity.mfa)}
+      ${kv('PAM', identity.pam)}
+      ${(identity.eventIds||[]).length ? `
+        <div class="env-kv-section">Key Event IDs</div>
+        ${(identity.eventIds).map(e => `
+          <div class="env-kv">
+            <span class="env-kv-lbl">${pill(e.id)}</span>
+            <span class="env-kv-val">${e.desc}</span>
+          </div>`).join('')}` : ''}`;
+
+    const edrContent = `
+      ${kv('Product', edr.product)}
+      ${kv('Version', edr.version)}
+      ${kv('Deployment', edr.deployment)}
+      ${kv('Telemetry', edr.telemetry)}`;
+
+    const netContent = `
+      ${kv('Firewalls', net.firewalls)}
+      ${kv('IDS / IPS', net.idsIps)}
+      ${kv('Flow Data', net.flowData)}
+      ${kv('Packet Capture', net.pcap)}`;
+
+    const cloudContent = `
+      ${kv('Cloud Providers', cloud.providers)}
+      ${kv('Security Services', cloud.services)}`;
+
+    const otherContent = `
+      ${kv('Vulnerability Scanners', other.vulnScanners)}
+      ${kv('Asset Management', other.assetMgmt)}
+      ${kv('Threat Intelligence', other.threatIntel)}
+      ${kv('SOAR / Automation', other.soar)}`;
+
+    body.innerHTML = `<div class="kb-env-2col">
+      ${card('SIEM / Log Aggregation', '📊', siemContent, null, null)}
+      ${card('Identity & Access', '🔐', idContent, null, null)}
+      ${card('EDR / Endpoint Security', '🛡️', edrContent, null, null)}
+      ${card('Network Security', '🌐', netContent, null, null)}
+      ${card('Cloud Security', '☁️', cloudContent, null, null)}
+      ${card('Other Security Tools', '🔧', otherContent, null, null)}
+    </div>`;
+
+  } else if (activeEnvTab === 'stack') {
+    const s = d.techStack || {};
+    const os = s.os || {};
+    const dev = s.dev || {};
+    const db = s.databases || {};
+    const infra = s.infrastructure || {};
+    const net = s.networking || {};
+    const apps = s.apps || {};
+
+    const osList = arr => arr && arr.length
+      ? arr.map(v => `<div class="env-list-item">• ${v}</div>`).join('')
+      : `<span class="env-ph">Not configured</span>`;
+
+    const osContent = `
+      <div class="env-kv-section">Servers</div>${osList(os.servers)}
+      <div class="env-kv-section" style="margin-top:10px;">Workstations</div>${osList(os.workstations)}
+      ${os.mobile ? `<div class="env-kv-section" style="margin-top:10px;">Mobile</div><div class="env-list-item">• ${os.mobile}</div>` : ''}`;
+
+    const devContent = `
+      ${kv('Languages', dev.languages)}
+      ${kv('Web Frameworks', dev.webFrameworks)}
+      ${kv('API Frameworks', dev.apiFrameworks)}`;
+
+    const dbContent = `
+      ${kv('Relational', db.relational)}
+      ${kv('NoSQL', db.nosql)}
+      ${kv('Caching', db.caching)}
+      ${kv('Data Warehouse', db.warehouse)}`;
+
+    const infraContent = `
+      ${kv('Cloud Platforms', infra.cloud)}
+      ${kv('Containers / Orchestration', infra.containers)}
+      ${kv('CI / CD', infra.cicd)}`;
+
+    const netContent = `
+      ${kv('Architecture', net.architecture)}
+      ${kv('Load Balancers', net.loadBalancers)}
+      ${kv('DNS', net.dns)}
+      ${kv('VPN / Remote Access', net.vpn)}
+      ${kv('Jump Boxes', net.jumpBoxes)}`;
+
+    const appsContent = `
+      ${kv('Email', apps.email)}
+      ${kv('Collaboration', apps.collaboration)}
+      ${kv('File Sharing', apps.fileSharing)}
+      ${kv('Version Control', apps.versionControl)}
+      ${kv('Project Management', apps.projectMgmt)}
+      ${kv('Business Applications', apps.business)}`;
+
+    body.innerHTML = `<div class="kb-env-2col">
+      ${card('Operating Systems', '🖥️', osContent, null, null)}
+      ${card('Networking', '🔀', netContent, null, null)}
+      ${card('Infrastructure & Platforms', '🏗️', infraContent, null, null)}
+      ${card('Applications & Services', '📦', appsContent, null, null)}
+      ${card('Development Stack', '💻', devContent, null, null)}
+      ${card('Databases & Data Stores', '🗄️', dbContent, null, null)}
+    </div>`;
+
+  } else if (activeEnvTab === 'gaps') {
+    const gaps = d.gaps || [];
+    const ttps = d.priorityTtps || {};
+
+    const gapsContent = gaps.length
+      ? `<table class="kb-table"><thead><tr><th>Area</th><th>Status / Notes</th></tr></thead><tbody>
+          ${gaps.map(g => `<tr>
+            <td style="font-weight:600;color:var(--sub);">${g.label}</td>
+            <td>${g.value || '<span class="env-ph">Not configured</span>'}</td>
+          </tr>`).join('')}
+        </tbody></table>`
+      : `<span class="env-ph">No gaps documented.</span>`;
+
+    const tacticColors = { TA0006:'red', TA0008:'orange', TA0004:'yellow', TA0003:'indigo', TA0010:'blue' };
+    const ttpsContent = (ttps.tactics||[]).length
+      ? `<table class="kb-table"><thead><tr><th>ID</th><th>Tactic</th><th>Focus Areas</th></tr></thead><tbody>
+          ${(ttps.tactics).map(t => `<tr>
+            <td>${pill(t.id)}</td>
+            <td style="font-weight:600;color:var(--sub);">${t.name}</td>
+            <td style="color:var(--muted);font-size:10.5px;">${t.desc || '—'}</td>
+          </tr>`).join('')}
+        </tbody></table>`
+      : `<span class="env-ph">No priority TTPs configured.</span>`;
+
+    const tmContent = (ttps.threatModel||[]).length
+      ? (ttps.threatModel).map(t => `<div class="env-list-item">⚠ ${t}</div>`).join('')
+      : `<span class="env-ph">No threat model configured.</span>`;
+
+    body.innerHTML = `<div class="kb-env-1col">
+      ${card('Known Gaps & Blind Spots', '⚠', gapsContent, gaps.filter(g=>!g.value).length + ' unconfigured', 'yellow')}
+      ${card('Priority Tactics', '🎯', ttpsContent, (ttps.tactics||[]).length + ' tactics', 'red')}
+      ${card('Threat Model Focus', '🔍', tmContent, null, null)}
+    </div>`;
+
+  } else if (activeEnvTab === 'maint') {
+    const maint = d.maintenance || {};
+    const cl = maint.checklist || [];
+    const log = maint.changeLog || [];
+
+    const checklistContent = cl.length
+      ? cl.map(item => `<div class="env-checklist-item"><span class="env-check-box">☐</span><span>${item}</span></div>`).join('')
+      : `<span class="env-ph">No checklist configured.</span>`;
+
+    const changelogContent = log.length
+      ? log.map(e => `<div class="env-changelog-item">
+          <span class="env-changelog-date">${e.date}</span>
+          <span class="env-changelog-note">${e.note}</span>
+        </div>`).join('')
+      : `<span class="env-ph">No change log entries.</span>`;
+
+    body.innerHTML = `<div class="kb-env-1col">
+      ${card('Quarterly Review Checklist', '📋', checklistContent, cl.length + ' items', 'blue')}
+      ${card('Change Log', '📝', changelogContent, null, null)}
+    </div>`;
   }
 }
 
-function toggleKbEnvEdit() {
-  // snapshot current values
-  kbEnvSnapshot = {
-    domain:   { ...envData.domain },
-    stats:    (envData.stats||[]).map(s=>({...s})),
-    segments: envData.segments.map(s=>({...s})),
-    assets:   envData.assets.map(a=>({...a})),
-    accounts: envData.accounts.map(a=>({...a})),
-    topology: envData.topology,
-  };
-  kbEnvEditMode = true;
-  document.getElementById('kb-env-edit-btn').style.display   = 'none';
-  document.getElementById('kb-env-save-btn').style.display   = '';
-  document.getElementById('kb-env-cancel-btn').style.display = '';
-  document.getElementById('kb-env-hint').innerHTML = '🖊 Edit mode active — all fields are now editable. Click <b>Save Changes</b> when done.';
-  renderKbEnvPane();
-}
-
-function cancelKbEnvEdit() {
-  if (kbEnvSnapshot) {
-    envData.domain   = { ...kbEnvSnapshot.domain };
-    envData.stats    = kbEnvSnapshot.stats.map(s=>({...s}));
-    envData.segments = kbEnvSnapshot.segments.map(s=>({...s}));
-    envData.assets   = kbEnvSnapshot.assets.map(a=>({...a}));
-    envData.accounts = kbEnvSnapshot.accounts.map(a=>({...a}));
-    envData.topology = kbEnvSnapshot.topology;
-  }
-  kbEnvEditMode = false;
-  kbEnvSnapshot = null;
-  document.getElementById('kb-env-edit-btn').style.display   = '';
-  document.getElementById('kb-env-save-btn').style.display   = 'none';
-  document.getElementById('kb-env-cancel-btn').style.display = 'none';
-  document.getElementById('kb-env-hint').innerHTML = 'Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.';
-  renderKbEnvPane();
-}
-
-function saveKbEnvChanges() {
-  // Flush overview fields
-  const g = id => document.getElementById(id)?.value || '';
-  if (!envData.domain) envData.domain = {};
-  envData.domain.name = g('kb-env-domain');
-  const setStat = (label, val) => { const s = (envData.stats||[]).find(s=>s.label===label); if(s) s.value=val; };
-  setStat('Endpoints', g('kb-env-endpoints'));
-  setStat('Servers',   g('kb-env-servers'));
-  // Flush segment table inputs
-  document.querySelectorAll('[data-seg]').forEach(inp => {
-    const i = parseInt(inp.dataset.seg), f = inp.dataset.field;
-    if (envData.segments[i]) envData.segments[i][f] = inp.value;
-  });
-  // Flush asset table inputs
-  document.querySelectorAll('[data-asset]').forEach(inp => {
-    const i = parseInt(inp.dataset.asset), f = inp.dataset.field;
-    if (envData.assets[i]) envData.assets[i][f] = inp.value;
-  });
-  // Flush account table inputs
-  document.querySelectorAll('[data-acct]').forEach(inp => {
-    const i = parseInt(inp.dataset.acct), f = inp.dataset.field;
-    if (envData.accounts[i]) envData.accounts[i][f] = inp.value;
-  });
-  // Flush topology
-  const topoEl = document.getElementById('kb-env-topo');
-  if (topoEl) envData.topology = topoEl.value;
-
-  kbEnvEditMode = false;
-  kbEnvSnapshot = null;
-  document.getElementById('kb-env-edit-btn').style.display   = '';
-  document.getElementById('kb-env-save-btn').style.display   = 'none';
-  document.getElementById('kb-env-cancel-btn').style.display = 'none';
-  const hint = document.getElementById('kb-env-hint');
-  hint.innerHTML = '✓ Changes saved — agents will use updated context on next invocation.';
-  hint.style.color = 'var(--green)';
-  setTimeout(() => {
-    hint.innerHTML = 'Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.';
-    hint.style.color = '';
-  }, 3000);
-  renderKbEnvPane();
-}
+// Stubs — edit mode removed (update kb/environment.md directly)
+function toggleKbEnvEdit() {}
+function cancelKbEnvEdit()  {}
+function saveKbEnvChanges() {}
 
 // ── IOC Repository ──
 function renderKbIocPane() {

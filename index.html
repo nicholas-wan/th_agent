@@ -29,6 +29,7 @@
     <div class="nav-tab" onclick="goTab('observe',this)">🤖 Agents</div>
     <div class="nav-tab" onclick="goTab('coverage',this)">📊 Coverage</div>
     <div class="nav-tab" onclick="goTab('kb',this);initKbTab()">📚 Knowledge Base</div>
+    <div class="nav-tab" onclick="goTab('faq',this)">❓ FAQ</div>
   </nav>
   <div class="topbar-end">
     <div style="position:relative;" id="user-menu-wrap">
@@ -2696,17 +2697,16 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   <div class="kb-subtab-bar" id="kb-subtab-bar">
     <div class="kb-stab on" id="kb-stab-tradecraft" onclick="switchKbTab('tradecraft')">📚 Tradecraft</div>
     <div class="kb-stab"    id="kb-stab-env"        onclick="switchKbTab('env')">🏗️ Environment</div>
-    <div class="kb-stab"    id="kb-stab-ioc"        onclick="switchKbTab('ioc')">🔍 IOC Repository</div>
+    <div class="kb-stab"    id="kb-stab-ioc"        onclick="switchKbTab('ioc')">🗂️ Artifacts Repository</div>
   </div>
 
   <!-- ── Tradecraft pane (skills + runbooks) ── -->
   <div class="kb-pane on" id="kb-pane-tradecraft">
     <div class="kb-skills-wrap">
 
-      <!-- Inner tab bar: Tactic | Domain | TTP Runbooks | Propose Edit -->
+      <!-- Inner tab bar: Domain | TTP Runbooks | Propose Edit -->
       <div class="kb-sk-stab-bar">
-        <div class="kb-sk-stab on" id="kb-tc-stab-tactic"   onclick="switchTradecraftTab('tactic')">🎯 Tactic Skills</div>
-        <div class="kb-sk-stab"    id="kb-tc-stab-domain"   onclick="switchTradecraftTab('domain')">🏢 Domain Skills</div>
+        <div class="kb-sk-stab on" id="kb-tc-stab-domain"   onclick="switchTradecraftTab('domain')">🔌 Platform Skills</div>
         <div class="kb-sk-stab"    id="kb-tc-stab-runbooks" onclick="switchTradecraftTab('runbooks')">📖 TTP Runbooks</div>
         <div class="kb-sk-stab"    id="kb-tc-stab-author"   onclick="switchTradecraftTab('author')">✏️ Propose Edit</div>
       </div>
@@ -2792,122 +2792,26 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 
       <div class="info-bar">
         <span class="ib-icon">🏗️</span>
-        <span>This is the <b>Environment Context</b> your agents draw from at hunt time. Fields marked with a teal border are editable — changes update the live agent context immediately.</span>
+        <span>The <b>Environment Context</b> your agents draw from at hunt time — security tooling, technology stack, known visibility gaps, and priority threat model. Edit <code>kb/environment.md</code> to update.</span>
       </div>
 
-      <!-- Edit bar -->
-      <div class="kb-edit-bar">
-        <span class="kb-edit-hint" id="kb-env-hint">Click <b>Edit</b> to modify any environment field. Agents will pick up changes on the next hunt.</span>
+      <!-- Meta + source button bar -->
+      <div class="kb-env-bar">
+        <div class="kb-env-meta" id="kb-env-meta"><!-- populated by renderKbEnvPane() --></div>
         <button class="btn btn-outline btn-sm" onclick="openEnvSource()">📄 View Source</button>
-        <button class="btn btn-outline btn-sm" id="kb-env-edit-btn" onclick="toggleKbEnvEdit()">✏️ Edit</button>
-        <button class="btn btn-primary btn-sm" id="kb-env-save-btn" style="display:none;" onclick="saveKbEnvChanges()">✓ Save Changes</button>
-        <button class="btn btn-outline btn-sm" id="kb-env-cancel-btn" style="display:none;" onclick="cancelKbEnvEdit()">Cancel</button>
       </div>
 
-      <div class="kb-env-2col">
-
-        <!-- Overview -->
-        <div class="kb-card">
-          <div class="kb-card-head">
-            <span class="kb-card-title">🌐 Domain Overview</span>
-            <span class="chip chip-blue" style="font-size:10px;">CORP.LOCAL</span>
-          </div>
-          <div class="kb-card-body">
-            <div class="kb-field">
-              <label class="kb-field-lbl">Domain Name</label>
-              <input class="kb-input" id="kb-env-domain" disabled>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <div class="kb-field">
-                <label class="kb-field-lbl">Total Endpoints</label>
-                <input class="kb-input" id="kb-env-endpoints" disabled>
-              </div>
-              <div class="kb-field">
-                <label class="kb-field-lbl">Total Servers</label>
-                <input class="kb-input" id="kb-env-servers" disabled>
-              </div>
-            </div>
-            <div class="kb-field">
-              <label class="kb-field-lbl">Hunt Scope</label>
-              <input class="kb-input" id="kb-env-scope" disabled>
-            </div>
-            <div class="kb-field">
-              <label class="kb-field-lbl">SIEM Platform</label>
-              <input class="kb-input" id="kb-env-siem" disabled>
-            </div>
-            <div class="kb-field">
-              <label class="kb-field-lbl">EDR Platform</label>
-              <input class="kb-input" id="kb-env-edr" disabled>
-            </div>
-          </div>
-        </div>
-
-        <!-- Network Segments -->
-        <div class="kb-card">
-          <div class="kb-card-head">
-            <span class="kb-card-title">🗺️ Network Segments</span>
-            <span class="chip chip-gray" style="font-size:10px;" id="kb-seg-count">— segments</span>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="kb-table" id="kb-seg-table">
-              <thead>
-                <tr>
-                  <th>Name</th><th>Subnet</th><th>Sensitivity</th>
-                </tr>
-              </thead>
-              <tbody id="kb-seg-body"><!-- populated by renderKbEnvPane() --></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Key Assets -->
-        <div class="kb-card" style="grid-column:1/-1;">
-          <div class="kb-card-head">
-            <span class="kb-card-title">🖥️ Key Assets</span>
-            <span class="chip chip-gray" style="font-size:10px;" id="kb-asset-count">— assets</span>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="kb-table" id="kb-asset-table">
-              <thead>
-                <tr>
-                  <th>Hostname</th><th>IP</th><th>Role</th><th>OS</th><th>Segment</th><th>Owner</th>
-                </tr>
-              </thead>
-              <tbody id="kb-asset-body"><!-- populated by renderKbEnvPane() --></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Key Accounts -->
-        <div class="kb-card" style="grid-column:1/-1;">
-          <div class="kb-card-head">
-            <span class="kb-card-title">👤 Key Accounts</span>
-            <span class="chip chip-gray" style="font-size:10px;" id="kb-acct-count">— accounts</span>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="kb-table" id="kb-acct-table">
-              <thead>
-                <tr>
-                  <th>Account</th><th>Type</th><th>Status</th><th>Normal Behaviour</th>
-                </tr>
-              </thead>
-              <tbody id="kb-acct-body"><!-- populated by renderKbEnvPane() --></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Topology Map -->
-        <div class="kb-card" style="grid-column:1/-1;">
-          <div class="kb-card-head">
-            <span class="kb-card-title">📡 Network Topology Map</span>
-            <span style="font-size:10px;color:var(--muted);">ASCII reference · used by agents at scope-setting time</span>
-          </div>
-          <div class="kb-card-body">
-            <textarea class="kb-textarea" id="kb-env-topo" rows="14" disabled></textarea>
-          </div>
-        </div>
-
+      <!-- Inner tab bar -->
+      <div class="kb-env-itab-bar" id="kb-env-itab-bar">
+        <button class="kb-env-itab on" onclick="switchEnvTab('tools',this)">🔐 Security Tools</button>
+        <button class="kb-env-itab" onclick="switchEnvTab('stack',this)">🖥️ Tech Stack</button>
+        <button class="kb-env-itab" onclick="switchEnvTab('gaps',this)">⚠ Gaps &amp; TTPs</button>
+        <button class="kb-env-itab" onclick="switchEnvTab('maint',this)">📋 Maintenance</button>
       </div>
+
+      <!-- Dynamic body — populated by renderKbEnvPane() -->
+      <div id="kb-env-body" class="kb-env-body"></div>
+
     </div>
   </div>
 
@@ -2989,6 +2893,211 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   </div>
 
 </div><!-- /pane-kb -->
+
+<!-- #region PANE: FAQ -->
+<!-- ═══════ FAQ PANE ═══════ -->
+<div id="pane-faq" class="tab-pane">
+  <div class="faq-wrap">
+
+    <div class="faq-header">
+      <div>
+        <div class="faq-title">❓ Frequently Asked Questions</div>
+        <div class="faq-sub">Platform guidance, workflow tips, and agent & tool reference</div>
+      </div>
+      <input class="faq-search" id="faq-search" placeholder="Search questions…" oninput="filterFaq(this.value)" autocomplete="off">
+    </div>
+
+    <div class="faq-body" id="faq-body">
+
+      <!-- ── Getting Started ── -->
+      <div class="faq-cat-label">Getting Started</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">What is PrimeTH and what does LOCK stand for?</summary>
+        <div class="faq-a">
+          <p><b>PrimeTH</b> is a structured threat hunting platform built around the <b>LOCK</b> framework — a four-stage methodology for proactive adversary detection:</p>
+          <ul>
+            <li><b>L — Learn</b>: Ingest and analyse CTI, extract TTPs, and form hypotheses.</li>
+            <li><b>O — Observe</b>: Define the environment baseline — what normal looks like, what suspicious looks like, and which observables to watch for.</li>
+            <li><b>C — Check</b>: Write and test SPL detection logic against Splunk Enterprise Security.</li>
+            <li><b>K — Keep</b>: Capture findings, build a timeline, log evidence, and produce the hunt report.</li>
+          </ul>
+          <p>Each stage is supported by specialised AI agents that reason over tradecraft, data sources, and detection logic in parallel.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How do I create a new hunt?</summary>
+        <div class="faq-a">
+          <p>Click <b>+ New Hunt</b> in the top-right corner of the screen. Fill in the hunt title, select a primary TTP focus, and choose a lead analyst. The hunt is created in <b>Draft</b> status and opens directly into the Learn stage where you can paste CTI and start TTP extraction.</p>
+          <p>Hunts progress through Draft → Active → Closed as you gate each LOCK stage.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How do I switch between hunts without losing my place?</summary>
+        <div class="faq-a">
+          <p>Use the <b>hunt switcher dropdown</b> in the hunt detail header (the monospace hunt ID button, e.g. <code>TH-2026-041</code>). Switching hunts preserves your current LOCK stage — if you were on Check in hunt 041 and switch to hunt 040, you stay on the Check tab.</p>
+          <p>The exception is the <b>Keep</b> stage — if the destination hunt has no Keep data yet, the platform falls back to the Learn tab.</p>
+        </div>
+      </details>
+
+      <!-- ── The LOCK Workflow ── -->
+      <div class="faq-cat-label">The LOCK Workflow</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">What happens in each LOCK stage?</summary>
+        <div class="faq-a">
+          <ul>
+            <li><b>Learn</b>: Paste a CTI report or threat brief. The Hypothesis Agent extracts TTPs, maps them to MITRE ATT&CK, and proposes hunt hypotheses. The Tradecraft and Detection Logic agents then load relevant context and draft SPL stubs.</li>
+            <li><b>Observe</b>: Define and document your environment baseline for this hunt. Edit what normal looks like, what suspicious looks like, and the expected observables per category (Processes, Network, Files, Authentication). Sub-hunts each have their own Observe profile.</li>
+            <li><b>Check</b>: Run SPL queries in the embedded query runner, review RAA (Reasoning Augmented Analytics) findings, and track hypothesis coverage. The Check Summary card rolls up RAA + query results to show which gaps have been addressed.</li>
+            <li><b>Keep</b>: Log confirmed findings, attach evidence, build a timeline of adversary activity, and generate the final hunt report for stakeholders.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What are sub-hunts and when should I use them?</summary>
+        <div class="faq-a">
+          <p>Sub-hunts let you decompose a single hunt into <b>per-TTP investigation threads</b>. Each sub-hunt has its own Observe profile (normal/suspicious/observables) and its own SPL queries in the Check stage.</p>
+          <p>Use sub-hunts when a hunt covers multiple distinct TTPs that require different data sources or detection approaches — for example, splitting T1570 (Lateral Tool Transfer) and T1003.001 (LSASS Credential Dumping) into separate sub-hunts lets each analyst focus on one thread without cluttering the shared view.</p>
+          <p>Select a sub-hunt from the sidebar that appears on the left of the Hunt Detail pane when sub-hunts are configured.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What is the Observe stage used for — can I skip it?</summary>
+        <div class="faq-a">
+          <p>The Observe stage is your <b>hunt-specific baseline document</b>. It tells the agents (and the team) what "normal" looks like in this environment for the scope of this hunt, and what adversary artefacts to watch for.</p>
+          <p>You can technically skip it, but agents in the Check stage use Observe data to calibrate thresholds, choose exclusions, and interpret RAA findings. Skipping it means agents fall back to generic defaults, which increases false positives.</p>
+          <p>Click <b>✏ Edit</b> in the Observe tab to update any item — existing entries become inline text fields, and you can add or remove entries per section.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What are gate decisions and where do I find them?</summary>
+        <div class="faq-a">
+          <p>A <b>gate decision</b> is a formal record of whether a LOCK stage has been passed or escalated — who made the call, when, and why. They are logged in <code>kb/gate-decisions.js</code> keyed by hunt ID.</p>
+          <p>Gate decisions appear in the Hunt Detail header as status chips, and in the hunt history overlay (clock icon). They provide an audit trail for each stage transition, useful for post-hunt reviews and compliance reporting.</p>
+        </div>
+      </details>
+
+      <!-- ── Agents & Tools ── -->
+      <div class="faq-cat-label">Agents &amp; Tools</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">What are the five agents and what does each one do?</summary>
+        <div class="faq-a">
+          <ul>
+            <li><b>🎛️ Orchestrator Agent</b> — spawns and coordinates all other agents; manages task routing and pipeline state.</li>
+            <li><b>💡 Hypothesis Agent</b> — runs first; analyses CTI, extracts TTPs, and formulates testable hypotheses. Completes before the others start.</li>
+            <li><b>🗄️ Data Engineering Agent</b> — identifies required log sources, validates index availability, and ensures the data pipeline is ready for query.</li>
+            <li><b>🧠 RAA Supervisor Agent (Tradecraft)</b> — applies threat tradecraft knowledge to interpret anomalies and flag process-chain or command-line deviations that rule-based queries may miss.</li>
+            <li><b>⚙️ Detection Logic Agent</b> — drafts, tunes, and validates SPL detection rules; integrates FP exclusions from the Observe baseline.</li>
+          </ul>
+          <p>Click any agent card in the <b>Agents</b> tab or the Observe panel to open its detail drawer.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What is RAA (Reasoning Augmented Analytics)?</summary>
+        <div class="faq-a">
+          <p><b>RAA</b> is an always-on analytic layer in the Check stage that runs <i>alongside</i> SPL queries rather than replacing them. It applies two lenses:</p>
+          <ul>
+            <li><b>Process Chain Anomaly</b> — detects unusual parent-child process relationships that deviate from known-good baselines.</li>
+            <li><b>Command Line Anomaly</b> — flags suspicious argument patterns (LOLBin abuse, encoded commands, unusual flags) in process execution telemetry.</li>
+          </ul>
+          <p>RAA findings appear at the top of the Check stage. The <b>Check Summary</b> card below RAA shows whether your SPL queries have addressed the specific gaps RAA identified — if a RAA finding has no corresponding query, the gap is flagged as open.</p>
+          <p>Not all RAA findings will be applicable to every hunt; use analyst judgement when interpreting results.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What is the Rule Validation tool and how is it different from running a query?</summary>
+        <div class="faq-a">
+          <p><b>Rule Validation</b> (✅ in the Tools Available sidebar) is a static analysis tool — it reviews SPL logic for syntax correctness, field name validity, and detection coverage without executing against live data.</p>
+          <p>Running a query in the Check stage query runner <i>executes</i> against Splunk ES and returns real results. Rule Validation is the pre-flight check; the query runner is the live test.</p>
+          <p>Rule Validation is a tool, not an agent — it does not appear in the agent topology, feed filter pills, or agent model list.</p>
+        </div>
+      </details>
+
+      <!-- ── Detection & Analysis ── -->
+      <div class="faq-cat-label">Detection &amp; Analysis</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">How do I read the Check Summary card?</summary>
+        <div class="faq-a">
+          <p>The <b>Check Summary</b> card appears at the top of the Check stage and has two states:</p>
+          <ul>
+            <li><b>Pre-run</b>: Shows the RAA findings count and how many hypotheses have been mapped to queries. Prompts you to run queries to complete the assessment.</li>
+            <li><b>Post-run</b>: After at least one query is executed, the card shows a combined assessment — which RAA gaps were addressed by the query results, and which remain open. An overall verdict (Covered / Partial / Gap) is assigned per hypothesis.</li>
+          </ul>
+          <p>The summary is per-hunt and resets if you switch to a different hunt. It does not persist between sessions.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Why are some TTPs shown in red, yellow, or indigo on the MITRE grid?</summary>
+        <div class="faq-a">
+          <p>The colour coding on the MITRE ATT&CK grid in the Learn stage reflects <b>detection confidence</b> for each TTP in the context of this hunt:</p>
+          <ul>
+            <li><b>Red (chip-red)</b> — confirmed or highly likely adversary activity; primary detection target.</li>
+            <li><b>Indigo (chip-indigo)</b> — possible or supporting TTP; secondary target.</li>
+            <li><b>Yellow</b> — low confidence or insufficient data.</li>
+          </ul>
+          <p>Hover over any TTP chip to see the full technique name, tactic, and a brief description.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How do I tune a query to reduce false positives?</summary>
+        <div class="faq-a">
+          <p>False positive tuning follows a three-step approach in PrimeTH:</p>
+          <ul>
+            <li><b>1 — Observe stage</b>: Document known-good behaviour under "What Normal Looks Like" and list approved processes/accounts/IPs in Expected Observables. Agents use this to auto-suggest exclusions.</li>
+            <li><b>2 — Check stage exclusions</b>: Modify the SPL <code>| where NOT match(...)</code> or <code>| search NOT</code> clauses directly in the query editor. The Detection Logic Agent will suggest tuned versions based on the Observe baseline.</li>
+            <li><b>3 — Runbooks</b>: Each TTP runbook in the Knowledge Base has an <b>Exclusions</b> section listing pre-validated FP patterns for that technique. Open the runbook from the KB tab to copy relevant exclusions.</li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- ── Knowledge Base ── -->
+      <div class="faq-cat-label">Knowledge Base</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">What is the difference between Platform Skills and Runbooks?</summary>
+        <div class="faq-a">
+          <p><b>Platform Skills</b> are detection packages tied to a specific technology platform or log source not yet fully onboarded into the environment — for example, VMware vCenter, Ivanti Connect Secure, or SolarWinds Orion. Each skill includes detection patterns, an SPL template, FP exclusions, and attack path context for that platform.</p>
+          <p><b>Runbooks</b> are technique-level playbooks keyed to MITRE ATT&CK TTP IDs (e.g. <code>T1003.001</code>). They are platform-agnostic and cover the full investigation procedure: data sources, SPL queries, triage steps, and response actions.</p>
+          <p>Use Platform Skills when onboarding a new log source; use Runbooks as the step-by-step investigation guide during an active hunt.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What is the Artifacts Repository?</summary>
+        <div class="faq-a">
+          <p>The <b>Artifacts Repository</b> (previously IOC Repository) in the Knowledge Base stores indicators and artefacts associated with past and active hunts — IP addresses, file hashes, domain names, JA3 fingerprints, registry keys, and similar forensic artefacts.</p>
+          <p>Artefacts are defined in <code>kb/iocs.js</code> and are searchable from the KB search bar. They can be referenced in hunt findings and linked to specific TTPs or adversary campaigns.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How do I add a new Platform Skill or Runbook?</summary>
+        <div class="faq-a">
+          <p>Both are defined in Markdown source files that serve as the runtime source of truth:</p>
+          <ul>
+            <li><b>Platform Skill</b>: Open <code>kb/skills.md</code>, copy any existing <code>## SK-XXX —</code> block, paste it above the final <code>---</code>, fill in the fields, then mirror the entry in <code>kb/skills-fallback.js</code> (used for local <code>file://</code> development).</li>
+            <li><b>Runbook</b>: Open <code>kb/runbooks.md</code>, copy any existing <code>## T…</code> block, paste it, and fill in the TTP ID, data sources, SPL, and triage steps.</li>
+          </ul>
+          <p>Required fields for a skill: <code>type</code>, <code>category</code>, <code>category-label</code>, <code>ttps</code>, <code>author</code>. No build step is required — changes are picked up on next page load when serving over HTTP.</p>
+        </div>
+      </details>
+
+    </div><!-- /faq-body -->
+  </div><!-- /faq-wrap -->
+</div><!-- /pane-faq -->
+<!-- #endregion PANE: FAQ -->
 
 <!-- ═══════ DRAWER ═══════ -->
 <div class="drawer" id="drawer">
@@ -3120,75 +3229,41 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 
     <!-- Tab bar -->
     <div class="ec-tabs">
-      <div class="ec-tab on"  data-ec-tab="overview"     onclick="switchEcTab('overview')">Overview</div>
+      <div class="ec-tab on"  data-ec-tab="overview"    onclick="switchEcTab('overview')">Overview</div>
       <div class="ec-tab"     data-ec-tab="crownJewels" onclick="switchEcTab('crownJewels')" style="color:var(--red);font-weight:700;">👑 Crown Jewels</div>
-      <div class="ec-tab"     data-ec-tab="network"     onclick="switchEcTab('network')">Network Segments</div>
-      <div class="ec-tab"     data-ec-tab="assets"      onclick="switchEcTab('assets')">Assets</div>
-      <div class="ec-tab"     data-ec-tab="accounts"    onclick="switchEcTab('accounts')">Accounts</div>
-      <div class="ec-tab"     data-ec-tab="topology"    onclick="switchEcTab('topology')">Topology</div>
+      <div class="ec-tab"     data-ec-tab="tools"       onclick="switchEcTab('tools')">Security Tools</div>
+      <div class="ec-tab"     data-ec-tab="stack"       onclick="switchEcTab('stack')">Tech Stack</div>
+      <div class="ec-tab"     data-ec-tab="gaps"        onclick="switchEcTab('gaps')">Gaps &amp; TTPs</div>
+      <div class="ec-tab"     data-ec-tab="maint"       onclick="switchEcTab('maint')">Maintenance</div>
     </div>
 
     <!-- Overview pane -->
     <div class="ec-pane on" id="ec-pane-overview">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;" id="ec-overview-stats"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div>
-          <div class="rb-section-head" style="margin-bottom:10px;"><span class="rb-section-icon">🌐</span>Domain Info</div>
-          <div id="ec-domain-info"></div>
-        </div>
-        <div>
-          <div class="rb-section-head" style="margin-bottom:10px;"><span class="rb-section-icon">⚠️</span>Active Anomalies</div>
-          <div id="ec-anomalies"></div>
-        </div>
-      </div>
+      <div id="ec-overview-meta" style="margin-bottom:14px;"></div>
+      <div id="ec-overview-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
     </div>
 
     <!-- Crown Jewels pane -->
     <div class="ec-pane" id="ec-pane-crownJewels"><!-- populated by renderCrownJewels() --></div>
 
-    <!-- Network Segments pane -->
-    <div class="ec-pane" id="ec-pane-network">
-      <div class="ec-search-wrap">
-        <span class="ec-search-icon">🔍</span>
-        <input type="text" placeholder="Filter segments by name, CIDR, or tag…" oninput="filterEcSegments(this.value)">
-      </div>
-      <div class="ec-seg-grid" id="ec-seg-grid"></div>
+    <!-- Security Tools pane -->
+    <div class="ec-pane" id="ec-pane-tools">
+      <div id="ec-tools-body"></div>
     </div>
 
-    <!-- Assets pane -->
-    <div class="ec-pane" id="ec-pane-assets">
-      <div class="ec-search-wrap">
-        <span class="ec-search-icon">🔍</span>
-        <input type="text" placeholder="Filter by hostname, IP, OS, role, segment…" oninput="filterEcAssets(this.value)">
-      </div>
-      <div id="ec-asset-detail-slot"></div>
-      <div style="overflow-x:auto;">
-        <table class="ec-asset-table" id="ec-asset-table">
-          <thead><tr>
-            <th>Hostname</th><th>IP</th><th>Role</th><th>OS</th><th>Segment</th><th>Owner</th><th>Last Seen</th><th>Status</th>
-          </tr></thead>
-          <tbody id="ec-asset-tbody"></tbody>
-        </table>
-      </div>
+    <!-- Tech Stack pane -->
+    <div class="ec-pane" id="ec-pane-stack">
+      <div id="ec-stack-body"></div>
     </div>
 
-    <!-- Accounts pane -->
-    <div class="ec-pane" id="ec-pane-accounts">
-      <div class="ec-search-wrap">
-        <span class="ec-search-icon">🔍</span>
-        <input type="text" placeholder="Filter by username, type, group, or status…" oninput="filterEcAccounts(this.value)">
-      </div>
-      <div id="ec-accounts-list"></div>
+    <!-- Gaps & TTPs pane -->
+    <div class="ec-pane" id="ec-pane-gaps">
+      <div id="ec-gaps-body"></div>
     </div>
 
-    <!-- Topology pane -->
-    <div class="ec-pane" id="ec-pane-topology">
-      <div class="rb-section-head" style="margin-bottom:12px;"><span class="rb-section-icon">🗺️</span>Network Topology Map</div>
-      <div class="ec-topo" id="ec-topo-map"></div>
-      <div style="margin-top:14px;">
-        <div class="rb-section-head" style="margin-bottom:10px;"><span class="rb-section-icon">🔗</span>Key Infrastructure</div>
-        <div id="ec-infra-list"></div>
-      </div>
+    <!-- Maintenance pane -->
+    <div class="ec-pane" id="ec-pane-maint">
+      <div id="ec-maint-body"></div>
     </div>
   </div>
 </div>

@@ -1,493 +1,240 @@
-# Environment Context
+# Environment Profile
 
-Describes the target environment: domain, network segments, key assets, accounts, and crown jewels. Agents load this at hunt start via `get_topology()` / `get_env_context()`.
+**Last Updated:** 2026-01-13
+**Review Cadence:** Quarterly
+**Maintained By:** Security Operations Team
 
-Edit this file to keep the environment picture current. Changes are reflected in the Knowledge Base → Environment tab on next page load.
-
----
-
-## Domain
-
-> name: CORP.LOCAL | netbios: CORP | forest: CORP.LOCAL | level: Windows Server 2019
-> adfs: https://adfs.corp.local | ad-sync: Azure AD Connect · delta sync every 30 min
-
-### Domain Controllers
-- WIN-DC01.corp.local (10.0.1.10)
-- WIN-DC02.corp.local (10.0.1.11)
-
-### Sites
-- HQ-Site (10.0.0.0/16)
-- DR-Site (10.10.0.0/16)
-
-### Trusts
-- One-way outbound → PARTNER.LOCAL (selective auth)
+> **⚠️ SENSITIVE DATA WARNING**
+> This file contains technical details about your organization's infrastructure. Treat it with the same security posture as your hunt documentation.
 
 ---
 
-## Stats
+## Purpose
 
-> label: Endpoints | value: 2,412 | note: Windows · macOS · Linux | color: blue
-> label: Servers | value: 34 | note: On-prem · virtualised | color: indigo
-> label: Segments | value: 8 | note: VLANs mapped | color: green
-> label: User Accounts | value: 1,847 | note: 638 service accounts | color: yellow
+This file captures the technical environment context that informs threat hunting decisions. It helps answer:
 
----
-
-## Anomalies
-
-- crit | CORP\jsmith authenticated from 3 source IPs in 6h — off-hours logon anomaly (T1078.002)
-- high | WIN-DC01: unexpected outbound SMB to 10.0.8.44 (Workstations VLAN) at 02:14 UTC
-- high | svc-backup account interactive logon detected on WIN-WS041 — service accounts should never be interactive
-- med | WIN-WS041: new service installed outside patch window — svchost.exe variant (T1543.003)
+- What technologies are we running that might be vulnerable?
+- Where should we focus hunting efforts based on our attack surface?
+- What data sources and tools do we have available for hunts?
 
 ---
 
-## Segment: Domain Controllers
+## Security & Monitoring Tools
 
-> id: seg-dc | sensitivity: critical | cidr: 10.0.1.0/24 | vlan: 10 | gateway: 10.0.1.1 | hosts: 2 | icon: 🏛️
+### SIEM / Log Aggregation
 
-Tier-0 assets. No workstation traffic permitted. Firewalled from all non-admin VLANs.
+- **Platform:** SIEM/Log Aggregation Platform (Splunk, Elasticsearch, Sentinel, etc.)
+- **Version:** [Specify your platform version]
+- **Coverage:**
+  - Windows Security Event Logs (Event IDs 4624, 4625, 4648, 4768, 4769, 4771, etc.)
+  - Windows System and Application Logs
+  - Endpoint telemetry (process execution, network connections, file events)
+  - Network flow data (NetFlow, firewall logs)
+  - Authentication logs (Active Directory, VPN, cloud services)
+  - Application logs (web servers, databases, business applications)
+- **Retention:** 90 days hot/warm storage, 1 year cold storage
+- **Query Access:**
+  - Web interface for interactive querying
+  - REST API available for programmatic access
+  - CLI tools or SDK for automated hunts
+- **Data Collections/Indexes:**
+  - `security_events` - Primary security telemetry (12M+ events)
+  - `windows_logs` - Windows Event Logs
+  - `endpoint_data` - EDR/endpoint telemetry
+  - `network_logs` - Network flow and firewall logs
+  - `auth_logs` - Authentication events across all sources
+- **Integration Guide:** Document platform-specific query syntax in `integrations/[platform]/AGENTS.md`
+- **Common Fields:**
+  - Windows: `EventCode`, `ComputerName`, `User`, `LogonType`, `SourceNetworkAddress`, `TargetUserName`
+  - Network: `src_ip`, `dest_ip`, `src_port`, `dest_port`, `protocol`, `action`
+  - Endpoint: `process_name`, `parent_process`, `command_line`, `user`, `dest`
+- **Documentation:** [Link to internal docs, query examples in `queries/` directory]
 
-### Tags
-- Tier-0
-- Jump-access only
-- IDS monitored
+### EDR / Endpoint Security
 
-### ACLs
-- Allow: Admin VLAN (10.0.9.0/24)
-- Allow: Splunk ES (10.0.5.20)
-- Deny: all others
+- **Product:** [To be configured - e.g., CrowdStrike Falcon, Microsoft Defender, Carbon Black]
+- **Version:** [To be configured]
+- **Deployment:** [To be configured - % of endpoints covered, OS types]
+- **Telemetry:** Process execution, network connections, file events, registry modifications
+- **API Access:** [To be configured]
+- **Documentation:** [To be configured]
 
----
+### Network Security
 
-## Segment: Server Farm
+- **Firewalls:** [To be configured - vendor/model]
+- **IDS/IPS:** [To be configured]
+- **Flow Data:** NetFlow logs ingested into SIEM
+- **Packet Capture:** [To be configured - limited PCAP availability]
+- **Documentation:** [To be configured]
 
-> id: seg-srv | sensitivity: high | cidr: 10.0.2.0/24 | vlan: 20 | gateway: 10.0.2.1 | hosts: 28 | icon: 🖥️
+### Cloud Security
 
-Application and file servers. East-west traffic restricted via host-based firewall policy.
+- **Cloud Providers:** [To be configured - AWS, Azure, GCP]
+- **Security Services:** [To be configured - CloudTrail, Azure Monitor, etc.]
+- **Documentation:** [To be configured]
 
-### Tags
-- Production
-- Change-controlled
-- Sysmon deployed
+### Identity & Access
 
-### ACLs
-- Allow: Corp Workstations
-- Allow: Admin VLAN
-- Deny: Guest/IoT
+- **Identity Provider:** Active Directory (on-premises)
+- **Domain Controllers:** Multiple DCs logging authentication events to SIEM
+- **MFA Solutions:** [To be configured]
+- **PAM Tools:** [To be configured]
+- **Authentication Logs:** Centralized in SIEM `windows_logs` and `auth_logs` collections
+- **Key Event IDs:**
+  - 4624 - Successful logon
+  - 4625 - Failed logon
+  - 4648 - Logon using explicit credentials
+  - 4768 - Kerberos TGT requested
+  - 4769 - Kerberos service ticket requested
+  - 4771 - Kerberos pre-authentication failed
+- **Documentation:** [To be configured]
 
----
+### Other Security Tools
 
-## Segment: Corp Workstations
-
-> id: seg-ws | sensitivity: medium | cidr: 10.0.3.0/24 | vlan: 30 | gateway: 10.0.3.1 | hosts: 1840 | icon: 💻
-
-Standard employee endpoints. Managed via Intune. No server-to-workstation initiation permitted.
-
-### Tags
-- Intune managed
-- EDR deployed
-- User VLAN
-
-### ACLs
-- Allow: Internet via proxy
-- Allow: Server Farm (restricted ports)
-- Deny: DC direct
-
----
-
-## Segment: DMZ / Public-facing
-
-> id: seg-dmz | sensitivity: high | cidr: 10.0.4.0/24 | vlan: 40 | gateway: 10.0.4.1 | hosts: 6 | icon: 🌐
-
-Web servers, reverse proxies, email gateways. Strict egress filtering. No internal DNS.
-
-### Tags
-- Internet-facing
-- WAF protected
-- Isolated DNS
-
-### ACLs
-- Allow: inbound 443/80 from Internet
-- Deny: lateral to internal subnets
-- Allow: outbound SMTP 25
-
----
-
-## Segment: Security / SOC
-
-> id: seg-sec | sensitivity: high | cidr: 10.0.5.0/24 | vlan: 50 | gateway: 10.0.5.1 | hosts: 8 | icon: 🛡️
-
-Splunk ES, EDR management console, SOAR. Read-only access to all other VLANs for log collection.
-
-### Tags
-- SOC tools
-- Log collection
-- Splunk ES
-
-### ACLs
-- Allow: syslog/UDP 514 from all
-- Allow: Splunk forwarder 9997 from all
-- Deny: outbound to Internet
+- **Vulnerability Scanners:** [To be configured]
+- **Asset Management:** [To be configured]
+- **Threat Intelligence:** [To be configured]
+- **SOAR/Automation:** [To be configured]
 
 ---
 
-## Segment: Admin / Privileged
+## Technology Stack
 
-> id: seg-admin | sensitivity: critical | cidr: 10.0.9.0/24 | vlan: 90 | gateway: 10.0.9.1 | hosts: 4 | icon: 🔑
+### Operating Systems
 
-Jump hosts, PAM solution, admin workstations. Requires MFA + privileged session recording.
+- **Servers:**
+  - Windows: Server 2016, Server 2019, Server 2022
+  - Linux: [To be configured - distributions]
 
-### Tags
-- Tier-0 access
-- PAM enforced
-- Session recorded
+- **Workstations:**
+  - Windows: Windows 10, Windows 11
+  - macOS: [To be configured if applicable]
+  - Linux: [To be configured if applicable]
 
-### ACLs
-- Allow: DC VLAN
-- Allow: Server Farm
-- Allow: Splunk ES (read)
-- Deny: Internet direct
+- **Mobile:**
+  - [To be configured]
 
----
+### Development Stack
 
-## Segment: IoT / OT
+- **Languages:** [To be configured - Python, JavaScript, Java, etc.]
+- **Web Frameworks:** [To be configured]
+- **API Frameworks:** [To be configured]
 
-> id: seg-iot | sensitivity: medium | cidr: 10.0.6.0/24 | vlan: 60 | gateway: 10.0.6.1 | hosts: 312 | icon: 📡
+### Databases & Data Stores
 
-Building management, printers, physical security cameras. Isolated from corp network.
+- **Relational:** [To be configured - SQL Server, PostgreSQL, etc.]
+- **NoSQL:** [To be configured]
+- **Caching:** [To be configured]
+- **Data Warehouses:** [To be configured]
 
-### Tags
-- Isolated
-- No domain join
-- Unmanaged endpoints
+### Infrastructure & Platforms
 
-### ACLs
-- Allow: outbound NTP/DNS only
-- Deny: all inbound
-- Deny: corp subnets
+- **Cloud Platforms:** [To be configured - AWS, Azure, GCP services]
+- **Containers & Orchestration:** [To be configured]
+- **CI/CD:** [To be configured]
 
----
+### Networking
 
-## Segment: DR Site
+- **Network Architecture:** [To be configured - segmentation, VLANs, DMZ]
+- **Load Balancers:** [To be configured]
+- **DNS:** [To be configured]
+- **VPN/Remote Access:** [To be configured]
+- **Jump Boxes:** [To be configured - List known jump box hostnames/IPs for RDP hunting]
 
-> id: seg-dr | sensitivity: high | cidr: 10.10.0.0/16 | vlan: 100 | gateway: 10.10.0.1 | hosts: 220 | icon: 🔄
+### Applications & Services
 
-Disaster recovery site. Site-to-site VPN to HQ. Replication traffic only during off-hours.
+- **Productivity:**
+  - Email: [To be configured]
+  - Collaboration: [To be configured]
+  - File Sharing: [To be configured]
 
-### Tags
-- DR site
-- VPN tunnel
-- Replication VLAN
+- **Development:**
+  - Version Control: [To be configured]
+  - Project Management: [To be configured]
+  - Documentation: [To be configured]
 
-### ACLs
-- Allow: replication ports from HQ DCs
-- Allow: backup traffic from svc-backup
-- Deny: user traffic
-
----
-
-## Asset: WIN-DC01
-
-> ip: 10.0.1.10 | role: dc | os: Windows Server 2022 | segment: Domain Controllers | owner: IT Ops | status: online | last-seen: 2 min ago
-> fqdn: WIN-DC01.corp.local | mac: 00:50:56:A1:01:10 | cpu: Intel Xeon E5 ×16 | ram: 32 GB | disk: SSD 500 GB
-> uptime: 147 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-15 | criticality: Tier-0
-
-Primary DC. FSMO roles: PDC, RID, Infrastructure. Kerberos KDC. Do not reboot without change ticket.
+- **Business Applications:**
+  - [To be configured]
 
 ---
 
-## Asset: WIN-DC02
+## Internal Documentation & Resources
 
-> ip: 10.0.1.11 | role: dc | os: Windows Server 2022 | segment: Domain Controllers | owner: IT Ops | status: online | last-seen: 3 min ago
-> fqdn: WIN-DC02.corp.local | mac: 00:50:56:A1:01:11 | cpu: Intel Xeon E5 ×16 | ram: 32 GB | disk: SSD 500 GB
-> uptime: 147 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-15 | criticality: Tier-0
+### Architecture Documentation
 
-Secondary DC. DNS secondary. AD replication partner to WIN-DC01.
+- **System Architecture:** [To be configured - link to diagrams]
+- **Network Diagrams:** [To be configured]
+- **Data Flow Diagrams:** [To be configured]
+- **Security Architecture:** [To be configured]
 
----
+### Operational Documentation
 
-## Asset: WIN-FS01
+- **Runbooks:** [To be configured]
+- **Incident Response Plans:** [To be configured]
+- **DR/BCP Plans:** [To be configured]
+- **Change Management:** [To be configured]
 
-> ip: 10.0.2.20 | role: srv | os: Windows Server 2019 | segment: Server Farm | owner: IT Ops | status: online | last-seen: 1 min ago
-> fqdn: WIN-FS01.corp.local | mac: 00:50:56:A2:02:20 | cpu: Intel Xeon ×8 | ram: 64 GB | disk: NAS 20 TB
-> uptime: 312 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-15 | criticality: High
+### Asset & Configuration Management
 
-Primary file server. DFS namespace root. Shares: \\corp\finance, \\corp\hr, \\corp\shared.
-
----
-
-## Asset: WIN-APP01
-
-> ip: 10.0.2.21 | role: srv | os: Windows Server 2019 | segment: Server Farm | owner: App Team | status: online | last-seen: 4 min ago
-> fqdn: WIN-APP01.corp.local | mac: 00:50:56:A2:02:21 | cpu: Intel Xeon ×8 | ram: 32 GB | disk: SSD 200 GB
-> uptime: 89 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-10 | criticality: High
-
-Internal ERP application server (SAP). Service account: svc-erp. Connects to SQL-DB01.
+- **CMDB/Asset Inventory:** [To be configured]
+- **Configuration Management:** [To be configured]
+- **Service Catalog:** [To be configured]
 
 ---
 
-## Asset: SQL-DB01
+## Access & Credentials
 
-> ip: 10.0.2.30 | role: srv | os: Windows Server 2019 | segment: Server Farm | owner: DBA Team | status: online | last-seen: 2 min ago
-> fqdn: SQL-DB01.corp.local | mac: 00:50:56:A2:02:30 | cpu: Intel Xeon ×16 | ram: 128 GB | disk: SSD RAID 2 TB
-> uptime: 201 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-03-20 | criticality: Critical
+> **Do not store actual credentials here.** Document where to find them.
 
-SQL Server 2019. Hosts ERP and HR databases. SA account disabled. svc-sql service account. Named pipes disabled.
-
----
-
-## Asset: SPLUNK-ES
-
-> ip: 10.0.5.20 | role: sec | os: Linux (RHEL 8) | segment: Security / SOC | owner: SOC | status: online | last-seen: < 1 min
-> fqdn: splunk-es.corp.local | mac: 00:50:56:A5:05:20 | cpu: AMD EPYC ×32 | ram: 256 GB | disk: SSD RAID 10 TB
-> uptime: 61 days | sysmon: N/A | edr: CrowdStrike 7.1 | patch: 2026-04-20 | criticality: Critical
-
-Splunk Enterprise Security 8.x. Ingest: ~80 GB/day. Indexes: main, security, windows, sysmon, network. REST API used by hunt agents.
+- **Secret Management:** [To be configured - Vault, AWS Secrets Manager, etc.]
+- **Service Accounts:** [To be configured - location of hunt service account credentials]
+- **API Keys:** [To be configured]
+- **SIEM Access:** [To be configured - role-based access, API tokens]
+- **Documentation:** [To be configured]
 
 ---
 
-## Asset: WIN-WS041
+## Known Gaps & Blind Spots
 
-> ip: 10.0.3.41 | role: ws | os: Windows 11 Pro | segment: Corp Workstations | owner: jsmith | status: online | last-seen: 18 min ago
-> fqdn: WIN-WS041.corp.local | mac: 00:50:56:A3:03:41 | cpu: Intel i7 ×8 | ram: 16 GB | disk: SSD 256 GB
-> uptime: 12 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-08 | criticality: Medium
+Document areas where visibility is limited:
 
-⚠ ALERT: Unusual LSASS access detected (EventCode 10, GrantedAccess 0x1fffff). Assigned to jsmith — currently under investigation (TH-2026-041).
-
----
-
-## Asset: WIN-WS042
-
-> ip: 10.0.3.42 | role: ws | os: Windows 11 Pro | segment: Corp Workstations | owner: mwebb | status: online | last-seen: 7 min ago
-> fqdn: WIN-WS042.corp.local | mac: 00:50:56:A3:03:42 | cpu: Intel i7 ×8 | ram: 16 GB | disk: SSD 256 GB
-> uptime: 5 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-15 | criticality: Low
-
-Standard workstation assigned to Marcus Webb (SOC analyst).
+- **Unmonitored Systems:** [To be configured - legacy systems, contractor networks]
+- **Data Source Gaps:** [To be configured - logs not collected]
+- **Tool Limitations:** [To be configured - EDR coverage gaps]
+- **Third-Party Services:** [To be configured - SaaS apps without logging]
+- **RDP Visibility:** [To be configured - Are all RDP sessions logged? Any jump box exemptions?]
 
 ---
 
-## Asset: JUMP-01
+## Priority TTPs (Based on Threat Model)
 
-> ip: 10.0.9.10 | role: net | os: Windows Server 2022 | segment: Admin / Privileged | owner: IT Ops | status: online | last-seen: 5 min ago
-> fqdn: JUMP-01.corp.local | mac: 00:50:56:A9:09:10 | cpu: Intel Xeon ×4 | ram: 8 GB | disk: SSD 120 GB
-> uptime: 88 days | sysmon: v15.0 | edr: CrowdStrike 7.1 | patch: 2026-04-15 | criticality: High
+**High Priority Tactics:**
+- TA0006 - Credential Access (password spraying, credential dumping)
+- TA0008 - Lateral Movement (RDP abuse, pass-the-hash, pass-the-ticket)
+- TA0004 - Privilege Escalation (token manipulation, UAC bypass)
+- TA0003 - Persistence (scheduled tasks, services, registry run keys)
+- TA0010 - Exfiltration (data staging, exfil over C2 channel)
 
-Privileged access workstation. CyberArk PSM installed. All admin sessions recorded. MFA enforced via Duo.
-
----
-
-## Account: jsmith
-
-> type: User | status: active | last-logon: 2026-04-27 02:41 UTC · WIN-DC01 | pwd-age: 47 days | mfa: Duo · enrolled
-> groups: Domain Users, Finance-RW, VPN-Users
-
-Normal: Business hours · Corp Workstations · WIN-WS041
-Anomaly: ⚠ Off-hours logons from 3 source IPs in 6h — matches T1078.002 pattern (TH-2026-041)
+**Threat Model Focus:**
+- Ransomware operators (initial access → lateral movement → encryption)
+- Insider threats (data exfiltration, sabotage)
+- External attackers (phishing → credential theft → lateral movement)
 
 ---
 
-## Account: mwebb
+## Maintenance Notes
 
-> type: User | status: active | last-logon: 2026-04-27 09:12 UTC · WIN-WS042 | pwd-age: 12 days | mfa: Duo · enrolled
-> groups: Domain Users, SOC-Analysts, Splunk-Users
+### Review Checklist (Quarterly)
 
-Normal: Business hours · Corp Workstations + JUMP-01
+- [ ] Verify SIEM data collections and data sources are current
+- [ ] Add new log sources integrated into SIEM
+- [ ] Remove decommissioned systems
+- [ ] Update tool coverage percentages
+- [ ] Refresh internal documentation links
+- [ ] Validate SIEM API access still works
+- [ ] Update jump box allowlist for RDP hunts
+- [ ] Review priority TTPs based on recent incidents
 
----
+### Change Log
 
-## Account: svc-backup
-
-> type: Service | status: active | last-logon: 2026-04-27 02:18 UTC · WIN-WS041 | pwd-age: 180 days | mfa: N/A (service account)
-> groups: Domain Users, Backup Operators
-
-Normal: Non-interactive · scheduled tasks only · Server Farm + DC VLAN
-Anomaly: ⚠ Interactive logon detected on WIN-WS041 at 02:18 UTC — service accounts must not log on interactively
-
----
-
-## Account: svc-sql
-
-> type: Service | status: active | last-logon: 2026-04-26 22:00 UTC · SQL-DB01 | pwd-age: 90 days | mfa: N/A (service account)
-> groups: Domain Users, SQL-Service
-
-Normal: Non-interactive · SQL-DB01 only
-
----
-
-## Account: svc-splunk
-
-> type: Service | status: active | last-logon: 2026-04-27 09:05 UTC · SPLUNK-ES | pwd-age: 60 days | mfa: N/A (service account)
-> groups: Domain Users, Splunk-Service
-
-Normal: Non-interactive · SPLUNK-ES only · read-only domain access
-
----
-
-## Account: adm-itops
-
-> type: Admin | status: active | last-logon: 2026-04-25 14:30 UTC · JUMP-01 | pwd-age: 30 days | mfa: Duo · hardware token
-> groups: Domain Admins, Enterprise Admins, Schema Admins
-
-Normal: Business hours · JUMP-01 only · PAM session required
-
----
-
-## Account: krbtgt
-
-> type: Service | status: active | last-logon: Never (system account) | pwd-age: 364 days | mfa: N/A
-> groups: Domain Users
-
-Normal: Never logged on interactively — Kerberos KDC account
-
----
-
-## Topology
-
-```
-CORP.LOCAL — Network Topology
-═══════════════════════════════════════════════════════════
-
-  Internet
-      │
-  ┌───┴────────────────────────────────────────┐
-  │  Perimeter Firewall (Palo Alto PA-5220)    │
-  │  203.0.113.1 (external) · 10.0.4.1 (DMZ GW)      │
-  └───┬────────────────────────────────────────┘
-      │
-  ┌───┴──────────────────────┐
-  │  DMZ  10.0.4.0/24  VLAN 40  │  Web · Mail · Reverse Proxy
-  └───┬──────────────────────┘
-      │   (restricted — no lateral to internal)
-  ┌───┴──────────────────────────────────────────────────┐
-  │  Core Switch (Cisco Nexus 9000)                      │
-  │  Inter-VLAN routing · ACL enforcement · span port ──→ SPLUNK-ES
-  └──┬──────────┬──────────┬──────────┬──────────┬──────┘
-     │          │          │          │          │
-  ┌──┴──┐   ┌──┴──┐   ┌──┴──┐   ┌──┴──┐   ┌──┴──────┐
-  │ DC  │   │ SRV │   │ WS  │   │SEC  │   │ ADMIN   │
-  │VLAN │   │VLAN │   │VLAN │   │VLAN │   │VLAN 90  │
-  │ 10  │   │ 20  │   │ 30  │   │ 50  │   │(PAM+MFA)│
-  │/24  │   │/24  │   │/24  │   │/24  │   └──┬──────┘
-  │Tier-0│  │Prod │   │Users│   │SOC  │      │
-  └──┬──┘   └─────┘   └─────┘   └─────┘   jump hosts
-     │
-  ⚠ WIN-WS041 (10.0.3.41) → WIN-DC01 (10.0.1.10)
-    Unexpected SMB (445) lateral movement detected
-    TH-2026-041 · EventCode 5145 · jsmith / svc-backup
-
-     │ Site-to-Site VPN (IPSec)
-  ┌──┴──────────────────┐
-  │  DR Site  10.10.0.0/16  │  Replication · Backup
-  └─────────────────────┘
-
-  IoT  VLAN 60  10.0.6.0/24  — isolated · no corp routing
-```
-
----
-
-## Infrastructure
-
-- 🏛️ | WIN-DC01 / WIN-DC02 | Domain Controllers · FSMO roles · KDC | 10.0.1.10–11 | Tier-0
-- 🛡️ | SPLUNK-ES | SIEM · Hunt agent MCP endpoint | 10.0.5.20 | Critical
-- 🔑 | JUMP-01 | Privileged Access Workstation · PAM | 10.0.9.10 | High
-- 🔥 | Palo Alto PA-5220 | Perimeter firewall · IPS · URL filtering | 203.0.113.1 | Critical
-- 🔀 | Cisco Nexus 9000 | Core switch · Inter-VLAN routing · SPAN | 10.0.0.1 | Critical
-- 🗄️ | SQL-DB01 | SQL Server 2019 · ERP + HR databases | 10.0.2.30 | Critical
-
----
-
-## Crown Jewel: WIN-DC01
-
-> tier: 0 | ip: 10.0.1.10 | segment: DC VLAN | exposure: high | ttp: T1078.002 · T1003.001 | icon: 🏛️
-
-Role: Primary Domain Controller
-Blast: Domain dominance · Golden Ticket · DCSync · extract all credential hashes from AD
-
----
-
-## Crown Jewel: WIN-DC02
-
-> tier: 0 | ip: 10.0.1.11 | segment: DC VLAN | exposure: medium | ttp: T1003.001 | icon: 🏛️
-
-Role: Secondary Domain Controller
-Blast: AD replication access · offline database copy · Tier-0 redundancy path
-
----
-
-## Crown Jewel: PKI-01
-
-> tier: 0 | ip: 10.0.2.5 | segment: Mgmt VLAN | exposure: low | icon: 🔐
-
-Role: Root Certificate Authority
-Blast: Certificate forgery · impersonate any identity · ESC1–8 ADCS attack surface · HTTPS interception
-
----
-
-## Crown Jewel: BACKUP-01
-
-> tier: 0 | ip: 10.0.3.15 | segment: Mgmt VLAN | exposure: medium | ttp: T1570 | icon: 💾
-
-Role: Enterprise Backup Server
-Blast: Full data corpus · stored credentials · offline AD database copy · ransomware primary target
-
----
-
-## Crown Jewel: SCCM-01
-
-> tier: 1 | ip: 10.0.5.20 | segment: Mgmt VLAN | exposure: low | icon: ⚙️
-
-Role: SCCM / ConfigMgr Server
-Blast: Code execution on ~2,400 endpoints · software push · local admin rights across all workstations
-
----
-
-## Crown Jewel: SIEM-01
-
-> tier: 1 | ip: 10.0.4.10 | segment: Security VLAN | exposure: low | icon: 🔍
-
-Role: Splunk Enterprise Security
-Blast: Security visibility manipulation · log tampering · detection blind spots · hunt data access
-
----
-
-## Crown Jewel: SQL-PROD-01
-
-> tier: 1 | ip: 10.0.6.5 | segment: Server VLAN | exposure: low | icon: 🗄️
-
-Role: Production SQL Server
-Blast: Financial records · customer PII · business-critical operational data · exfiltration target
-
----
-
-## Crown Account: Administrator
-
-> type: Built-in Domain Admin | group: Domain Admins | exposure: medium | ttp: T1078.002 | icon: 👑
-
-Desc: Full domain control if compromised — primary adversary target for privilege escalation endpoint
-
----
-
-## Crown Account: krbtgt
-
-> type: Kerberos TGT Account | group: Domain Users | exposure: medium | ttp: T1003.006 | icon: 🔑
-
-Desc: Golden Ticket via NTLM hash extraction — DCSync prerequisite · compromise = unrestricted domain access
-
----
-
-## Crown Account: svc-backup
-
-> type: Service Account | group: Backup Operators | exposure: low | ttp: T1558.003 | icon: 🛡️
-
-Desc: Access to BACKUP-01 and the full backup data corpus · SPN registered · Kerberoasting target
-
----
-
-## Crown Account: jsmith
-
-> type: Domain User | group: Corp Workstations | exposure: high | ttp: T1078.002 · T1570 | icon: ⚠️
-
-Desc: Current hunt subject · off-hours logon anomaly · touched 14 hosts · MFA enrolled · elevated exposure
-
----
+- **2026-01-13:** Initial creation with SIEM configuration for RDP lateral movement hunting
