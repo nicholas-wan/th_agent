@@ -1,4 +1,4 @@
-# Platform Skills Repository
+﻿# Platform Attack Skills Repository
 
 Platform-specific detection skills tied to particular technology platforms or log sources. Each skill encodes detection patterns, SPL templates, and FP exclusions for a specific platform that may not yet be fully onboarded into the environment.
 

@@ -12,7 +12,7 @@ js/report.js             Hunt Report modal functions
 js/pipeline.js           LOCK pipeline feed — steps, pills, topology, play
 js/check.js              Check stage — rules, queries, RAA, velocityData, findingComments
 js/keep.js               Keep stage — findings, timeline, TTP selector, notes
-js/kb-tab.js             KB tab — platform skills, runbooks, env pane, RV modal
+js/kb-tab.js             KB tab — platform attack skills, runbooks, env pane, RV modal
 kb/
   skills.md              Source of truth for skillsData[]          (edit here)
   runbooks.md            Source of truth for runbookData{}         (edit here)
@@ -80,7 +80,7 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 
 | Variable | File | Notes |
 |---|---|---|
-| `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'domain'` (platform skills only) |
+| `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'domain'` (platform attack skills only) |
 | `runbookData{}` | `kb/runbooks-fallback.js` | Keyed by TTP ID e.g. `'T1003.001'` |
 | `envData{}` / `crownJewels{}` | `kb/environment-fallback.js` | Segments, assets, accounts |
 | `iocRepository[]` | `kb/iocs.js` | Artefacts/IOCs — displayed as "Artefacts Repository" in UI |
@@ -156,4 +156,4 @@ Open/close: `el.classList.add/remove('open')`. IDs: `history-overlay` `report-ov
 - ❌ Redeclare globals from `kb/*.js` in `app.js`
 - ❌ Edit `kb/*-fallback.js` for data — edit the `.md` files instead (keep both in sync for skills)
 - ❌ Edit `kb/skills.js` / `kb/runbooks.js` / `kb/environment.js` — legacy empty shells
-- ❌ Add "Tactic Skills" tab — KB has Platform Skills only (`skillType: 'domain'`)
+- ❌ Add "Tactic Skills" tab — KB has Platform Attack Skills only (`skillType: 'domain'`)
