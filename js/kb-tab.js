@@ -308,13 +308,36 @@ function _parseMdEnvironment(text) {
           else if (inWS)  env.techStack.os.workstations.push(bm[1].trim());
         }
       }
+      // Dev stack
+      env.techStack.dev.languages     = getVal('Development Stack', 'Languages');
+      env.techStack.dev.webFrameworks = getVal('Development Stack', 'Web Frameworks');
+      env.techStack.dev.apiFrameworks = getVal('Development Stack', 'API Frameworks');
+      // Databases
+      env.techStack.databases.relational = getVal('Databases & Data Stores', 'Relational');
+      env.techStack.databases.nosql      = getVal('Databases & Data Stores', 'NoSQL');
+      env.techStack.databases.caching    = getVal('Databases & Data Stores', 'Caching');
+      env.techStack.databases.warehouse  = getVal('Databases & Data Stores', 'Data Warehouses');
+      // Infrastructure
+      env.techStack.infrastructure.cloud      = getVal('Infrastructure & Platforms', 'Cloud Platforms');
+      env.techStack.infrastructure.containers = getVal('Infrastructure & Platforms', 'Containers & Orchestration');
+      env.techStack.infrastructure.cicd       = getVal('Infrastructure & Platforms', 'CI/CD');
       // Networking
-      env.techStack.networking.vpn       = getVal('Networking', 'VPN/Remote Access');
-      env.techStack.networking.jumpBoxes = getVal('Networking', 'Jump Boxes');
-      env.techStack.networking.dns       = getVal('Networking', 'DNS');
+      env.techStack.networking.architecture  = getVal('Networking', 'Network Architecture');
+      env.techStack.networking.loadBalancers = getVal('Networking', 'Load Balancers');
+      env.techStack.networking.dns           = getVal('Networking', 'DNS');
+      env.techStack.networking.vpn           = getVal('Networking', 'VPN/Remote Access');
+      env.techStack.networking.jumpBoxes     = getVal('Networking', 'Jump Boxes');
       // Apps
       env.techStack.apps.email         = getVal('Applications & Services', 'Email');
-      env.techStack.apps.versionControl= getVal('Version Control', 'Version Control');
+      env.techStack.apps.collaboration = getVal('Applications & Services', 'Collaboration');
+      env.techStack.apps.fileSharing   = getVal('Applications & Services', 'File Sharing');
+      env.techStack.apps.versionControl= getVal('Applications & Services', 'Version Control');
+      env.techStack.apps.projectMgmt   = getVal('Applications & Services', 'Project Management');
+      env.techStack.apps.business      = getVal('Applications & Services', 'Business Applications');
+      // Also handle siem version and dcs
+      env.monitoring.siem.version   = getVal('SIEM / Log Aggregation', 'Version');
+      env.monitoring.identity.dcs   = getVal('Identity & Access', 'Domain Controllers');
+      env.monitoring.network.pcap   = getVal('Network Security', 'Packet Capture');
 
     } else if (title === 'Known Gaps & Blind Spots') {
       const gapLabels = ['Unmonitored Systems','Data Source Gaps','Tool Limitations','Third-Party Services','RDP Visibility'];
