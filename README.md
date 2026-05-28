@@ -1,4 +1,4 @@
-﻿# PrimeTH ATHF — Project Reference
+# PrimeTH ATHF — Project Reference
 
 ## File Structure
 
@@ -12,7 +12,7 @@ js/report.js             Hunt Report modal functions
 js/pipeline.js           LOCK pipeline feed — steps, pills, topology, play
 js/check.js              Check stage — rules, queries, RAA, velocityData, findingComments
 js/keep.js               Keep stage — findings, timeline, TTP selector, notes
-js/kb-tab.js             KB tab — platform attack skills, runbooks, env pane, RV modal
+js/kb-tab.js             KB tab — platform attack techniques, runbooks, env pane, RV modal
 kb/
   skills.md              Source of truth for skillsData[]          (edit here)
   runbooks.md            Source of truth for runbookData{}         (edit here)
@@ -43,10 +43,10 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 | Style / layout | `css/styles.css` | Grep class name |
 | JS function | `js/*.js` | Grep function name → Read at offset |
 | HTML structure | `index.html` | Grep `#region PANE: <name>` |
-| Add platform skill | `kb/skills.md` + `kb/skills-fallback.js` | Copy any `## SK-…` block; keep both files in sync |
+| Add platform attack technique | `kb/skills.md` + `kb/skills-fallback.js` | Copy any `## SK-…` block; keep both in sync |
 | Add TTP runbook | `kb/runbooks.md` | Copy any `## T…` block, fill fields |
 | Add IOC | `kb/iocs.js` | Append to `iocRepository[]` |
-| Edit environment | `kb/environment.md` | Copy `## Segment:` or `## Asset:` block |
+| Edit environment | `kb/environment.md` | Edit fields directly; parser reads on load |
 | Gate decision log | `kb/gate-decisions.js` | Append to hunt's array |
 | Edit FAQ content | `index.html` | Grep `#region PANE: FAQ` |
 
@@ -80,9 +80,9 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 
 | Variable | File | Notes |
 |---|---|---|
-| `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'domain'` (platform attack skills only) |
+| `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'domain'` (platform attack techniques only) |
 | `runbookData{}` | `kb/runbooks-fallback.js` | Keyed by TTP ID e.g. `'T1003.001'` |
-| `envData{}` / `crownJewels{}` | `kb/environment-fallback.js` | Segments, assets, accounts |
+| `envData{}` / `crownJewels{}` | `kb/environment-fallback.js` | monitoring, techStack; overwritten from environment.md at runtime |
 | `iocRepository[]` | `kb/iocs.js` | IOCs — displayed as "IOC Repository" in UI |
 | `observeData{}` | `js/observe.js` | Normal/suspicious/observables per hunt; editable in-place |
 | `gateDecisionLog{}` | `kb/gate-decisions.js` | Keyed by short hunt ID e.g. `'041'` |
@@ -103,9 +103,9 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 | 4 | 🧠 | RAA Supervisor Agent | `tradecraft` | yellow |
 | 5 | ⚙️ | Detection Logic Agent | `detection` | green |
 
-Orchestrator spawns all. Hypothesis runs first, completes before rest of pipeline. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
+Orchestrator spawns all. Hypothesis runs first. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
 
-> ✅ **Rule Validation** is a **tool** (not an agent) — `rv-tool-` CSS prefix, `rv-overlay` modal. Never add it to agent lists, topology, feed filter pills, or `agentModels`.
+> ✅ **Rule Validation** is a **tool** (not an agent) — `rv-tool-` CSS prefix, `rv-overlay` modal. Never add to agent lists, topology, feed pills, or `agentModels`.
 
 **Adding a new agent:** update `agentData` (agents.js), Observe pane rows, pipeline sidebar pills, apick grid, `feedAgents`, `updateAgentPills` steps, and feed timeline.
 
@@ -137,8 +137,6 @@ Learn sidebar and Observe panel both show these — keep in sync. Adding a tool:
 | Check | C | SPL rule testing + RAA analysis |
 | Keep | K | Findings, timeline, evidence, hunt report |
 
-L tab stages: CTI/TTP extraction → Hypotheses → Tradecraft → Detection Logic.
-
 ---
 
 ## Modals
@@ -154,6 +152,6 @@ Open/close: `el.classList.add/remove('open')`. IDs: `history-overlay` `report-ov
 - ❌ ev/min → ✅ ev/hr
 - ❌ Inline `<style>` or `<script>` in `index.html`
 - ❌ Redeclare globals from `kb/*.js` in `app.js`
-- ❌ Edit `kb/*-fallback.js` for data — edit the `.md` files instead (keep both in sync for skills)
+- ❌ Edit `kb/*-fallback.js` for data — edit `.md` files instead (keep both in sync for skills)
 - ❌ Edit `kb/skills.js` / `kb/runbooks.js` / `kb/environment.js` — legacy empty shells
-- ❌ Add "Tactic Skills" tab — KB has Platform Attack Skills only (`skillType: 'domain'`)
+- ❌ Add "Tactic Techniques" tab — KB has Platform Attack Techniques only (`skillType: 'domain'`)
