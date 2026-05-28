@@ -204,15 +204,15 @@ const keepData = {
     createdBy: 'priya', createdAt: 'Apr 14, 2026 · 10:15',
     criticals: 1, highs: 4,
     subhunts: [
-      { id:'sh01', label:'SH-01', ttp:'T1195.002', name:'Trojanised Build Artifact',  status:'confirmed' },
+      { id:'sh01', label:'SH-01', ttp:'T1195.002', name:'Trojanised Build Artefact',  status:'confirmed' },
       { id:'sh02', label:'SH-02', ttp:'T1071.001', name:'Cobalt Strike C2 via HTTPS', status:'confirmed' },
     ],
     subhuntLock: {
       sh01: {
-        l: 'H-01 · T1195.002 scoped from CISA supply chain advisory. Trojanised build artifact on CI/CD pipeline. Confidence 84% — SolarWinds-pattern unsigned binary insertion.',
+        l: 'H-01 · T1195.002 scoped from CISA supply chain advisory. Trojanised build artefact on CI/CD pipeline. Confidence 84% — SolarWinds-pattern unsigned binary insertion.',
         o: 'Unsigned binary introduced on SRV-BUILD01 Apr 10. SHA-256 mismatch against artefact registry. 4-day exposure window before detection. 10 downstream hosts received the payload.',
-        c: 'DL-2026-039-001 deployed · T1195.002-unsigned-build-artifact · PASS · FP rate 0.8%.',
-        k: 'SRV-BUILD01 re-imaged from pre-Apr 10 snapshot. All Apr 10–14 artifacts flagged and redistributed. CI/CD pipeline binary signing enforced as build gate.',
+        c: 'DL-2026-039-001 deployed · T1195.002-unsigned-build-artefact · PASS · FP rate 0.8%.',
+        k: 'SRV-BUILD01 re-imaged from pre-Apr 10 snapshot. All Apr 10–14 artefacts flagged and redistributed. CI/CD pipeline binary signing enforced as build gate.',
       },
       sh02: {
         l: 'H-02 · T1071.001 C2 staging scoped via JA3 fingerprint — Cobalt Strike malleable profile from SRV-BUILD01 to update.cdn-cache[.]net. Confidence 71%.',
@@ -229,7 +229,7 @@ const keepData = {
       { sev:'m', title:'Exfiltration over C2 Channel',                     meta:'update.cdn-cache[.]net · Detection Logic Agent · T1041 · 2w ago',     drawer:'detection'  },
     ],
     lock: {
-      l: 'Ingested CISA supply chain advisory (SolarWinds-pattern). Extracted 7 ATT&amp;CK techniques. 2 hypotheses generated: trojanised build artifacts and C2 staging.',
+      l: 'Ingested CISA supply chain advisory (SolarWinds-pattern). Extracted 7 ATT&amp;CK techniques. 2 hypotheses generated: trojanised build artefacts and C2 staging.',
       o: 'H-01 confirmed (trojanised build tool on SRV-BUILD01). H-02 confirmed (Cobalt Strike C2 via HTTPS).',
       c: 'SPL queries executed in Splunk ES. 6 hits on H-01 (index=windows/sysmon). MITRE coverage: 5 confirmed.',
       k: 'Hunt closed. 5 findings documented. SRV-BUILD01 re-imaged. 4 new detection rules deployed.',
@@ -237,7 +237,7 @@ const keepData = {
       raa: { relevant: true, partial: true, note: 'RAA partial — Process Chain triggered (8 hits, T1574.002). T1071.001 deferred to SPL (network-layer; outside RAA scope)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Detection Logic Agent</b> — trojanised build artifact confirmed on SRV-BUILD01',  time:'11:03', tag:'T1195.002' },
+      { color:'red',    text:'<b>Detection Logic Agent</b> — trojanised build artefact confirmed on SRV-BUILD01',  time:'11:03', tag:'T1195.002' },
       { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon over HTTPS, JA3 match',                     time:'10:52', tag:'T1071.001' },
       { color:'indigo', text:'<b>Rule Validation Agent</b> — DLL sideloading confirmed on 10 hosts',               time:'10:44', tag:'T1574.002' },
       { color:'yellow', text:'<b>RAA Supervisor Agent</b> — scheduled task persistence detected',                  time:'10:38', tag:'T1053.005' },
@@ -245,8 +245,8 @@ const keepData = {
     ],
     report: {
       status: 'Closed', statusClass: 'chip-green',
-      summary: 'This hunt investigated supply chain compromise indicators following a CISA advisory on SolarWinds-pattern intrusions. Over a 48-minute engagement, agents confirmed that the primary CI/CD build server (SRV-BUILD01) had been serving trojanised build artifacts for a four-day window (Apr 10–14). All build outputs from that window are considered potentially compromised. A Cobalt Strike C2 channel was simultaneously active, suggesting the implant was already staging for lateral movement at the time of detection.',
-      approach: 'H-01 (trojanised build artifact) was confirmed by cross-referencing Sysmon file-creation events on SRV-BUILD01 with known-good binary hashes from the artefact registry — an unsigned binary introduced on Apr 10 did not match any registered build output. H-02 (C2 staging) was confirmed via JA3 fingerprint on outbound HTTPS from SRV-BUILD01 to <span class="report-ioc">update.cdn-cache[.]net</span>, matching a Cobalt Strike malleable profile. DLL sideloading via a legitimate Windows binary was identified on 10 downstream hosts that had pulled the affected build.',
+      summary: 'This hunt investigated supply chain compromise indicators following a CISA advisory on SolarWinds-pattern intrusions. Over a 48-minute engagement, agents confirmed that the primary CI/CD build server (SRV-BUILD01) had been serving trojanised build artefacts for a four-day window (Apr 10–14). All build outputs from that window are considered potentially compromised. A Cobalt Strike C2 channel was simultaneously active, suggesting the implant was already staging for lateral movement at the time of detection.',
+      approach: 'H-01 (trojanised build artefact) was confirmed by cross-referencing Sysmon file-creation events on SRV-BUILD01 with known-good binary hashes from the artefact registry — an unsigned binary introduced on Apr 10 did not match any registered build output. H-02 (C2 staging) was confirmed via JA3 fingerprint on outbound HTTPS from SRV-BUILD01 to <span class="report-ioc">update.cdn-cache[.]net</span>, matching a Cobalt Strike malleable profile. DLL sideloading via a legitimate Windows binary was identified on 10 downstream hosts that had pulled the affected build.',
       impact: [
         { val:'10', lbl:'Hosts exposed', color:'var(--yellow)' },
         { val:'4d', lbl:'Dwell time', color:'var(--red)' },
@@ -255,18 +255,18 @@ const keepData = {
       ],
       recommendations: [
         'Re-image SRV-BUILD01 and restore from a pre-Apr 10 snapshot verified against known-good hashes.',
-        'Invalidate and re-sign all build artifacts produced between Apr 10–14; redistribute to affected hosts before next deployment window.',
+        'Invalidate and re-sign all build artefacts produced between Apr 10–14; redistribute to affected hosts before next deployment window.',
         'Audit the 10 hosts that pulled the affected build — treat as potentially implanted; prioritise EDR sweep.',
         'Block <span class="report-ioc">update.cdn-cache[.]net</span> at perimeter DNS and proxy; check for any other outbound connections to that domain.',
-        'Harden CI/CD pipeline: enforce binary signing verification as a required build gate before artifact publication.',
+        'Harden CI/CD pipeline: enforce binary signing verification as a required build gate before artefact publication.',
       ]
     },
     pivot: {
       huntId: 'TH-2026-040-SC',
-      hypothesis: 'SRV-BUILD01 served trojanised artifacts for 4 days. Pivot to a blast-radius containment hunt: query all 10 downstream hosts for the svchost-wrapper scheduled task and any unsigned DLLs loaded since Apr 10, to confirm whether any host is still beaconing or has staged additional payloads.',
+      hypothesis: 'SRV-BUILD01 served trojanised artefacts for 4 days. Pivot to a blast-radius containment hunt: query all 10 downstream hosts for the svchost-wrapper scheduled task and any unsigned DLLs loaded since Apr 10, to confirm whether any host is still beaconing or has staged additional payloads.',
       techniques: ['T1053.005','T1574.002','T1041'],
       rationale: 'Re-imaging SRV-BUILD01 removes the source, not the payload. Each of the 10 downstream hosts remains unverified — any one could still be an active beacon. This hunt must complete before the next deployment window opens to prevent reinfection via a still-compromised host.',
-      seedData: ['Affected downstream host list (10 hosts)', 'Apr 10–14 artifact hash inventory from artefact registry', 'Sysmon DLL load events (index=sysmon EventCode=7) since Apr 10']
+      seedData: ['Affected downstream host list (10 hosts)', 'Apr 10–14 artefact hash inventory from artefact registry', 'Sysmon DLL load events (index=sysmon EventCode=7) since Apr 10']
     }
   }
 };
@@ -282,7 +282,7 @@ const huntNotes = {
     { text: 'FS02 payroll data confirmed encrypted. Ransom note at C:\\Recovery\\README.txt. IT restoring from Apr 23 backup — ETA 4h. Payroll team notified of potential delay.', ts: '14:28 · Apr 24', id: 1004, author: 'priya' },
   ],
   '039': [
-    { text: 'SRV-BUILD01 re-image complete. All build artifacts from Apr 10–14 flagged as potentially compromised. DevOps notified — re-sign and re-distribute affected packages before next deployment window.', ts: '11:22 · Apr 14', id: 1005, author: 'alice' },
+    { text: 'SRV-BUILD01 re-image complete. All build artefacts from Apr 10–14 flagged as potentially compromised. DevOps notified — re-sign and re-distribute affected packages before next deployment window.', ts: '11:22 · Apr 14', id: 1005, author: 'alice' },
   ],
   // ── Past hunt notes — referenced by Learn stage for institutional memory ──
   '038': [

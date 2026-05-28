@@ -1,4 +1,4 @@
-/* ── observe.js ───────────────────────────────────────────────────────────
+﻿/* ── observe.js ───────────────────────────────────────────────────────────
    Hunt Observe stage functions. Loaded after app.js.
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -142,7 +142,7 @@ const observeData = {
   },
   '039': {
     normal: [
-      { text: 'CI/CD build artifacts signed by the corporate code-signing certificate — verified against artefact registry on publish' },
+      { text: 'CI/CD build artefacts signed by the corporate code-signing certificate — verified against artefact registry on publish' },
       { text: 'Scheduled build tasks created by the CI/CD service account (svc-build) from the approved build server only' },
       { text: 'DLL loads on downstream hosts matching the signed artefact registry hash list' },
       { text: 'Outbound HTTPS from SRV-BUILD01 to known package registries (npm, PyPI, Maven) during build windows' },
@@ -155,7 +155,7 @@ const observeData = {
       { text: 'Cobalt Strike JA3 fingerprint on outbound connections from build or downstream hosts' },
     ],
     observables: {
-      Processes: ['Unsigned build artifact binary', 'svchost-wrapper scheduled task', 'DLL sideload via legitimate Windows binary'],
+      Processes: ['Unsigned build artefact binary', 'svchost-wrapper scheduled task', 'DLL sideload via legitimate Windows binary'],
       Network: ['JA3 match to Cobalt Strike (update.cdn-cache[.]net)', 'HTTPS beacon from build/downstream hosts', 'Exfil over C2 channel (T1041)'],
       Files: ['Unsigned binary introduced Apr 10', 'svchost-wrapper scheduled task XML', 'DLL sideload files on downstream hosts (10 hosts)'],
       Authentication: ['svc-build account used outside build windows', 'Downstream host auth anomalies post-infection'],
