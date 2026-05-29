@@ -249,7 +249,11 @@ function _addThinking(agent) {
 }
 
 function _typewrite(el, text, speed) {
-  const tok = ++_typewriteCancelToken;
+  // Snapshot the current token — do NOT increment it here.
+  // Incrementing on every call would cancel the previous message's typewriter
+  // mid-word whenever a new message starts. The token is only incremented by
+  // clearAgentsFeed() to cancel all in-flight writers at once.
+  const tok = _typewriteCancelToken;
   let i = 0;
   const tick = () => {
     if (_typewriteCancelToken !== tok) return;
