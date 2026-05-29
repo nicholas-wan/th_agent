@@ -799,13 +799,14 @@ function runPipeline() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Advance through each stage with delays
-  // Spaced to let each step's feed entries stream before the next fires
+  // Advance through each stage with delays.
+  // Timings are computed from the sequential entry chain duration per step
+  // (inter-gap + think delay + typewriter time for every entry in the step).
   const steps = [
-    { delay:  6000, step: 1, stage: 'stage-1' },
-    { delay: 14000, step: 2, stage: 'stage-2' },
-    { delay: 23000, step: 3, stage: 'stage-3' },
-    { delay: 34000, step: 4, stage: 'stage-4' },
+    { delay:  8000, step: 1, stage: 'stage-1' },
+    { delay: 22000, step: 2, stage: 'stage-2' },
+    { delay: 40000, step: 3, stage: 'stage-3' },
+    { delay: 74000, step: 4, stage: 'stage-4' },
   ];
 
   steps.forEach(({ delay, step, stage }) => {
@@ -815,11 +816,11 @@ function runPipeline() {
     }, delay);
   });
 
-  // Re-enable button after full run
+  // Re-enable button after full run (~87s for all 5 steps)
   setTimeout(() => {
     btn.disabled = false;
     btn.textContent = '▶ Run Pipeline';
-  }, 50000);
+  }, 90000);
 }
 
 

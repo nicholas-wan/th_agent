@@ -193,9 +193,10 @@ let feedTimers = [];
 // ── Realism helpers ──────────────────────────────────────────
 let _totalTokens = 0;
 let _typewriteCancelToken = 0;
+let _chainToken = 0; // incremented on step change to break in-progress entry chains
 const _tokensPerType = { reason:165, tool:55, relay:40, done:85, warn:65, env:25, runbook:45 };
 const _entryDelayBase = { reason:1100, tool:750, relay:550, done:650, warn:850, env:350, runbook:500 };
-const _thinkDelayBase = { reason:900, tool:480, relay:250, done:200, warn:680, env:180, runbook:280 };
+const _thinkDelayBase = { reason:600, tool:350, relay:200, done:150, warn:480, env:130, runbook:220 };
 
 function _highlightSpl(raw) {
   let s = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -248,19 +249,23 @@ function _addThinking(agent) {
   return el;
 }
 
-function _typewrite(el, text, speed) {
-  // Snapshot the current token — do NOT increment it here.
-  // Incrementing on every call would cancel the previous message's typewriter
-  // mid-word whenever a new message starts. The token is only incremented by
-  // clearAgentsFeed() to cancel all in-flight writers at once.
+function _typewrite(el, text, speed, onDone) {
+  // Snapshot token — do NOT increment (only clearAgentsFeed increments to
+  // cancel everything at once). Ticks use raw setTimeout so they are NOT
+  // stored in feedTimers and cannot be killed by a step transition.
   const tok = _typewriteCancelToken;
   let i = 0;
   const tick = () => {
-    if (_typewriteCancelToken !== tok) return;
+    if (_typewriteCancelToken !== tok) {
+      el.textContent = text; // complete instantly rather than leaving half-typed
+      if (onDone) onDone();
+      return;
+    }
     if (i < text.length) {
       el.textContent += text[i++];
-      const d = i < 10 ? speed * 3 : speed;
-      feedTimers.push(setTimeout(tick, d));
+      setTimeout(tick, i < 10 ? speed * 3 : speed); // raw — immune to feedTimers.forEach(clearTimeout)
+    } else {
+      if (onDone) onDone();
     }
   };
   tick();
@@ -289,7 +294,7 @@ function feedAddSep(label) {
   feedAddBlockSep(label);
 }
 
-function feedAddEntry(e) {
+function feedAddEntry(e, onComplete) {
   const { type, agent, to } = e;
 
   // Micro-state label
@@ -309,10 +314,10 @@ function feedAddEntry(e) {
 
   // Thinking indicator then stream the block
   const thinkEl  = _addThinking(agent);
-  const thinkMs  = (_thinkDelayBase[type] || 300) + Math.random() * 350;
+  const thinkMs  = (_thinkDelayBase[type] || 300) + Math.random() * 200;
   feedTimers.push(setTimeout(() => {
     if (thinkEl && thinkEl.parentNode) thinkEl.remove();
-    feedAddBlock(e, true);
+    feedAddBlock(e, true, onComplete);
     if (type === 'done') _setAgentLegendStatus(agent, 'idle');
   }, thinkMs));
 }
@@ -321,7 +326,7 @@ function feedAddEntry(e) {
 let activeFeedFilter = 'all';
 let _stepStartTime   = 0;
 
-function feedAddBlock(e, doStream = false) {
+function feedAddBlock(e, doStream = false, onDone) {
   const { type, agent, msg, detail, to } = e;
   const feed = document.getElementById('agents-reasoning-feed');
   if (!feed) return;
@@ -427,10 +432,11 @@ function feedAddBlock(e, doStream = false) {
   feed.scrollTop = feed.scrollHeight;
 
   if (doStream) {
-    const speed = type === 'reason' ? 16 : type === 'warn' ? 20 : 12;
-    _typewrite(msgEl, msg, speed);
+    const speed = type === 'reason' ? 7 : type === 'warn' ? 8 : 4;
+    _typewrite(msgEl, msg, speed, onDone);
   } else {
     msgEl.textContent = msg;
+    if (onDone) onDone();
   }
 
   // Token counter
@@ -470,7 +476,8 @@ function feedAddBlockSep(label) {
 }
 
 function clearAgentsFeed() {
-  // Cancel any in-flight typewriters
+  // Stop in-progress entry chain and all typewriters
+  _chainToken++;
   _typewriteCancelToken++;
   const feed = document.getElementById('agents-reasoning-feed');
   if (!feed) return;
@@ -598,6 +605,9 @@ function topoFilterFeed(agent) {
 function playFeedStep(step) {
   feedTimers.forEach(clearTimeout);
   feedTimers = [];
+  // Break any in-progress chain from a previous step
+  _chainToken++;
+  const myChain = _chainToken;
   _stepStartTime = Date.now();
   const entries = feedSteps[step] || [];
 
@@ -609,19 +619,35 @@ function playFeedStep(step) {
   _setAgentProgStep(step, 'active');
 
   feedAddSep(feedStepLabels[step] || 'Step ' + step);
-  let delay = 0;
-  entries.forEach(e => {
-    delay += (_entryDelayBase[e.type] || 650) + Math.random() * 380;
-    feedTimers.push(setTimeout(() => feedAddEntry(e), delay));
-  });
-  // mark idle after last entry
-  feedTimers.push(setTimeout(() => {
-    if (dot) dot.style.opacity = '0.4';
-    if (agStatus) agStatus.textContent = 'idle · last: ' + (feedStepLabels[step] || 'Step ' + step);
-    _setAgentProgStep(step, 'done');
-    // Reset active agent statuses to idle
-    ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'idle'));
-  }, delay + 600));
+
+  // Sequential chain: each entry appears only after the previous typewriter
+  // finishes, then a short inter-message gap before the next entry's think
+  // indicator appears. This prevents messages from being interrupted and gives
+  // each message room to breathe before the next one arrives.
+  let i = 0;
+  const _interGap = { reason:280, tool:180, relay:150, done:220, warn:260, env:120, runbook:170 };
+
+  const scheduleNext = () => {
+    if (_chainToken !== myChain) return; // step changed — stop this chain
+    if (i >= entries.length) {
+      feedTimers.push(setTimeout(() => {
+        if (_chainToken !== myChain) return;
+        if (dot) dot.style.opacity = '0.4';
+        if (agStatus) agStatus.textContent = 'idle · last: ' + (feedStepLabels[step] || 'Step ' + step);
+        _setAgentProgStep(step, 'done');
+        ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'idle'));
+      }, 500));
+      return;
+    }
+    const e = entries[i++];
+    const gap = (_interGap[e.type] || 220) + Math.random() * 160;
+    feedTimers.push(setTimeout(() => {
+      if (_chainToken !== myChain) return;
+      feedAddEntry(e, scheduleNext);
+    }, gap));
+  };
+
+  scheduleNext();
 }
 
 function setStep(i) {
