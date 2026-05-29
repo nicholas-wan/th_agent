@@ -8,7 +8,7 @@ const keepData = {
   '041': {
     title: 'TH-2026-041', label: 'Volt Typhoon · Active', labelClass: 'chip-red',
     createdBy: 'alice', createdAt: 'Apr 27, 2026 · 09:15',
-    criticals: 3, highs: 9,
+    criticals: 3, highs: 3,
     subhunts: [
       { id:'sh01', label:'SH-01', ttp:'T1570',     name:'Lateral Tool Transfer',    status:'confirmed' },
       { id:'sh02', label:'SH-02', ttp:'T1003.001', name:'LSASS Credential Dumping', status:'confirmed' },
@@ -24,18 +24,18 @@ const keepData = {
       },
       sh02: {
         l: 'H-02 · T1003.001 scoped post-lateral-movement to WIN-DC01. SK-029 LSASS exclusion list pre-loaded. Confidence 82%.',
-        o: 'rundll32.exe accessed LSASS with handle 0x1fffff from explorer.exe parent — Mimikatz sekurlsa::logonpasswords pattern. 5 full-access events on WIN-DC01.',
+        o: 'rundll32.exe accessed LSASS with handle 0x1fffff from an explorer.exe → cmd.exe parent chain — Mimikatz sekurlsa::logonpasswords pattern. 1 critical full-access event on WIN-DC01 (2 further read-only 0x1410 events benign).',
         c: 'DL-2026-041-002 deployed · T1003.001-lsass-full-access · PASS · FP rate 0.9%.',
-        k: '5 LSASS access events confirmed on WIN-DC01. Credential dump likely complete. Memory acquisition recommended before reboot.',
+        k: 'Critical LSASS full-access event confirmed on WIN-DC01. Credential dump likely complete. Memory acquisition recommended before reboot.',
       },
       sh03: {
-        l: 'H-03 · T1558.003 scoped with 147 CMDB SPN exclusions (BackupExec, MSSQLSvc). RC4 threshold tuned to 15/hr. Confidence 74%.',
+        l: 'H-03 · T1558.003 scoped with 147 CMDB SPN exclusions (BackupExec, MSSQLSvc). RC4 threshold tuned to >3 SPNs/user/5m. Confidence 74%.',
         o: 'jsmith requested 11 unique SPNs in 5 minutes via RC4-encrypted TGS-REQ. Consistent with targeted kerberoasting post-lateral-movement.',
         c: 'DL-2026-041-003 deployed · T1558.003-kerberoasting · PASS · FP rate 0.4%.',
         k: '3 RC4 TGS-REQ bursts from jsmith@CORP confirmed. SPN list includes krbtgt — indicates Golden Ticket attempt possible.',
       },
       sh04: {
-        l: 'H-04 · T1071.001 net-new cert-chain path — short-lived LE cert + non-browser UA + beacon interval anomaly. Confidence 41%.',
+        l: 'H-04 · T1071.001 net-new cert-chain path — short-lived LE cert + non-browser UA + beacon interval anomaly. Confidence 78%.',
         o: '2 Cobalt Strike C2 sessions confirmed by JA3 fingerprint (769c10b0…) + beacon interval 60.1s to 185.220.101.47:443.',
         c: 'DL-2026-041-004 deployed · T1071.001-c2-beacon-ja3 · PASS · FP rate 0.2%.',
         k: 'Active C2 channel confirmed. Perimeter block for 185.220.101.47/32 recommended. JA3 watermark 0x4e4b5547 matches known Cobalt Strike profile.',
@@ -45,16 +45,16 @@ const keepData = {
       { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · RAA Supervisor Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
       { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · RAA Supervisor Agent · T1570 · 5m ago',      drawer:'tradecraft' },
       { sev:'c', title:'Cobalt Strike C2 Beacon — JA3 rule match',           meta:'185.220.101.47 · Detection Logic Agent · T1071.001 · 8m ago',    drawer:'detection'  },
-      { sev:'h', title:'Kerberoasting — Cmd-line Anomaly, 7 SPNs',           meta:'corp.local · RAA Supervisor Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
+      { sev:'h', title:'Kerberoasting — RC4 TGS-REQ anomaly, 11 SPNs',       meta:'corp.local · RAA Supervisor Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
       { sev:'h', title:'Registry Run Key — Validated persistence rule',      meta:'SRV-APP03 · Rule Validation Agent · T1547.001 · 15m ago',        drawer:'validation' },
       { sev:'h', title:'DNS TXT Exfiltration Pattern',                       meta:'evilc2[.]net · Detection Logic Agent · T1041 · 19m ago',         drawer:'detection'  },
-      { sev:'m', title:'PowerShell Encoded Command — Anomaly Score 81',      meta:'WIN-WS041 · RAA Supervisor Agent · T1059.001 · 22m ago',  drawer:'tradecraft' },
-      { sev:'m', title:'Shadow Copy Deletion via vssadmin — Score 97',       meta:'WIN-DC01 · RAA Supervisor Agent · T1490 · 31m ago',       drawer:'tradecraft' },
+      { sev:'m', title:'Off-Hours Valid Account Auth — CORP\\jsmith',        meta:'WIN-DC01 · RAA Supervisor Agent · T1078.002 · 22m ago',   drawer:'tradecraft' },
+      { sev:'m', title:'Scheduled Task Persistence — svcupd.exe',            meta:'SRV-APP03 · Detection Logic Agent · T1053.005 · 31m ago', drawer:'detection'  },
     ],
     lock: {
-      l: 'Ingested CISA AA24-038A (Volt Typhoon). Extracted 14 ATT&amp;CK techniques. Generated 4 hypotheses focused on lateral movement, credential dumping, Kerberoasting, and C2 beaconing.',
+      l: 'Ingested CISA AA24-038A (Volt Typhoon). Extracted 8 ATT&amp;CK techniques. Generated 4 hypotheses focused on lateral movement, credential dumping, Kerberoasting, and C2 beaconing.',
       o: 'H-01 confirmed (PsExec lateral movement — 14 hosts). H-02 confirmed (LSASS credential dump — WIN-DC01). H-03 likely (Kerberoasting). H-04 under investigation (Cobalt Strike C2 profile match).',
-      c: 'SPL queries executed in Splunk ES via MCP. 14 hits on H-01 (index=windows). MITRE coverage: 4 confirmed, 3 partial. Detection rules generated and pushed to SIEM.',
+      c: 'SPL queries executed in Splunk ES via MCP. 14 hits on H-01 (index=windows). MITRE coverage: 4 confirmed, 4 secondary tracked. Detection rules generated and pushed to SIEM.',
       k: 'Recording in progress. 8 findings documented. Recommend IR escalation for WIN-DC01. New detection rules deployed.',
       kItalic: true,
       raa: { relevant: true, note: 'RAA triggered — 2 analytics confirmed · T1570 (14-host pivot chain) · T1003.001 (LSASS dump on WIN-DC01)' },
@@ -63,7 +63,7 @@ const keepData = {
       { color:'red',    text:'<b>RAA Supervisor Agent</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
       { color:'blue',   text:'<b>RAA Supervisor Agent</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570',     host:'CORP NET'  },
       { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon rule matched, JA3 hit on 185.220.101.47',  time:'09:35', tag:'T1071.001', host:'EXT'       },
-      { color:'yellow', text:'<b>RAA Supervisor Agent</b> — cmd-line anomaly, Kerberoasting pattern (7 SPNs)',    time:'09:32', tag:'T1558.003', host:'WIN-WS041' },
+      { color:'yellow', text:'<b>RAA Supervisor Agent</b> — EventCode 4769 TGS-REQ anomaly, Kerberoasting pattern (11 SPNs)',    time:'09:32', tag:'T1558.003', host:'corp.local' },
       { color:'indigo', text:'<b>Rule Validation Agent</b> — persistence rule triggered, svcupd.exe registry key',time:'09:29', tag:'T1547.001', host:'SRV-APP03' },
       { color:'green',  text:'<b>Detection Logic Agent</b> — SPL rules validated and pushed to SIEM',             time:'09:18', tag:'',          host:'SYSTEM'    },
       { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-041 started, 6 agents deployed',          time:'09:15', tag:'',          host:'SYSTEM'    },
@@ -71,7 +71,7 @@ const keepData = {
     ],
     report: {
       status: 'Active', statusClass: 'chip-red',
-      summary: 'This hunt targeted active APT29/Volt Typhoon intrusion activity across the corporate Windows domain. Over a 26-minute window, agents analysed authentication logs, Sysmon process telemetry, and network flow data against four hypotheses derived from the CISA AA24-038A advisory. All four hypotheses returned positive results, confirming a live, multi-stage intrusion involving lateral movement, credential dumping, Kerberoasting, and an active C2 channel.',
+      summary: 'This hunt targeted active Volt Typhoon intrusion activity across the corporate Windows domain. Over a 26-minute window, agents analysed authentication logs, Sysmon process telemetry, and network flow data against four hypotheses derived from the CISA AA24-038A advisory. All four hypotheses returned positive results, confirming a live, multi-stage intrusion involving lateral movement, credential dumping, Kerberoasting, and an active C2 channel.',
       approach: 'H-01 (PsExec lateral movement) was confirmed first via off-hours authentication analysis — 14 distinct hosts were touched by a single compromised account (CORP\\jsmith) in two sessions, far exceeding the 3-host detection threshold. H-02 (LSASS credential dump) was confirmed via process chain anomaly: <span class="report-ioc">rundll32.exe</span> accessed LSASS with handle <span class="report-ioc">0x1fffff</span> from an <span class="report-ioc">explorer.exe</span> parent on WIN-DC01, consistent with Mimikatz sekurlsa::logonpasswords. H-03 (Kerberoasting) was confirmed by RC4 TGS-REQ volume analysis — jsmith requested 11 unique SPNs in a 5-minute window against the CORP domain. H-04 (C2 beacon) was confirmed by JA3 fingerprint match — beacon interval 60.1s, watermark <span class="report-ioc">0x4e4b5547</span>, destination <span class="report-ioc">185.220.101.47:443</span>.',
       impact: [
         { val:'14', lbl:'Hosts involved', color:'var(--red)' },
@@ -83,7 +83,7 @@ const keepData = {
         'Escalate to Incident Response immediately — isolate WIN-DC01 and acquire memory image before reboot.',
         'Suspend CORP\\jsmith and rotate all credentials authenticated from that account in the past 72 hours.',
         'Push perimeter block for <span class="report-ioc">185.220.101.47/32</span> and audit all outbound connections on port 443 for matching JA3 hashes.',
-        'Review CORP\\svc-sql01 and CORP\\admin-backup for signs of credential reuse — both accounts exceeded the lateral movement threshold.',
+        'Audit every host CORP\\jsmith authenticated to in the 72h window — the pivot chain touched 14 hosts including WIN-DC01, WIN-SQL02, and WIN-FS01.',
         'Schedule full EDR coverage audit — WIN-DC01 LSASS access was detected via RAA, not a deployed rule.',
       ]
     },
@@ -275,7 +275,7 @@ const keepData = {
 const huntNotes = {
   '041': [
     { text: 'jsmith account suspended. Confirmed lateral movement from WS-089 to WIN-DC01. Escalated to IR team at 14:30 — recommend memory acquisition on WIN-DC01 before reboot.', ts: '09:47 · Apr 27', id: 1001, author: 'marcus' },
-    { text: 'JA3 hash 3b5074b1b5d032e5620f69f9159e9c4d cross-referenced with CTI — confirmed Cobalt Strike malleable C2 profile (watermark 0x4e4b5547). Firewall block pushed to perimeter for 185.220.101.47/32.', ts: '09:43 · Apr 27', id: 1002, author: 'alice' },
+    { text: 'JA3 hash 769c10b06a1a2b7b7a26b0a2be2e88a4 cross-referenced with CTI — confirmed Cobalt Strike malleable C2 profile (watermark 0x4e4b5547). Firewall block pushed to perimeter for 185.220.101.47/32.', ts: '09:43 · Apr 27', id: 1002, author: 'alice' },
   ],
   '040': [
     { text: 'FIN7 TTP cluster confirmed via CTI correlation (FIN7 2024 cluster, TA577). IOC package submitted to FS-ISAC. Hunt closure report filed in ServiceNow #INC-2040882.', ts: '14:35 · Apr 24', id: 1003, author: 'ryan' },

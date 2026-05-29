@@ -115,7 +115,7 @@
       <div class="hunt-card active" onclick="openHunt('TH-2026-041')">
         <div class="hc-top">
           <div class="hc-id"><span>TH-2026-041</span> <span class="chip chip-blue">● Active</span></div>
-          <div class="hc-title">APT29 Lateral Movement &amp; Credential Harvesting — Corp Domain</div>
+          <div class="hc-title">Volt Typhoon Lateral Movement &amp; Credential Harvesting — Corp Domain</div>
           <div class="hc-tags">
             <span class="chip chip-red">Critical</span>
             <span class="chip chip-indigo">Volt Typhoon CTI</span>
@@ -194,7 +194,7 @@
         <div class="hunt-switch-item hsw-active" id="hsw-TH-2026-041" onclick="openHunt('TH-2026-041');closeHuntSwitcher()">
           <div class="hsw-info">
             <div class="hsw-id"><span>TH-2026-041</span><span class="chip chip-red" style="font-size:9px;">Active</span></div>
-            <div class="hsw-title">APT29 Lateral Movement &amp; Credential Harvesting — Corp Domain</div>
+            <div class="hsw-title">Volt Typhoon Lateral Movement &amp; Credential Harvesting — Corp Domain</div>
           </div>
         </div>
         <div class="hunt-switch-item" id="hsw-TH-2026-040" onclick="openHunt('TH-2026-040');closeHuntSwitcher()">
@@ -218,7 +218,7 @@
       </div>
     </div>
     <span class="chip chip-red" id="hd-status" style="font-size:10px;">Volt Typhoon · Active</span>
-    <span style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;" id="hd-title">APT29 Lateral Movement &amp; Credential Harvesting — Corp Domain</span>
+    <span style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;" id="hd-title">Volt Typhoon Lateral Movement &amp; Credential Harvesting — Corp Domain</span>
     <button class="btn btn-outline btn-sm" onclick="openHistoryModal()" style="flex-shrink:0;display:flex;align-items:center;gap:5px;">🕐 History</button>
     <button class="btn btn-outline btn-sm" onclick="openReportModal()" style="flex-shrink:0;display:flex;align-items:center;gap:5px;">📄 Report</button>
     <button class="btn btn-primary btn-sm" id="run-pipeline-btn" onclick="runPipeline()" style="flex-shrink:0;display:flex;align-items:center;gap:5px;">▶ Run Pipeline</button>
@@ -397,7 +397,7 @@
                   <span class="chip chip-indigo" style="font-size:9px;">recommendation</span>
                 </div>
                 <div class="agent-gate-reasoning" id="hyp-agent-reasoning">
-                  I've analysed the 8 TTPs from the CTI report and cross-referenced 3 past hunts via the Past Hunts tool. 4 techniques carry high confidence and prior confirmation — T1570, T1003.001, T1558.003, and T1071.001 — all matched to prior activity in TH-2026-038. I recommend scoping hypothesis generation to these 4 techniques. The remaining 4 are retained as secondary indicators and can be promoted to primary scope at any time.
+                  I've analysed the 8 TTPs from the CTI report and cross-referenced 3 past hunts via the Past Hunts tool. 4 techniques carry high confidence and prior confirmation — T1570, T1003.001, T1558.003, and T1071.001 — matched to prior activity across TH-2026-038, TH-2026-035, and TH-2025-091. I recommend scoping hypothesis generation to these 4 techniques. The remaining 4 are retained as secondary indicators and can be promoted to primary scope at any time.
                 </div>
                 <div class="agent-gate-prompt"><span class="agent-gate-prompt-dot"></span>Pipeline paused — your decision needed to continue</div>
                 <div class="agent-gate-actions">
@@ -479,7 +479,7 @@
                   <span class="hyp-branch-hunt">TH-2026-035</span>
                 </div>
                 <div class="hyp-branch-body">Kerberoasting rule returned 22% FP rate — BackupExec and MSSQLSvc SPNs triggered on every scan. Signal recoverable with CMDB exclusion list.</div>
-                <div class="hyp-branch-action">↳ 147-entry CMDB SPN exclusion list pre-loaded · RC4 threshold tuned to 15/hr · FP drops to &lt;2%</div>
+                <div class="hyp-branch-action">↳ 147-entry CMDB SPN exclusion list pre-loaded · RC4 threshold tuned to &gt;3 SPNs/user/5m · FP drops to &lt;2%</div>
               </div>
               <!-- H-04: Clean -->
               <div class="hyp-branch-row">
@@ -569,9 +569,10 @@
                 <div>
                   <div class="gate-field-label">Active hypothesis</div>
                   <label class="gate-option"><input type="radio" name="g2-hyp" checked> H-01 · PsExec lateral movement via compromised domain accounts <span style="color:var(--muted);">(highest prior confirmation)</span></label>
-                  <label class="gate-option"><input type="radio" name="g2-hyp"> H-02 · Credential harvesting via LSASS access &amp; Kerberoasting</label>
-                  <label class="gate-option"><input type="radio" name="g2-hyp"> H-03 · C2 beacon via Cobalt Strike malleable profile <span style="color:var(--muted);">(net-new)</span></label>
-                  <label class="gate-option"><input type="radio" name="g2-hyp"> All three — run sequentially</label>
+                  <label class="gate-option"><input type="radio" name="g2-hyp"> H-02 · LSASS credential dump via full-access handle</label>
+                  <label class="gate-option"><input type="radio" name="g2-hyp"> H-03 · Kerberoasting via RC4 TGS-REQ</label>
+                  <label class="gate-option"><input type="radio" name="g2-hyp"> H-04 · C2 beacon via Cobalt Strike malleable profile <span style="color:var(--muted);">(net-new)</span></label>
+                  <label class="gate-option"><input type="radio" name="g2-hyp"> All four — run sequentially</label>
                 </div>
                 <div style="display:flex;justify-content:flex-end;">
                   <button class="btn btn-primary btn-sm" onclick="agentApplyModify(3,'gate-2')">Apply & Continue →</button>
@@ -1141,7 +1142,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
     <span style="width:1px;height:14px;background:var(--border2);margin:0 4px;flex-shrink:0;"></span>
     <span id="check-hunt-ttps" style="font-size:11px;color:var(--muted);">8 TTPs</span>
     <span style="width:1px;height:14px;background:var(--border2);margin:0 4px;flex-shrink:0;"></span>
-    <span id="check-hunt-hyps" style="font-size:11px;color:var(--muted);">3 hypotheses under test</span>
+    <span id="check-hunt-hyps" style="font-size:11px;color:var(--muted);">4 hypotheses under test</span>
     <span style="width:1px;height:14px;background:var(--border2);margin:0 4px;flex-shrink:0;"></span>
     <span class="chip chip-blue" style="font-size:10px;">⚡ Splunk ES</span>
   </div>
@@ -1642,7 +1643,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 <div class="history-overlay" id="history-overlay" onclick="if(event.target===this)closeHistoryModal()">
   <div class="history-modal">
     <div class="history-modal-head">
-      <span class="history-modal-title">🕐 Hunt History <span class="chip chip-gray" style="font-size:10px;">APT29 Lateral Movement &amp; Credential Harvesting</span></span>
+      <span class="history-modal-title">🕐 Hunt History <span class="chip chip-gray" style="font-size:10px;">Volt Typhoon Lateral Movement &amp; Credential Harvesting</span></span>
       <button class="btn btn-outline btn-sm" onclick="closeHistoryModal()">✕</button>
     </div>
 

@@ -145,7 +145,7 @@ const queryIterations = {
 // ── Per-hunt Check data — keyed by short hunt ID ──
 const checkData = {
   '041': {
-    hypothesis: 'H-02 · LSASS + Kerberoasting',
+    hypothesis: 'H-02 · T1003.001 · LSASS Credential Dumping',
     queryDesc: 'Detects processes accessing LSASS memory with handles commonly used by credential dumping tools. Filters on suspicious GrantedAccess masks (0x1010, 0x1410, 0x147a, 0x1fffff) indicating full or partial LSASS read rights. Any non-AV/EDR process touching LSASS this way is anomalous.',
     querySpl: `index=sysmon EventCode=10 TargetImage="*\\\\lsass.exe"
 | where match(GrantedAccess,"0x1010|0x1410|0x147a|0x1fffff")
@@ -155,10 +155,10 @@ const checkData = {
 | table _time, host, SourceImage, GrantedAccess, SourceProcessId, severity`,
     resultsMeta: '<span class="chip chip-red">3 hits</span><span class="chip chip-gray" style="font-size:10px;">0.61s</span>',
     resultsHead: '<tr><th>TimeGenerated</th><th>Host</th><th>Source Image</th><th>Access Mask</th><th>Severity</th></tr>',
-    resultsBody: `<tr><td>2026-04-27 03:14</td><td>WIN-WS089</td><td style="color:var(--red);font-family:monospace;">rundll32.exe</td><td class="ttp-id">0x1fffff</td><td><span class="chip chip-red" style="font-size:10px;">critical</span></td></tr>
-              <tr><td>2026-04-27 03:15</td><td>WIN-WS089</td><td style="font-family:monospace;">powershell.exe</td><td class="ttp-id">0x1010</td><td><span class="chip chip-yellow" style="font-size:10px;">high</span></td></tr>
-              <tr><td>2026-04-26 22:48</td><td>WIN-DC01</td><td style="font-family:monospace;">msiexec.exe</td><td class="ttp-id">0x1410</td><td><span class="chip chip-yellow" style="font-size:10px;">high</span></td></tr>`,
-    interp: '3 hits, all anomalous. <b style="color:var(--red)">rundll32.exe</b> on WIN-WS089 used a full-access handle (0x1fffff) — consistent with Mimikatz sekurlsa::logonpasswords. The subsequent powershell.exe hit on the same host 1 minute later suggests a staged dump-and-exfil sequence. WIN-DC01 msiexec hit warrants investigation — msiexec has no business accessing LSASS on a domain controller.',
+    resultsBody: `<tr><td>2026-04-26 22:48</td><td>WIN-DC01</td><td style="color:var(--red);font-family:monospace;">rundll32.exe</td><td class="ttp-id">0x1fffff</td><td><span class="chip chip-red" style="font-size:10px;">critical</span></td></tr>
+              <tr><td>2026-04-26 22:41</td><td>WIN-DC01</td><td style="font-family:monospace;">rundll32.exe</td><td class="ttp-id">0x1410</td><td><span class="chip chip-yellow" style="font-size:10px;">review</span></td></tr>
+              <tr><td>2026-04-26 22:32</td><td>WIN-DC01</td><td style="font-family:monospace;">cmd.exe</td><td class="ttp-id">0x1410</td><td><span class="chip chip-yellow" style="font-size:10px;">review</span></td></tr>`,
+    interp: '3 LSASS access events on <b>WIN-DC01</b> (Tier-0 DC), but only one is the dump. <b style="color:var(--red)">rundll32.exe</b> with a full-access handle (0x1fffff), spawned from an explorer.exe → cmd.exe parent chain outside the AV/EDR whitelist — this matches the SK-029 NtDuplicateObject pattern and Mimikatz sekurlsa::logonpasswords. The other two events (0x1410 = PROCESS_QUERY_INFORMATION | VM_READ) are read-only and benign — typical of monitoring tools, cannot dump credentials. One critical full-access hit confirmed, immediately following the jsmith pivot chain.',
     summaryPre: {
       status: 'chip-yellow', statusLabel: 'Query not run',
       tags: [
@@ -166,7 +166,7 @@ const checkData = {
         { label: 'Query', val: 'Not run', cls: 'chip-gray' },
         { label: 'Gaps', val: 'T1558.003', cls: 'chip-yellow' },
       ],
-      assessment: 'Process Chain Anomaly triggered on <b>T1003.001</b> (LSASS credential dump — WIN-WS089). However, <b>T1558.003 (Kerberoasting)</b> is outside RAA scope — TGS-REQ patterns live in authentication logs, not process chains. <b>This is a coverage gap.</b> Run the query to fill it with direct Kerberos ticket-request evidence from EventCode 4769.',
+      assessment: 'Process Chain Anomaly triggered on <b>T1003.001</b> (LSASS credential dump — WIN-DC01). However, <b>T1558.003 (Kerberoasting)</b> is outside RAA scope — TGS-REQ patterns live in authentication logs, not process chains. <b>This is a coverage gap.</b> Run the query to fill it with direct Kerberos ticket-request evidence from EventCode 4769.',
     },
     summaryPost: {
       status: 'chip-green', statusLabel: '✓ 4 rules deployed',
@@ -175,7 +175,7 @@ const checkData = {
         { label: 'Rules', val: '4 deployed', cls: 'chip-green' },
         { label: 'Coverage', val: 'Complete', cls: 'chip-green' },
       ],
-      assessment: '<b>All four subhunt detection rules validated and deployed.</b> T1570 (PsExec) confirmed — 14 correlated ADMIN$ file-drop + service-install events. T1003.001 (LSASS dump) confirmed — 5 full-access handle events matching SK-029 pattern. T1558.003 (Kerberoasting) confirmed — 3 RC4 TGS-REQ bursts from jsmith. T1071.001 (C2 beacon) confirmed — 2 Cobalt Strike sessions by JA3 + interval regularity. Credential rotation across CORP domain initiated; WIN-WS089 and WIN-DC01 isolated.',
+      assessment: '<b>All four subhunt detection rules validated and deployed.</b> T1570 (PsExec) confirmed — 14 correlated ADMIN$ file-drop + service-install events. T1003.001 (LSASS dump) confirmed — rundll32 full-access handle (0x1fffff) on WIN-DC01 matching SK-029 pattern. T1558.003 (Kerberoasting) confirmed — 3 RC4 TGS-REQ bursts from jsmith. T1071.001 (C2 beacon) confirmed — 2 Cobalt Strike sessions by JA3 + interval regularity. Credential rotation across CORP domain initiated; WIN-WS089 and WIN-DC01 isolated.',
     },
     raa: {
       // Hunt-level "all subhunts" view
@@ -346,12 +346,12 @@ const checkData = {
             action: 'Apply SK-029 pattern: filter on GrantedAccess=0x1fffff (full access mask); exclude known EDR/AV process names.',
           },
           {
-            num: 'v3', badge: 'PASS', failMode: '', metric: '5 hits · confirmed',
+            num: 'v3', badge: 'PASS', failMode: '', metric: '1 hit · confirmed',
             spl: `index=sysmon EventCode=10 TargetImage="*lsass.exe*"
   GrantedAccess="0x1fffff"
 | where NOT match(SourceImage,"(?i)MsMpEng|CrowdStrike|SentinelOne|velociraptor")
 | stats count by SourceImage, GrantedAccess, host, user`,
-            reason: '5 hits — rundll32.exe requesting full LSASS access (0x1fffff). SK-029 NtDuplicateObject pattern confirmed. No legitimate process needs this mask on a domain controller.',
+            reason: '1 hit — rundll32.exe on WIN-DC01 requesting full LSASS access (0x1fffff). SK-029 NtDuplicateObject pattern confirmed. No legitimate process needs this mask on a domain controller.',
             action: '',
           },
         ],

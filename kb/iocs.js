@@ -19,7 +19,7 @@
 
 const iocRepository = [
   { id:'IOC-001', type:'IP',      value:'185.220.101.47',              hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:52', note:'Cobalt Strike C2 — JA3 watermark 0x4e4b5547 confirmed' },
-  { id:'IOC-002', type:'JA3',     value:'769c10b3d4a2e5c91f3b8d2e410f', hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:43', note:'Malleable C2 profile — matching known CS kit' },
+  { id:'IOC-002', type:'JA3',     value:'769c10b06a1a2b7b7a26b0a2be2e88a4', hunt:'TH-2026-041', ttp:'T1071.001', sev:'c', status:'blocked',    analyst:'alice',  ts:'2026-04-27 09:43', note:'Malleable C2 profile — matching known CS kit' },
   { id:'IOC-003', type:'Hash',    value:'7f3a9c2b1e44d0f8a6c3b2d9e1f441', hunt:'TH-2026-041', ttp:'T1003.001', sev:'c', status:'blocked',  analyst:'marcus', ts:'2026-04-27 09:45', note:'Unsigned rundll32 variant — LSASS handle access' },
   { id:'IOC-004', type:'Account', value:'jsmith',                       hunt:'TH-2026-041', ttp:'T1078.002', sev:'h', status:'suspended',  analyst:'alice',  ts:'2026-04-27 09:47', note:'Lateral movement — 14 hosts in session, off-hours' },
   { id:'IOC-005', type:'IP',      value:'10.0.8.44',                    hunt:'TH-2026-040', ttp:'T1486',     sev:'c', status:'isolated',   analyst:'priya',  ts:'2026-04-24 14:25', note:'WIN-FS02 — payroll data encrypted, isolated by EDR' },

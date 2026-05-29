@@ -155,7 +155,7 @@ function resetCheckForHunt(huntId) {
 
 // ── Hunt meta for detail pane header ──
 const huntMeta = {
-  'TH-2026-041': { status:'Volt Typhoon · Active', statusClass:'chip-red', title:'APT29 Lateral Movement & Credential Harvesting — Corp Domain', defaultTab:'learn' },
+  'TH-2026-041': { status:'Volt Typhoon · Active', statusClass:'chip-red', title:'Volt Typhoon Lateral Movement & Credential Harvesting — Corp Domain', defaultTab:'learn' },
   'TH-2026-040': { status:'FIN7 Ransomware · Closed', statusClass:'chip-green', title:'Ransomware Pre-cursor BEC Activity — Finance Segment', defaultTab:'keep' },
   'TH-2026-039': { status:'Supply Chain · Closed', statusClass:'chip-green', title:'Supply Chain Compromise Indicators — DevOps Pipeline', defaultTab:'keep' },
   'TH-2026-038': { status:'Draft', statusClass:'chip-gray', title:'DNS Tunneling & C2 Beacon Detection — All Segments', defaultTab:'learn' },
@@ -313,7 +313,7 @@ const reportTTPDetails = {
     { id:'T1078.002', name:'Valid Accounts: Domain',      detail:null, tactic:'Def. Evasion', tacticClass:'chip-yellow', prior:3, rules:'2 live',  rulesColor:'green',  sid:'s01' },
     { id:'T1570',     name:'Lateral Tool Transfer',       detail:'Confirmed in TH-2026-038 · jsmith pivot chain scoped', tactic:'Lateral Mvmt', tacticClass:'chip-red',    prior:2, rules:'2 live',  rulesColor:'green',  sid:'s02' },
     { id:'T1003.001', name:'LSASS Credential Dumping',    detail:'Follows lateral movement to WIN-DC01 · SK-029 exclusion list pre-loaded', tactic:'Cred. Access',  tacticClass:'chip-red',    prior:2, rules:'1 live',  rulesColor:'yellow', sid:'s04' },
-    { id:'T1558.003', name:'Kerberoasting',               detail:'147 SPN exclusions loaded · RC4 threshold tuned to 15/hr · FP rate <2%', tactic:'Cred. Access',  tacticClass:'chip-red',    prior:2, rules:'1 tuned', rulesColor:'yellow', sid:'s05' },
+    { id:'T1558.003', name:'Kerberoasting',               detail:'147 SPN exclusions loaded · RC4 threshold tuned to >3 SPNs/user/5m · FP rate <2%', tactic:'Cred. Access',  tacticClass:'chip-red',    prior:2, rules:'1 tuned', rulesColor:'yellow', sid:'s05' },
     { id:'T1071.001', name:'C2 Beacon via HTTPS',         detail:'Net-new cert-chain path · JA3 fingerprint detection available', tactic:'C&C',          tacticClass:'chip-indigo', prior:3, rules:'1 live',  rulesColor:'yellow', sid:'s06' },
     { id:'T1547.001', name:'Registry Run Keys',           detail:null, tactic:'Persistence',   tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:'s08' },
     { id:'T1053.005', name:'Scheduled Task',              detail:null, tactic:'Persistence',   tacticClass:'chip-indigo', prior:1, rules:'1 live',  rulesColor:'yellow', sid:'s08' },
@@ -1329,53 +1329,56 @@ function buildReport() {
       <div class="report-kv"><span class="report-kv-k">Hunt ID</span><span class="report-kv-v">${huntId}</span></div>
       <div class="report-kv"><span class="report-kv-k">Title</span><span class="report-kv-v">${huntTitle}</span></div>
       <div class="report-kv"><span class="report-kv-k">Date</span><span class="report-kv-v">${today}</span></div>
-      <div class="report-kv"><span class="report-kv-k">Threat Actor</span><span class="report-kv-v">APT29 (Volt Typhoon indicators)</span></div>
-      <div class="report-kv"><span class="report-kv-k">CTI Source</span><span class="report-kv-v">CISA AA23-347A — APT29 Targets Critical Infrastructure</span></div>
+      <div class="report-kv"><span class="report-kv-k">Threat Actor</span><span class="report-kv-v">Volt Typhoon</span></div>
+      <div class="report-kv"><span class="report-kv-k">CTI Source</span><span class="report-kv-v">CISA AA24-038A — Volt Typhoon</span></div>
       <div class="report-kv"><span class="report-kv-k">Environment</span><span class="report-kv-v">Splunk ES · Corp domain · index=sysmon, wineventlog, network</span></div>
-      <div class="report-kv"><span class="report-kv-k">Status</span><span class="report-kv-v">Detection Logic complete — pending Check execution</span></div>
+      <div class="report-kv"><span class="report-kv-k">Status</span><span class="report-kv-v">Active — 4 detection rules deployed, IR escalation recommended</span></div>
     </div>
 
     <div class="report-section">
-      <div class="report-sh">TTPs Investigated (7)</div>
-      <div class="report-row"><span class="chip chip-blue" style="font-size:9px;">T1053.005</span><span style="flex:1;">Scheduled Task Creation</span><span style="font-size:10px;color:var(--green);">New rule generated</span></div>
-      <div class="report-row"><span class="chip chip-blue" style="font-size:9px;">T1547.001</span><span style="flex:1;">Registry Run Key Persistence</span><span style="font-size:10px;color:var(--green);">New rule generated</span></div>
-      <div class="report-row"><span class="chip chip-yellow" style="font-size:9px;">T1558.003</span><span style="flex:1;">Kerberoasting — Anomalous TGS-REQ</span><span style="font-size:10px;color:var(--yellow);">New rule (RAA 0 hits)</span></div>
-      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1570</span><span style="flex:1;">Tool Transfer / PsExec</span><span style="font-size:10px;color:var(--muted);">Deferred to RAA · 59 hits</span></div>
-      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1078.002</span><span style="flex:1;">Valid Accounts — Domain</span><span style="font-size:10px;color:var(--muted);">Deferred to RAA · 59 hits</span></div>
-      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1003.001</span><span style="flex:1;">LSASS Memory Access</span><span style="font-size:10px;color:var(--muted);">Deferred to RAA · 3 hits</span></div>
-      <div class="report-row"><span class="chip chip-gray" style="font-size:9px;">T1021.006</span><span style="flex:1;">WinRM Lateral Movement</span><span style="font-size:10px;color:var(--muted);">Skipped — no telemetry</span></div>
+      <div class="report-sh">TTPs Investigated (4 selected of 8 extracted)</div>
+      <div class="report-row"><span class="chip chip-red" style="font-size:9px;">T1570</span><span style="flex:1;">Lateral Tool Transfer / PsExec</span><span style="font-size:10px;color:var(--green);">Confirmed · 14 hits</span></div>
+      <div class="report-row"><span class="chip chip-red" style="font-size:9px;">T1003.001</span><span style="flex:1;">LSASS Memory Access — WIN-DC01</span><span style="font-size:10px;color:var(--green);">Confirmed · 1 critical hit</span></div>
+      <div class="report-row"><span class="chip chip-red" style="font-size:9px;">T1558.003</span><span style="flex:1;">Kerberoasting — Anomalous TGS-REQ</span><span style="font-size:10px;color:var(--green);">Confirmed · 3 bursts (11 SPNs)</span></div>
+      <div class="report-row"><span class="chip chip-yellow" style="font-size:9px;">T1071.001</span><span style="flex:1;">C2 Beacon via HTTPS — JA3 match</span><span style="font-size:10px;color:var(--green);">Confirmed · 2 sessions</span></div>
     </div>
 
     <div class="report-section">
-      <div class="report-sh">Detection Rules Created (3)</div>
+      <div class="report-sh">Detection Rules Created (4)</div>
       <div class="report-rule-block">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span class="chip chip-blue" style="font-size:9px;">T1053.005</span>
-          <span style="font-weight:600;">Scheduled Task Creation via schtasks.exe</span>
+          <span class="chip chip-red" style="font-size:9px;">T1570</span>
+          <span style="font-weight:600;">PsExec Lateral Tool Transfer — ADMIN$ drop + service install</span>
         </div>
-        <div style="color:var(--muted);font-size:10px;">index=sysmon EventCode=1 · SCCM/msiexec baseline exclusions · risk-scored HIGH/MED on interpreter parents</div>
+        <div style="color:var(--muted);font-size:10px;">DL-2026-041-001 · index=windows EventCode=5145 joined with 7045 · SCCM hosts 10.0.5.20/21 excluded · FP 1.4%</div>
       </div>
       <div class="report-rule-block">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span class="chip chip-blue" style="font-size:9px;">T1547.001</span>
-          <span style="font-weight:600;">Registry Run Key Persistence</span>
+          <span class="chip chip-red" style="font-size:9px;">T1003.001</span>
+          <span style="font-weight:600;">LSASS Memory Access — full-access handle (SK-029)</span>
         </div>
-        <div style="color:var(--muted);font-size:10px;">index=sysmon EventCode=13 · OneDrive/Teams/Chrome excluded · HKLM vs HKCU hive differentiation</div>
+        <div style="color:var(--muted);font-size:10px;">DL-2026-041-002 · index=sysmon EventCode=10 · GrantedAccess=0x1fffff · MsMpEng/CrowdStrike/SentinelOne excluded · FP 0.9%</div>
       </div>
       <div class="report-rule-block">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span class="chip chip-yellow" style="font-size:9px;">T1558.003</span>
-          <span style="font-weight:600;">Kerberoasting — Anomalous TGS-REQ Volume</span>
+          <span class="chip chip-red" style="font-size:9px;">T1558.003</span>
+          <span style="font-weight:600;">Kerberoasting — RC4 TGS-REQ Volume (SK-038)</span>
         </div>
-        <div style="color:var(--muted);font-size:10px;">index=wineventlog EventCode=4769 EncryptionType=0x17 · >3 SPNs/user/5m · BackupExec/MSSQLSvc excluded</div>
+        <div style="color:var(--muted);font-size:10px;">DL-2026-041-003 · index=wineventlog EventCode=4769 EncryptionType=0x17 · >3 SPNs/user/5m · BackupExec/MSSQLSvc excluded · FP 0.4%</div>
+      </div>
+      <div class="report-rule-block">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span class="chip chip-yellow" style="font-size:9px;">T1071.001</span>
+          <span style="font-weight:600;">C2 Beacon — JA3 fingerprint + interval regularity</span>
+        </div>
+        <div style="color:var(--muted);font-size:10px;">DL-2026-041-004 · index=network sourcetype=zeek:ssl · known CS JA3 hashes · stddev&lt;5s AND ≥8 conn/30m · FP 0.2%</div>
       </div>
     </div>
 
     <div class="report-section">
-      <div class="report-sh">RAA Deferred (3 TTPs — confirmed hits)</div>
-      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1570</span><span style="flex:1;">Anomalous Command Lines analytic</span><span style="font-size:10px;color:var(--green);">59 hits</span></div>
-      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1078.002</span><span style="flex:1;">Anomalous Command Lines analytic</span><span style="font-size:10px;color:var(--green);">59 hits</span></div>
-      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1003.001</span><span style="flex:1;">Anomalous Process Chains analytic</span><span style="font-size:10px;color:var(--green);">3 hits</span></div>
+      <div class="report-sh">RAA Corroboration (2 analytics triggered)</div>
+      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1570</span><span style="flex:1;">Command Line Anomaly — jsmith pivot chain</span><span style="font-size:10px;color:var(--green);">59 hits</span></div>
+      <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1003.001</span><span style="flex:1;">Process Chain Anomaly — rundll32→LSASS on WIN-DC01</span><span style="font-size:10px;color:var(--green);">Confirmed</span></div>
     </div>
 
     <div class="report-section">
@@ -1386,10 +1389,10 @@ function buildReport() {
     <div class="report-section">
       <div class="report-sh">Recommendations</div>
       <div style="font-size:11px;color:var(--sub);display:flex;flex-direction:column;gap:6px;line-height:1.6;">
-        <div>• Deploy 3 new correlation searches to Splunk ES, scoped to Corp domain.</div>
-        <div>• Triage RAA hits for T1570 and T1078.002 (59 hits) — volume suggests potential active threat activity.</div>
-        <div>• Investigate T1021.006 telemetry gap — WinRM events absent from current wineventlog configuration.</div>
-        <div>• Schedule follow-up hunt in 2 weeks to validate rule efficacy and tune thresholds based on FP rate.</div>
+        <div>• Escalate to Incident Response immediately — isolate WIN-DC01 and acquire a memory image before reboot.</div>
+        <div>• Suspend CORP\\jsmith and rotate all credentials authenticated from that account in the past 72 hours.</div>
+        <div>• Push perimeter block for 185.220.101.47/32 and audit outbound port 443 for matching Cobalt Strike JA3 hashes.</div>
+        <div>• Schedule follow-up hunt TH-2026-042 (privileged account abuse / DCSync staging) seeded with the confirmed jsmith pivot chain.</div>
       </div>
     </div>`;
 }

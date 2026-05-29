@@ -30,7 +30,7 @@ function renderHuntReport(id) {
   const u = users[d.createdBy] || {};
 
   const huntTitles = {
-    '041': 'APT29 Lateral Movement & Credential Harvesting — Corp Domain',
+    '041': 'Volt Typhoon Lateral Movement & Credential Harvesting — Corp Domain',
     '040': 'Ransomware Pre-cursor BEC Activity — Finance Segment',
     '039': 'Supply Chain Compromise Indicators — DevOps Pipeline',
   };

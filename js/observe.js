@@ -27,9 +27,9 @@ const observeData = {
     ],
     observables: {
       Processes: ['psexesvc.exe', 'wmic.exe with /node: remote target', 'schtasks.exe /create', 'rundll32.exe accessing LSASS', 'cmd.exe /c whoami (post-lateral)'],
-      Network: ['JA3: 3b5074b1b5d032e5620f69f9159e9c4d (Cobalt Strike profile)', '185.220.101.47:443 and :8443', 'Beacon interval 60s ± 2s', 'Dual-port primary + fallback C2 channel'],
+      Network: ['JA3: 769c10b06a1a2b7b7a26b0a2be2e88a4 (Cobalt Strike profile)', '185.220.101.47:443 and :8443', 'Beacon interval 60s ± 2s', 'Dual-port primary + fallback C2 channel'],
       Files: ['New scheduled tasks outside SCCM namespace', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\MicrosoftEdgeUpdate', 'LSASS minidump in %TEMP% or C:\\ProgramData\\', 'Staging files in non-standard locations'],
-      Authentication: ['Off-hours NTLM/Kerberos from CORP\\jsmith', 'Lateral auth via ADMIN$ across 14 hosts', 'TGS-REQ spike — 7 SPNs within 5 min (T1558.003)'],
+      Authentication: ['Off-hours NTLM/Kerberos from CORP\\jsmith', 'Lateral auth via ADMIN$ across 14 hosts', 'TGS-REQ spike — 11 SPNs within 5 min (T1558.003)'],
     },
     subhunts: {
       sh01: {
@@ -85,13 +85,13 @@ const observeData = {
         suspicious: [
           { text: 'Single user account requesting RC4-encrypted TGS tickets for 3+ distinct SPNs within 5 minutes — targeted kerberoasting pattern' },
           { text: 'TGS-REQ for high-privilege SPN (krbtgt, HTTP/intranet, RPCSS) from a standard domain user account — Golden Ticket pre-staging' },
-          { text: 'RC4 TGS-REQ spike above 15/hr from a single account outside the scheduled backup window — threshold set post-SPN-exclusion' },
+          { text: 'RC4 TGS-REQ volume well above the per-account 3σ daily baseline outside the scheduled backup window — threshold set post-SPN-exclusion' },
           { text: 'TGS request for SPNs not in the 147-entry CMDB exclusion list from a non-service account — likely targeted enumeration' },
         ],
         observables: {
           'Key Events': ['EventCode 4769 · TicketEncryptionType=0x17 (RC4) · ServiceName ∉ 147-SPN exclusion list', 'EventCode 4768 burst — multiple Kerberos AS-REQ from single account in short window'],
           Account: ['CORP\\jsmith — 11 distinct SPN requests in 5 min including krbtgt (23:17 UTC)', 'SPNs targeted: krbtgt/CORP, MSSQLSvc/WIN-SQL02:1433, HTTP/intranet.corp.local'],
-          'Detection Tuning': ['RC4 burst threshold: 15/hr · 147 CMDB SPN exclusions loaded (BackupExec + MSSQLSvc)', 'FP rate dropped from 22% (TH-2026-035) to <2% after exclusion list applied'],
+          'Detection Tuning': ['RC4 burst threshold: >3 SPNs/user/5m · 147 CMDB SPN exclusions loaded (BackupExec + MSSQLSvc)', 'FP rate dropped from 22% (TH-2026-035) to <2% after exclusion list applied'],
           Network: ['Kerberos traffic to WIN-DC01 (10.0.1.10) from workstation CORP\\jsmith source host'],
         }
       },
@@ -104,13 +104,13 @@ const observeData = {
         ],
         suspicious: [
           { text: 'HTTPS beacon with stdev < 5s on 58–62s interval to non-approved external IP — Cobalt Strike default profile signature' },
-          { text: 'JA3 fingerprint 3b5074b1b5d032e5620f69f9159e9c4d matching known Cobalt Strike malleable C2 profiles' },
+          { text: 'JA3 fingerprint 769c10b06a1a2b7b7a26b0a2be2e88a4 matching known Cobalt Strike malleable C2 profiles' },
           { text: 'Short-lived Let\'s Encrypt certificate (lifetime < 24hr) with non-browser or empty user-agent string to external IP' },
           { text: 'Outbound HTTPS to ASN associated with VPS/hosting infrastructure (Frantech, Mullvad, AS62160) with no prior baseline' },
           { text: 'Dual-port C2 channel: primary :443 + fallback :8443 to same destination IP with identical beacon timing' },
         ],
         observables: {
-          Network: ['185.220.101.47:443 — JA3 3b5074b1b5d032e5620f69f9159e9c4d · beacon 60.1s ±0.3s stdev', '185.220.101.47:8443 — fallback C2 channel, identical JA3 + timing'],
+          Network: ['185.220.101.47:443 — JA3 769c10b06a1a2b7b7a26b0a2be2e88a4 · beacon 60.1s ±0.3s stdev', '185.220.101.47:8443 — fallback C2 channel, identical JA3 + timing'],
           Certificate: ['CN=update.windows-cdn[.]net · Let\'s Encrypt · issued < 24hr · 1 SAN · not in approved cert baseline'],
           'Detection Path': ['JA3 fingerprint match (Zeek SSL log)', 'Beacon interval regularity: stdev < 5s over 30-min window', 'Short cert lifetime + non-browser UA string in HTTP log'],
           'Prior Hunt': ['TH-2025-091 — zero JA3 hits · net-new cert-chain path not previously hunted · Alice Chen flagged gap'],
