@@ -362,6 +362,45 @@ function _parseMdEnvironment(text) {
       const tmLines = subMap['Threat Model Focus'] || [];
       env.priorityTtps.threatModel = bullets(tmLines, 0, tmLines.length);
 
+    } else if (title === 'Crown Jewels') {
+      // Parse pipe-delimited **Key:** Value pairs from bullet lines
+      const parseKV = (line) => {
+        const obj = {};
+        const stripped = line.replace(/^\s*[-*]\s*/, '');
+        for (const part of stripped.split(' | ')) {
+          const m = part.match(/\*\*([^*]+):\*\*\s*(.+)/);
+          if (m) obj[m[1].toLowerCase()] = m[2].trim();
+        }
+        return obj;
+      };
+      const t0Lines   = subMap['Tier-0 Assets']    || [];
+      const t1Lines   = subMap['Tier-1 Assets']    || [];
+      const acctLines = subMap['Critical Accounts'] || [];
+      for (const l of t0Lines) {
+        if (!/^\s*[-*]/.test(l)) continue;
+        const kv = parseKV(l);
+        if (!kv.name) continue;
+        cj.assets.push({ icon: kv.icon||'🖥️', name: kv.name, tier: 0,
+          role: kv.role||'', ip: kv.ip||'', segment: kv.segment||'',
+          blast: kv.blast||'', exposure: kv.exposure||'low', ttp: kv.ttp||'' });
+      }
+      for (const l of t1Lines) {
+        if (!/^\s*[-*]/.test(l)) continue;
+        const kv = parseKV(l);
+        if (!kv.name) continue;
+        cj.assets.push({ icon: kv.icon||'🖥️', name: kv.name, tier: 1,
+          role: kv.role||'', ip: kv.ip||'', segment: kv.segment||'',
+          blast: kv.blast||'', exposure: kv.exposure||'low', ttp: kv.ttp||'' });
+      }
+      for (const l of acctLines) {
+        if (!/^\s*[-*]/.test(l)) continue;
+        const kv = parseKV(l);
+        if (!kv.name) continue;
+        cj.accounts.push({ icon: kv.icon||'👤', name: kv.name,
+          type: kv.type||'', group: kv.group||'',
+          exposure: kv.exposure||'low', ttp: kv.ttp||'', desc: kv.desc||'' });
+      }
+
     } else if (title === 'Maintenance Notes') {
       const clLines = subMap['Review Checklist'] || [];
       env.maintenance.checklist = clLines
@@ -1284,10 +1323,42 @@ function submitKbDraft() {
 // ── KB Environment pane ──
 let activeEnvTab = 'tools';
 
+function copyEnvPill(el) {
+  const text = (el.textContent || '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const prev = el.style.borderColor;
+    el.style.borderColor = 'var(--green)';
+    el.title = 'Copied!';
+    setTimeout(() => { el.style.borderColor = prev; el.title = 'Click to copy'; }, 900);
+  }).catch(() => {});
+}
+
+function toggleEnvCard(bodyId) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const btn = body.nextElementSibling;
+  const nowCollapsed = body.classList.toggle('env-collapsed');
+  if (btn && btn.classList.contains('env-collapse-btn')) {
+    btn.textContent = nowCollapsed ? 'Show more ▼' : 'Show less ▲';
+  }
+}
+
+function filterEnvCards(val) {
+  const q = (val || '').toLowerCase().trim();
+  document.querySelectorAll('#kb-env-body .kb-card').forEach(card => {
+    card.style.display = (!q || card.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+}
+
 function switchEnvTab(tab, el) {
   activeEnvTab = tab;
   document.querySelectorAll('.kb-env-itab').forEach(t => t.classList.remove('on'));
   if (el) el.classList.add('on');
+  // Clear search + hide it for Crown Jewels (no card grid to filter)
+  const searchWrap = document.getElementById('kb-env-search-wrap');
+  const searchEl   = document.getElementById('kb-env-search');
+  if (searchEl) searchEl.value = '';
+  if (searchWrap) searchWrap.style.display = tab === 'crown' ? 'none' : '';
   renderKbEnvPane();
 }
 
@@ -1295,12 +1366,22 @@ function renderKbEnvPane() {
   const d = envData;
   if (!d) return;
 
-  // Meta bar
+  // ── Staleness calculation ──
+  let daysStale = null;
+  if (d.meta && d.meta.lastUpdated) {
+    const updated = new Date(d.meta.lastUpdated);
+    if (!isNaN(updated)) daysStale = Math.floor((Date.now() - updated.getTime()) / 86400000);
+  }
+
+  // ── Meta bar ──
   const metaEl = document.getElementById('kb-env-meta');
   if (metaEl && d.meta) {
     const m = d.meta;
+    const staleHtml = (daysStale !== null && daysStale > 90)
+      ? `<span class="env-stale-chip">⚠ ${daysStale} days since last review</span>`
+      : '';
     metaEl.innerHTML = `
-      <span class="env-meta-item">📅 <b>${m.lastUpdated || '—'}</b></span>
+      <span class="env-meta-item">📅 <b>${m.lastUpdated || '—'}</b></span>${staleHtml}
       <span class="env-meta-dot">·</span>
       <span class="env-meta-item">🔄 ${m.reviewCadence || '—'}</span>
       <span class="env-meta-dot">·</span>
@@ -1310,49 +1391,74 @@ function renderKbEnvPane() {
   const body = document.getElementById('kb-env-body');
   if (!body) return;
 
-  // ── helpers ──
-  const ph = v => v ? `<span>${v}</span>` : `<span class="env-ph">Not configured</span>`;
+  // ── Helpers ──
   const kv = (label, val) => val
     ? `<div class="env-kv"><span class="env-kv-lbl">${label}</span><span class="env-kv-val">${val}</span></div>`
-    : `<div class="env-kv"><span class="env-kv-lbl">${label}</span><span class="env-ph">Not configured</span></div>`;
-  const pill = v => `<code class="env-pill">${v}</code>`;
-  const card = (title, icon, content, chipText, chipColor) => `
+    : `<div class="env-kv"><span class="env-kv-lbl">${label}</span><span class="env-ph">⚠ Not configured</span></div>`;
+
+  const pill = (v, copyable) => copyable
+    ? `<code class="env-pill env-pill-copy" onclick="copyEnvPill(this)" title="Click to copy">${v}</code>`
+    : `<code class="env-pill">${v}</code>`;
+
+  // statusChip: given an object of key→value, return [chipText, chipColor]
+  const statusChip = (fields) => {
+    const vals = Object.values(fields);
+    const filled = vals.filter(v => {
+      if (v === null || v === undefined || v === '') return false;
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === 'object') return Object.keys(v).length > 0;
+      return true;
+    });
+    if (filled.length === 0) return ['Not configured', 'gray'];
+    if (filled.length < vals.length) return ['Partial', 'yellow'];
+    return ['Active', 'green'];
+  };
+
+  const card = (title, icon, content, chipText, chipColor, collapsible) => {
+    const cid = 'envcard-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return `
     <div class="kb-card">
       <div class="kb-card-head">
         <span class="kb-card-title">${icon} ${title}</span>
         ${chipText ? `<span class="chip chip-${chipColor||'gray'}" style="font-size:10px;">${chipText}</span>` : ''}
       </div>
-      <div class="kb-card-body">${content}</div>
+      <div class="kb-card-body${collapsible ? ' env-collapsed' : ''}" id="${cid}">${content}</div>
+      ${collapsible ? `<button class="env-collapse-btn" onclick="toggleEnvCard('${cid}')">Show more ▼</button>` : ''}
     </div>`;
+  };
 
   if (activeEnvTab === 'tools') {
     const m = d.monitoring || {};
-    const siem = m.siem || {};
+    const siem     = m.siem     || {};
     const identity = m.identity || {};
-    const edr = m.edr || {};
-    const net = m.network || {};
-    const cloud = m.cloud || {};
-    const other = m.other || {};
+    const edr      = m.edr      || {};
+    const net      = m.network  || {};
+    const cloud    = m.cloud    || {};
+    const other    = m.other    || {};
 
+    const [siemChip, siemChipCol] = statusChip({ platform: siem.platform, version: siem.version, retention: siem.retention, indexes: siem.indexes });
     const siemContent = `
       ${kv('Platform', siem.platform)}
       ${kv('Version', siem.version)}
       ${kv('Retention', siem.retention)}
       ${(siem.indexes||[]).length ? `
         <div class="env-kv-section">Indexes</div>
-        ${(siem.indexes).map(ix => `
-          <div class="env-kv">
-            <span class="env-kv-lbl">${pill(ix.name)}</span>
-            <span class="env-kv-val">${ix.desc}</span>
-          </div>`).join('')}` : ''}
+        <div class="env-index-table">
+          ${siem.indexes.map(ix => `
+            <div class="env-idx-row">
+              ${pill(ix.name, true)}
+              <span class="env-idx-desc">${ix.desc}</span>
+            </div>`).join('')}
+        </div>` : kv('Indexes', null)}
       ${Object.keys(siem.fields||{}).length ? `
         <div class="env-kv-section">Common Fields</div>
         ${Object.entries(siem.fields).map(([cat, flds]) => `
           <div class="env-kv env-kv-fields">
             <span class="env-kv-lbl">${cat}</span>
-            <span class="env-kv-val">${flds.map(f => pill(f)).join(' ')}</span>
+            <span class="env-kv-val">${flds.map(f => pill(f, true)).join(' ')}</span>
           </div>`).join('')}` : ''}`;
 
+    const [idChip, idChipCol] = statusChip({ provider: identity.provider, dcs: identity.dcs, mfa: identity.mfa, pam: identity.pam });
     const idContent = `
       ${kv('Provider', identity.provider)}
       ${kv('Domain Controllers', identity.dcs)}
@@ -1360,28 +1466,34 @@ function renderKbEnvPane() {
       ${kv('PAM', identity.pam)}
       ${(identity.eventIds||[]).length ? `
         <div class="env-kv-section">Key Event IDs</div>
-        ${(identity.eventIds).map(e => `
-          <div class="env-kv">
-            <span class="env-kv-lbl">${pill(e.id)}</span>
-            <span class="env-kv-val">${e.desc}</span>
-          </div>`).join('')}` : ''}`;
+        <div class="env-eid-grid">
+          ${identity.eventIds.map(e => `
+            <div class="env-eid-item">
+              ${pill(e.id, true)}
+              <span class="env-eid-desc">${e.desc}</span>
+            </div>`).join('')}
+        </div>` : kv('Event IDs', null)}`;
 
+    const [edrChip, edrChipCol] = statusChip({ product: edr.product, version: edr.version, deployment: edr.deployment, telemetry: edr.telemetry });
     const edrContent = `
       ${kv('Product', edr.product)}
       ${kv('Version', edr.version)}
       ${kv('Deployment', edr.deployment)}
       ${kv('Telemetry', edr.telemetry)}`;
 
+    const [netChip, netChipCol] = statusChip({ firewalls: net.firewalls, idsIps: net.idsIps, flowData: net.flowData, pcap: net.pcap });
     const netContent = `
       ${kv('Firewalls', net.firewalls)}
       ${kv('IDS / IPS', net.idsIps)}
       ${kv('Flow Data', net.flowData)}
       ${kv('Packet Capture', net.pcap)}`;
 
+    const [cloudChip, cloudChipCol] = statusChip({ providers: cloud.providers, services: cloud.services });
     const cloudContent = `
       ${kv('Cloud Providers', cloud.providers)}
       ${kv('Security Services', cloud.services)}`;
 
+    const [otherChip, otherChipCol] = statusChip({ vulnScanners: other.vulnScanners, assetMgmt: other.assetMgmt, threatIntel: other.threatIntel, soar: other.soar });
     const otherContent = `
       ${kv('Vulnerability Scanners', other.vulnScanners)}
       ${kv('Asset Management', other.assetMgmt)}
@@ -1389,48 +1501,53 @@ function renderKbEnvPane() {
       ${kv('SOAR / Automation', other.soar)}`;
 
     body.innerHTML = `<div class="kb-env-2col">
-      ${card('SIEM / Log Aggregation', '📊', siemContent, null, null)}
-      ${card('Identity & Access', '🔐', idContent, null, null)}
-      ${card('EDR / Endpoint Security', '🛡️', edrContent, null, null)}
-      ${card('Network Security', '🌐', netContent, null, null)}
-      ${card('Cloud Security', '☁️', cloudContent, null, null)}
-      ${card('Other Security Tools', '🔧', otherContent, null, null)}
+      ${card('SIEM / Log Aggregation',  '📊', siemContent,  siemChip,  siemChipCol,  true)}
+      ${card('Identity & Access',       '🔐', idContent,    idChip,    idChipCol,    true)}
+      ${card('EDR / Endpoint Security', '🛡️', edrContent,   edrChip,   edrChipCol,   false)}
+      ${card('Network Security',        '🌐', netContent,   netChip,   netChipCol,   false)}
+      ${card('Cloud Security',          '☁️', cloudContent, cloudChip, cloudChipCol, false)}
+      ${card('Other Security Tools',    '🔧', otherContent, otherChip, otherChipCol, false)}
     </div>`;
 
   } else if (activeEnvTab === 'stack') {
-    const s = d.techStack || {};
-    const os = s.os || {};
-    const dev = s.dev || {};
-    const db = s.databases || {};
-    const infra = s.infrastructure || {};
-    const net = s.networking || {};
-    const apps = s.apps || {};
+    const s    = d.techStack || {};
+    const os   = s.os            || {};
+    const dev  = s.dev           || {};
+    const db   = s.databases     || {};
+    const infra= s.infrastructure|| {};
+    const net  = s.networking    || {};
+    const apps = s.apps          || {};
 
     const osList = arr => arr && arr.length
       ? arr.map(v => `<div class="env-list-item">• ${v}</div>`).join('')
-      : `<span class="env-ph">Not configured</span>`;
+      : `<span class="env-ph">⚠ Not configured</span>`;
 
+    const [osChip, osChipCol]     = statusChip({ servers: os.servers, workstations: os.workstations });
     const osContent = `
       <div class="env-kv-section">Servers</div>${osList(os.servers)}
       <div class="env-kv-section" style="margin-top:10px;">Workstations</div>${osList(os.workstations)}
-      ${os.mobile ? `<div class="env-kv-section" style="margin-top:10px;">Mobile</div><div class="env-list-item">• ${os.mobile}</div>` : ''}`;
+      ${os.mobile ? `<div class="env-kv-section" style="margin-top:10px;">Mobile</div><div class="env-list-item">• ${os.mobile}</div>` : kv('Mobile', null)}`;
 
+    const [devChip, devChipCol]   = statusChip({ languages: dev.languages, webFrameworks: dev.webFrameworks, apiFrameworks: dev.apiFrameworks });
     const devContent = `
       ${kv('Languages', dev.languages)}
       ${kv('Web Frameworks', dev.webFrameworks)}
       ${kv('API Frameworks', dev.apiFrameworks)}`;
 
+    const [dbChip, dbChipCol]     = statusChip({ relational: db.relational, nosql: db.nosql, caching: db.caching, warehouse: db.warehouse });
     const dbContent = `
       ${kv('Relational', db.relational)}
       ${kv('NoSQL', db.nosql)}
       ${kv('Caching', db.caching)}
       ${kv('Data Warehouse', db.warehouse)}`;
 
+    const [infraChip, infraChipCol]= statusChip({ cloud: infra.cloud, containers: infra.containers, cicd: infra.cicd });
     const infraContent = `
       ${kv('Cloud Platforms', infra.cloud)}
       ${kv('Containers / Orchestration', infra.containers)}
       ${kv('CI / CD', infra.cicd)}`;
 
+    const [netChip, netChipCol]   = statusChip({ architecture: net.architecture, loadBalancers: net.loadBalancers, dns: net.dns, vpn: net.vpn, jumpBoxes: net.jumpBoxes });
     const netContent = `
       ${kv('Architecture', net.architecture)}
       ${kv('Load Balancers', net.loadBalancers)}
@@ -1438,6 +1555,7 @@ function renderKbEnvPane() {
       ${kv('VPN / Remote Access', net.vpn)}
       ${kv('Jump Boxes', net.jumpBoxes)}`;
 
+    const [appsChip, appsChipCol] = statusChip({ email: apps.email, collaboration: apps.collaboration, fileSharing: apps.fileSharing, versionControl: apps.versionControl, projectMgmt: apps.projectMgmt, business: apps.business });
     const appsContent = `
       ${kv('Email', apps.email)}
       ${kv('Collaboration', apps.collaboration)}
@@ -1447,14 +1565,18 @@ function renderKbEnvPane() {
       ${kv('Business Applications', apps.business)}`;
 
     body.innerHTML = `<div class="kb-env-2col">
-      ${card('Operating Systems', '🖥️', osContent, null, null)}
-      ${card('Networking', '🔀', netContent, null, null)}
-      ${card('Infrastructure & Platforms', '🏗️', infraContent, null, null)}
-      ${card('Applications & Services', '📦', appsContent, null, null)}
-      ${card('Development Stack', '💻', devContent, null, null)}
-      ${card('Databases & Data Stores', '🗄️', dbContent, null, null)}
+      ${card('Operating Systems',         '🖥️', osContent,    osChip,    osChipCol,    false)}
+      ${card('Networking',                '🔀', netContent,   netChip,   netChipCol,   false)}
+      ${card('Infrastructure & Platforms','🏗️', infraContent, infraChip, infraChipCol, false)}
+      ${card('Applications & Services',   '📦', appsContent,  appsChip,  appsChipCol,  true)}
+      ${card('Development Stack',         '💻', devContent,   devChip,   devChipCol,   false)}
+      ${card('Databases & Data Stores',   '🗄️', dbContent,    dbChip,    dbChipCol,    false)}
     </div>`;
 
+  } else if (activeEnvTab === 'crown') {
+    body.innerHTML = (typeof buildCrownJewelsHtml === 'function')
+      ? buildCrownJewelsHtml()
+      : `<div style="color:var(--muted);font-size:12px;padding:20px;">Crown Jewels data not available — populate kb/environment.md.</div>`;
   }
 }
 

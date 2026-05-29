@@ -53,6 +53,9 @@ function goSubTab(name, el) {
   document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('on'));
   document.getElementById('subpane-' + name).classList.add('on');
   if (el) el.classList.add('on');
+  // Subhunt sidebar is not relevant on the Agents tab
+  const sidebar = document.getElementById('subhunt-sidebar');
+  if (sidebar) sidebar.classList.toggle('sh-hidden-for-agents', name === 'agents');
 }
 
 function updateSubTabGating() {
@@ -2152,15 +2155,31 @@ function renderEcMaint() {
 // ── Crown Jewels ──
 // crownJewels — see kb/environment.js
 
-function renderCrownJewels() {
-  const pane = document.getElementById('ec-pane-crownJewels');
-  if (!pane) return;
+function buildCrownJewelsHtml() {
   const expDot = (e) => `<span class="cj-exp-dot ${e}"></span>`;
   const expLabel = { high:'In current hunt scope', medium:'Indirectly exposed', low:'Not currently exposed' };
   const t0 = crownJewels.assets.filter(a=>a.tier===0);
   const t1 = crownJewels.assets.filter(a=>a.tier===1);
   const inScope = crownJewels.assets.filter(a=>a.exposure==='high'||a.exposure==='medium').length;
-  pane.innerHTML = `
+  const assetCard = (a, tierCls) => `
+      <div class="cj-card ${tierCls}">
+        <div class="cj-card-head">
+          <span class="cj-icon">${a.icon}</span>
+          <span class="cj-name">${a.name}</span>
+          <span class="cj-tier-badge ${tierCls}">${tierCls === 'tier0' ? 'Tier-0' : 'Tier-1'}</span>
+        </div>
+        <div class="cj-card-body">
+          <div class="cj-role">${a.role}</div>
+          <div class="cj-ip">${a.ip} · ${a.segment}</div>
+          <div><div class="cj-blast-lbl">Blast Radius</div><div class="cj-blast">${a.blast}</div></div>
+          <div class="cj-exposure">
+            ${expDot(a.exposure)}<span class="cj-exp-label">${expLabel[a.exposure]}</span>
+            ${a.ttp ? `<span class="cj-exp-ttp" style="margin-left:auto;">${a.ttp}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  const emptyNote = (label) => `<div style="color:var(--muted);font-size:11px;font-style:italic;padding:12px 0;">${label}</div>`;
+  return `
     <div class="cj-summary-strip">
       <div class="cj-sum-item"><div class="cj-sum-val" style="color:var(--red);">${t0.length}</div><div class="cj-sum-lbl">Tier-0 assets</div></div>
       <div class="cj-sum-item"><div class="cj-sum-val" style="color:var(--orange);">${t1.length}</div><div class="cj-sum-lbl">Tier-1 assets</div></div>
@@ -2168,54 +2187,12 @@ function renderCrownJewels() {
       <div class="cj-sum-item"><div class="cj-sum-val" style="color:var(--yellow);">${inScope}</div><div class="cj-sum-lbl">In hunt scope</div></div>
     </div>
     <div class="cj-section-head"><span style="color:var(--red);">●</span> Tier-0 — Domain-Level Crown Jewels</div>
-    <div class="cj-grid">
-      ${t0.map(a=>`
-      <div class="cj-card tier0">
-        <div class="cj-card-head">
-          <span class="cj-icon">${a.icon}</span>
-          <span class="cj-name">${a.name}</span>
-          <span class="cj-tier-badge tier0">Tier-0</span>
-        </div>
-        <div class="cj-card-body">
-          <div class="cj-role">${a.role}</div>
-          <div class="cj-ip">${a.ip} · ${a.segment}</div>
-          <div>
-            <div class="cj-blast-lbl">Blast Radius</div>
-            <div class="cj-blast">${a.blast}</div>
-          </div>
-          <div class="cj-exposure">
-            ${expDot(a.exposure)}<span class="cj-exp-label">${expLabel[a.exposure]}</span>
-            ${a.ttp ? `<span class="cj-exp-ttp" style="margin-left:auto;">${a.ttp}</span>` : ''}
-          </div>
-        </div>
-      </div>`).join('')}
-    </div>
+    <div class="cj-grid">${t0.length ? t0.map(a=>assetCard(a,'tier0')).join('') : emptyNote('No Tier-0 assets defined — add them to kb/environment.md')}</div>
     <div class="cj-section-head" style="margin-top:16px;"><span style="color:var(--orange);">●</span> Tier-1 — High-Value Infrastructure</div>
-    <div class="cj-grid">
-      ${t1.map(a=>`
-      <div class="cj-card tier1">
-        <div class="cj-card-head">
-          <span class="cj-icon">${a.icon}</span>
-          <span class="cj-name">${a.name}</span>
-          <span class="cj-tier-badge tier1">Tier-1</span>
-        </div>
-        <div class="cj-card-body">
-          <div class="cj-role">${a.role}</div>
-          <div class="cj-ip">${a.ip} · ${a.segment}</div>
-          <div>
-            <div class="cj-blast-lbl">Blast Radius</div>
-            <div class="cj-blast">${a.blast}</div>
-          </div>
-          <div class="cj-exposure">
-            ${expDot(a.exposure)}<span class="cj-exp-label">${expLabel[a.exposure]}</span>
-            ${a.ttp ? `<span class="cj-exp-ttp" style="margin-left:auto;">${a.ttp}</span>` : ''}
-          </div>
-        </div>
-      </div>`).join('')}
-    </div>
+    <div class="cj-grid">${t1.length ? t1.map(a=>assetCard(a,'tier1')).join('') : emptyNote('No Tier-1 assets defined — add them to kb/environment.md')}</div>
     <div class="cj-section-head" style="margin-top:16px;"><span style="color:var(--yellow);">●</span> Critical Accounts</div>
     <div class="cj-account-list">
-      ${crownJewels.accounts.map(a=>`
+      ${crownJewels.accounts.length ? crownJewels.accounts.map(a=>`
       <div class="cj-account">
         <span class="cj-account-icon">${a.icon}</span>
         <div style="flex:1;">
@@ -2230,8 +2207,14 @@ function renderCrownJewels() {
           </div>
           <div class="cj-account-desc">${a.desc}</div>
         </div>
-      </div>`).join('')}
+      </div>`).join('') : emptyNote('No critical accounts defined — add them to kb/environment.md')}
     </div>`;
+}
+
+function renderCrownJewels() {
+  const pane = document.getElementById('ec-pane-crownJewels');
+  if (!pane) return;
+  pane.innerHTML = buildCrownJewelsHtml();
 }
 
 // ── Open / close / tab switch ──

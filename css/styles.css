@@ -702,6 +702,11 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .fb-rv      { background:rgba(139,92,246,.15);  color:#c4b5fd; }
 .fb-relay   { background:rgba(14,165,233,.15);  color:#38bdf8; }
 .feed-block-relay { border-color:rgba(14,165,233,.25); background:rgba(14,165,233,.04); }
+/* Consecutive same-agent message grouping */
+.feed-block-precedes-continued { border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom-color:transparent; }
+.feed-block-continued { border-top:none; border-top-left-radius:0; border-top-right-radius:0; margin-top:-10px; padding-top:2px; }
+.feed-block-continued::before { content:''; display:block; height:1px; background:var(--border); margin:0 -14px 8px; opacity:.5; }
+.feed-block-continued .feed-block-head { display:none; }
 .feed-relay-arrow { font-size:13px; color:#38bdf8; margin:0 5px; flex-shrink:0; font-weight:700; }
 .feed-block-name-to { color:var(--sub); }
 .feed-block-toggle { background:none; border:none; color:var(--blue); font-size:10px; cursor:pointer; padding:5px 0 0; margin:0; opacity:.6; display:block; font-family:inherit; transition:opacity .15s; }
@@ -793,13 +798,6 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .fr-title { font-weight: 500; font-size: 12px; line-height: 1.4; }
 .fr-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-/* ── prominent LOCK record ── */
-.lock-prominent { background: linear-gradient(135deg, rgba(59,130,246,.06) 0%, rgba(99,102,241,.04) 100%); border-color: rgba(59,130,246,.28) !important; margin: 14px 20px 0; }
-.lock-prominent .card-head { border-bottom-color: rgba(59,130,246,.16); background: rgba(59,130,246,.03); border-radius: var(--radius) var(--radius) 0 0; }
-.lock-prominent .card-title { font-size: 14px; letter-spacing: -.3px; }
-.lock-4col { display: grid; grid-template-columns: repeat(4, 1fr); }
-.lock-4col-cell { padding: 16px 18px; border-right: 1px solid rgba(59,130,246,.1); }
-.lock-4col-cell:last-child { border-right: none; }
 .lock-cell-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
 .lock-cell-label { font-size: 12px; font-weight: 600; color: var(--text); }
 .lock-cell-text { font-size: 11px; color: var(--sub); line-height: 1.6; }
@@ -1060,7 +1058,8 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .kb-sk-stab.on { color:var(--teal); border-bottom-color:var(--teal); }
 /* Environment sub-pane */
 .kb-env-wrap { padding:20px 24px; display:flex; flex-direction:column; gap:14px; flex:1; overflow:auto; }
-.kb-env-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+.kb-env-2col { columns:2; column-gap:16px; }
+.kb-env-2col .kb-card { break-inside:avoid; margin-bottom:16px; }
 .kb-env-1col { display:flex; flex-direction:column; gap:16px; }
 /* Env meta + tab bar */
 .kb-env-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -1068,11 +1067,20 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .env-meta-item { font-size:11px; color:var(--sub); }
 .env-meta-item b { color:var(--text); }
 .env-meta-dot { color:var(--muted); font-size:10px; }
-.kb-env-itab-bar { display:flex; gap:4px; border-bottom:1px solid var(--border); padding-bottom:0; }
+.env-stale-chip { display:inline-flex; align-items:center; gap:4px; background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); border-radius:4px; padding:2px 8px; font-size:10px; color:var(--yellow); margin-left:4px; }
+/* Tab group: wraps tab bar + search + body so flush-tab trick works */
+.kb-env-tabgroup { display:flex; flex-direction:column; flex:1; min-height:0; }
+.kb-env-itab-bar { display:flex; gap:4px; border-bottom:1px solid var(--border); padding-bottom:0; margin-bottom:-1px; position:relative; z-index:1; }
 .kb-env-itab { font-size:11px; padding:6px 13px; border:1px solid transparent; border-bottom:none; border-radius:var(--radius-sm) var(--radius-sm) 0 0; cursor:pointer; color:var(--muted); background:none; transition:color .12s, background .12s; }
 .kb-env-itab:hover { color:var(--sub); background:var(--s2); }
-.kb-env-itab.on { color:var(--text); background:var(--s1); border-color:var(--border); font-weight:600; }
-.kb-env-body { flex:1; }
+.kb-env-itab.on { color:var(--text); background:var(--s1); border-color:var(--border); border-bottom-color:var(--s1); font-weight:600; }
+/* Search bar */
+.kb-env-search-wrap { padding:12px 0 0; }
+.kb-env-search { width:100%; box-sizing:border-box; background:var(--s2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; font-size:11px; color:var(--text); outline:none; }
+.kb-env-search::placeholder { color:var(--muted); }
+.kb-env-search:focus { border-color:var(--blue); }
+/* Body panel */
+.kb-env-body { flex:1; overflow:auto; border-top:1px solid var(--border); padding-top:16px; }
 /* Env card content helpers */
 .env-kv { display:flex; align-items:flex-start; gap:10px; padding:4px 0; font-size:11px; border-bottom:1px solid rgba(31,45,71,.3); }
 .env-kv:last-child { border-bottom:none; }
@@ -1080,9 +1088,24 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .env-kv-val { flex:1; color:var(--sub); line-height:1.5; }
 .env-kv-fields .env-kv-val { display:flex; flex-wrap:wrap; gap:4px; }
 .env-kv-section { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-top:10px; margin-bottom:2px; }
-.env-ph { color:var(--muted); font-style:italic; font-size:10.5px; }
+.env-ph { color:var(--yellow); font-size:10.5px; opacity:.75; }
 .env-pill { background:var(--s3); border:1px solid var(--border); padding:1px 6px; border-radius:3px; font-size:10px; color:var(--blue); font-family:'SF Mono','Consolas',monospace; white-space:nowrap; }
+.env-pill-copy { cursor:pointer; transition:border-color .15s, color .15s; }
+.env-pill-copy:hover { border-color:var(--blue); color:var(--text); }
 .env-list-item { font-size:11px; color:var(--sub); padding:3px 0; }
+/* SIEM index table */
+.env-index-table { display:flex; flex-direction:column; gap:5px; margin-top:4px; }
+.env-idx-row { display:flex; align-items:baseline; gap:8px; }
+.env-idx-desc { font-size:10.5px; color:var(--sub); flex:1; }
+/* Event ID pill grid */
+.env-eid-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; margin-top:4px; }
+.env-eid-item { display:flex; align-items:baseline; gap:6px; }
+.env-eid-desc { font-size:10px; color:var(--sub); line-height:1.4; }
+/* Collapse */
+.kb-card-body.env-collapsed { max-height:190px; overflow:hidden; position:relative; }
+.kb-card-body.env-collapsed::after { content:''; position:absolute; bottom:0; left:0; right:0; height:50px; background:linear-gradient(transparent, var(--s1)); pointer-events:none; }
+.env-collapse-btn { display:block; width:100%; text-align:center; font-size:10px; color:var(--muted); background:none; border:none; border-top:1px solid var(--border); padding:5px 0; cursor:pointer; margin-top:4px; }
+.env-collapse-btn:hover { color:var(--sub); background:rgba(255,255,255,.02); }
 /* Gaps & TTPs tab */
 .env-checklist-item { display:flex; gap:8px; align-items:flex-start; font-size:11px; color:var(--sub); padding:5px 0; border-bottom:1px solid rgba(31,45,71,.3); }
 .env-checklist-item:last-child { border-bottom:none; }
@@ -1375,10 +1398,6 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   .observe-wrap { grid-template-columns: 1fr !important; }
   .ds-grid { grid-template-columns: 1fr !important; }
 .keep-wrap { grid-template-columns: 1fr !important; }
-  .lock-4col { grid-template-columns: repeat(2, 1fr); }
-  .lock-4col-cell:nth-child(odd) { border-right: 1px solid rgba(59,130,246,.1); }
-  .lock-4col-cell:nth-child(1), .lock-4col-cell:nth-child(2) { border-bottom: 1px solid rgba(59,130,246,.1); }
-  .lock-prominent { margin: 12px 12px 0; }
   .check-summary-prominent { margin: 12px 12px 0; }
   .report-lock-grid { grid-template-columns: repeat(2, 1fr); }
   .report-lock-cell:nth-child(2n) { border-right: none; }
@@ -1495,6 +1514,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .hunt-content .sub-pane { overflow:auto; }
 
 /* ── Subhunt sidebar ── */
+#subhunt-sidebar.sh-hidden-for-agents { display:none !important; }
 .subhunt-sidebar { width:194px; flex-shrink:0; border-right:1px solid var(--border); background:var(--s1); overflow-y:auto; display:flex; flex-direction:column; padding:14px 0 20px; }
 .sh-section-label { font-size:9px; font-weight:700; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; padding:0 14px 10px; flex-shrink:0; }
 .sh-nav-item { padding:9px 12px 9px 14px; cursor:pointer; border-left:2px solid transparent; transition:background .13s, border-color .13s; }

@@ -116,4 +116,40 @@ const envData = {
   },
 };
 
-const crownJewels = { assets: [], accounts: [] };
+const crownJewels = {
+  assets: [
+    // Tier-0
+    { icon:'🖥️', name:'WIN-DC01', tier:0, role:'Primary Domain Controller (HQ)',
+      ip:'10.0.1.10', segment:'Corp-Core (10.0.1.0/24)',
+      blast:'Full domain compromise — all user accounts, GPOs, trusts, and Kerberos infrastructure',
+      exposure:'high', ttp:'T1078.002' },
+    { icon:'🖥️', name:'WIN-DC02', tier:0, role:'Secondary Domain Controller (HQ)',
+      ip:'10.0.1.11', segment:'Corp-Core (10.0.1.0/24)',
+      blast:'Full domain compromise — replication partner to DC01; failover DC',
+      exposure:'medium', ttp:'' },
+    // Tier-1
+    { icon:'🗄️', name:'WIN-SQL02', tier:1, role:'SQL Server — ERP & Finance Backend',
+      ip:'10.0.2.20', segment:'App-Tier (10.0.2.0/24)',
+      blast:'Finance and ERP data exfiltration; SAP S/4HANA backend',
+      exposure:'high', ttp:'T1505.001' },
+    { icon:'📁', name:'WIN-FS01', tier:1, role:'File Server — Legacy CIFS Share',
+      ip:'10.0.2.30', segment:'App-Tier (10.0.2.0/24)',
+      blast:'Internal file share exfiltration; departmental and HR data',
+      exposure:'medium', ttp:'' },
+    { icon:'📊', name:'SIEM01', tier:1, role:'Splunk Enterprise Security (primary indexer)',
+      ip:'10.0.3.10', segment:'Security-OOB (10.0.3.0/24)',
+      blast:'Loss of all detection visibility across the environment',
+      exposure:'low', ttp:'' },
+  ],
+  accounts: [
+    { icon:'👤', name:'CORP\\jsmith', type:'Domain Admin', group:'Domain Admins',
+      exposure:'high', ttp:'T1078.002',
+      desc:'Primary domain admin — directly targeted in Volt Typhoon lateral movement chain; holds Tier-0 access to all DCs' },
+    { icon:'⚙️', name:'svc-backup', type:'Service Account', group:'Backup Operators',
+      exposure:'medium', ttp:'',
+      desc:'Backup service account with local admin on all servers; high-value target for privilege escalation via token impersonation' },
+    { icon:'⚙️', name:'svc-splunk', type:'Service Account', group:'Security Ops',
+      exposure:'low', ttp:'',
+      desc:'Splunk indexer service account; read access to all log data across every index' },
+  ],
+};

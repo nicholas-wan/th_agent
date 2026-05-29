@@ -230,7 +230,7 @@
     <div class="sub-tab" id="subtab-observe" onclick="goSubTab('observe',this)">👁 Observe</div>
     <div class="sub-tab" id="subtab-check" onclick="goSubTab('check',this)">⚙️ Check</div>
     <div class="sub-tab" id="subtab-keep" onclick="goSubTab('keep',this)">📋 Keep</div>
-    <div class="sub-tab" id="subtab-agents" onclick="goSubTab('agents',this)">🤖 Agents</div>
+    <div class="sub-tab" id="subtab-agents" onclick="goSubTab('agents',this)">🧠 Agent Reasoning</div>
   </div>
 
   <!-- ── Hunt body: subhunt sidebar + content ── -->
@@ -1181,20 +1181,6 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   </div>
   <div id="ref-data-banner-keep" class="info-bar" style="display:none;margin:10px 16px 0;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25);flex-shrink:0;"></div>
 
-  <!-- ── LOCK Record — prominent summary (always visible) ── -->
-  <div class="card lock-prominent" id="keep-lock-card">
-    <div class="card-head" style="padding:12px 18px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="card-title">📋 LOCK Hunt Record</span>
-        <span class="chip chip-gray" style="font-size:10px;" id="keep-lock-chip">TH-2026-041</span>
-      </div>
-      <span class="chip" id="keep-lock-status" style="font-size:10px;"></span>
-    </div>
-    <div class="lock-4col" id="keep-lock-body">
-      <!-- Populated by renderKeepHunt() -->
-    </div>
-  </div>
-
   <div class="keep-wrap">
 
     <!-- Main body -->
@@ -1202,21 +1188,6 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
       <div class="info-bar">
         <span class="ib-icon">ℹ️</span>
         <span>This is the <b>Keep</b> stage — the hunt record. <b>Click any finding</b> to see the agent's reasoning and recommended actions. Use <b>Export</b> to generate a report for IR hand-off.</span>
-      </div>
-
-      <!-- Gate Decision Log -->
-      <div class="card card-collapsible" id="card-gate-log">
-        <div class="card-head" onclick="toggleCollapse('card-gate-log',event)">
-          <span class="card-title">🔏 Agent Gate Decisions</span>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="chip chip-gray" style="font-size:10px;" id="gdl-count-chip">— decisions</span>
-            <span class="card-summary" id="gdl-summary"></span>
-            <button class="collapse-btn" onclick="toggleCollapse('card-gate-log',event)">▾</button>
-          </div>
-        </div>
-        <div class="card-body" style="padding:4px 15px 10px;" id="gdl-body">
-          <!-- populated by renderGateDecisionLog() -->
-        </div>
       </div>
 
       <!-- Findings card -->
@@ -2801,14 +2772,24 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         <button class="btn btn-outline btn-sm" onclick="openEnvSource()">📄 View Source</button>
       </div>
 
-      <!-- Inner tab bar -->
-      <div class="kb-env-itab-bar" id="kb-env-itab-bar">
-        <button class="kb-env-itab on" onclick="switchEnvTab('tools',this)">🔐 Security Tools</button>
-        <button class="kb-env-itab" onclick="switchEnvTab('stack',this)">🖥️ Tech Stack</button>
-      </div>
+      <!-- Tab bar + body grouped so flush-tab trick works -->
+      <div class="kb-env-tabgroup">
 
-      <!-- Dynamic body — populated by renderKbEnvPane() -->
-      <div id="kb-env-body" class="kb-env-body"></div>
+        <div class="kb-env-itab-bar" id="kb-env-itab-bar">
+          <button class="kb-env-itab on" onclick="switchEnvTab('tools',this)">🔐 Security Tools</button>
+          <button class="kb-env-itab" onclick="switchEnvTab('stack',this)">🖥️ Tech Stack</button>
+          <button class="kb-env-itab" onclick="switchEnvTab('crown',this)">👑 Crown Jewels</button>
+        </div>
+
+        <!-- Search bar (hidden for Crown Jewels tab) -->
+        <div class="kb-env-search-wrap" id="kb-env-search-wrap">
+          <input class="kb-env-search" id="kb-env-search" type="text" placeholder="Filter cards…" oninput="filterEnvCards(this.value)">
+        </div>
+
+        <!-- Dynamic body — populated by renderKbEnvPane() -->
+        <div id="kb-env-body" class="kb-env-body"></div>
+
+      </div>
 
     </div>
   </div>

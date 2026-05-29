@@ -47,6 +47,7 @@ const feedAgents = {
   data: { icon:'🗄️', name:'Data Eng' },
   ts:   { icon:'🧠', name:'Tradecraft' },
   dl:   { icon:'⚙️',  name:'Detection Logic' },
+  rv:   { icon:'✅', name:'Rule Validation' },
 };
 const feedPfx = { tool:'→', reason:'↳', done:'✓', warn:'⚠', runbook:'📖', env:'🏗️', rv:'✅', relay:'↗' };
 const feedAgentColors = {
@@ -55,14 +56,14 @@ const feedAgentColors = {
   data: { bg:'rgba(99,102,241,.18)', border:'#6366f1' },
   ts:   { bg:'rgba(245,158,11,.18)', border:'#f59e0b' },
   dl:   { bg:'rgba(16,185,129,.18)', border:'#10b981' },
+  rv:   { bg:'rgba(168,85,247,.18)', border:'#a855f7' },
 };
 const feedBadgeLabels = { tool:'TOOL CALL', reason:'REASONING', done:'COMPLETE', warn:'WARNING', runbook:'RUNBOOK', env:'ENV CTX', rv:'RULE VALID', relay:'MSG' };
 
 const feedSteps = {
   0: [
-    { type:'tool',   agent:'orch', msg:'pipeline initialised for TH-2026-041 · CISA AA24-038A · dispatching agents' },
-    { type:'relay',  agent:'orch', to:'data', msg:'initialise Splunk ES connection · confirm index availability across sysmon, windows, network, security' },
-    { type:'tool',   agent:'data', msg:'authenticating to Splunk ES via service token · enumerating indices…' },
+    { type:'reason', agent:'orch', msg:'CISA AA24-038A (Volt Typhoon) · scoring 8 TTPs by advisory prevalence × asset exposure × prior hunt recall · Tier-0 DC (WIN-DC01) in scope elevates credential-access and lateral-movement branches',
+      detail:'Scoring factors applied per TTP:\n• Advisory signal strength: frequency and specificity in CISA advisory text\n• Asset exposure: whether in-scope assets match technique target (e.g. WIN-DC01 for credential access)\n• Prior hunt recall: confirmed hits or clean runs in TH-2026-035/038/091\nT1078.002 (Valid Accounts, conf 95%) scored highest but is already covered by an active rule — merged as supporting signal into T1570 lateral movement scope rather than a standalone hypothesis.' },
     { type:'relay',  agent:'data', to:'orch', msg:'connected · 4 indices confirmed · sysmon(7d) windows(30d) network(14d) security(90d) · CIM normalisation verified',
       detail:'Auth via service account token. All 4 indices ingested and CIM-normalised. Baseline window set to 30 days. Ready for query workload.' },
     { type:'relay',  agent:'orch', to:'hyp',  get msg() {
@@ -72,21 +73,17 @@ const feedSteps = {
         const title = r ? r.title : 'CISA AA24-038A — Volt Typhoon';
         return `stand by — loading ${count} TTPs from ${title} upstream pipeline · pre-load environment topology to scope hypotheses`;
       } },
-    { type:'relay',  agent:'hyp',  to:'orch', msg:'acknowledged · fetching environment topology now · will have context ready before gather phase begins' },
     { type:'env',    agent:'orch', msg:'get_topology() → 8 network segments · 10.0.0.0/8 scope · 2,412 endpoints · Tier-0 isolation active' },
     { type:'done',   agent:'orch', msg:'8 TTPs loaded · confidence scored · T1570(87%) T1003.001(82%) T1558.003(74%) T1071.001(78%) · 4 hypotheses flagged · routing to Stage 1',
       detail:'Advisory signal strength scored across 8 TTPs. 4 hypotheses selected for this hunt:\n• T1570 — Lateral Tool Transfer (conf 87%)\n• T1003.001 — LSASS Credential Dumping (conf 82%)\n• T1558.003 — Kerberoasting (conf 74%)\n• T1071.001 — C2 Beacon via HTTPS (conf 78%)\nT1078.002 (Valid Accounts, conf 95%) acts as supporting authentication anomaly signal — scoped into T1570 hypothesis, not a separate hunt target.' },
   ],
   1: [
-    { type:'relay',  agent:'orch', to:'hyp',  msg:'begin parallel gather for T1570, T1003.001, T1558.003, T1071.001 · query past hunts, coverage checker, and runbooks simultaneously' },
-    { type:'relay',  agent:'hyp',  to:'orch', msg:'acknowledged · starting parallel gather now · will report back per-TTP as results land' },
     { type:'tool',   agent:'hyp',  msg:'search_hunts("T1078.002") → 3 past hunts retrieved · TH-2026-038 overlaps on jsmith credential abuse' },
     { type:'tool',   agent:'hyp',  msg:'get_hunt("TH-2026-038") → lateral movement confirmed · CORP\\jsmith pivoted 9 hosts · analyst notes loaded' },
     { type:'tool',   agent:'hyp',  msg:'check_coverage("T1078.002") → 1 existing rule active · last triggered 4 days ago · possible detection gap' },
     { type:'relay',  agent:'hyp',  to:'orch', msg:'T1078.002 — prior confirmed hits in TH-2026-038 · existing rule stale (4 days) · need Tier-0 asset context before finalising scope' },
     { type:'env',    agent:'orch', msg:'get_asset("WIN-DC01") → Tier-0 Domain Controller · 10.0.1.10 · DC VLAN · CrowdStrike Falcon 7.1' },
     { type:'env',    agent:'orch', msg:'get_account("jsmith") → Corp Workstations segment · off-hours logon anomaly flagged · MFA enrolled' },
-    { type:'relay',  agent:'orch', to:'hyp',  msg:'WIN-DC01 is Tier-0 · jsmith shows off-hours anomaly pattern matching TH-2026-038 window · elevate T1078.002 to top priority' },
     { type:'reason', agent:'hyp',  msg:'confidence on T1078.002 raised to 95% — off-hours logon + Tier-0 DC exposure confirmed',
       detail:'Prior hunt TH-2026-038 confirmed lateral movement via CORP\\jsmith credential abuse. Off-hours logon from 23:17–01:42 UTC maps directly to the current attack window. Existing coverage rule last hit 4 days ago — suggests actor may have shifted technique. Elevating confidence 87% → 95% and narrowing scope to DC VLAN (10.0.1.0/24).' },
     { type:'relay',  agent:'hyp',  to:'data', msg:'run EventCode 4769 TGS-REQ baseline · last 30 days · 5-minute buckets · flag DC VLAN segment' },
@@ -106,9 +103,6 @@ const feedSteps = {
       detail:'Decision matrix:\n• T1570 (Lateral Tool Transfer) — conf 87% → INCLUDE · confirmed TH-2026-038 (9-host jsmith pivot), Tier-0 DC reached\n• T1003.001 (LSASS Credential Dumping) — conf 82% → INCLUDE · follows lateral movement to WIN-DC01, SK-029 exclusion list pre-loaded\n• T1558.003 (Kerberoasting) — conf 74% → INCLUDE · 147 CMDB SPN exclusions loaded, RC4 threshold tuned to 15/hr, FP rate drops from 22% → <2%\n• T1071.001 (C2 Beacon via HTTPS) — conf 78% → INCLUDE · net-new cert-chain path not previously hunted, JA3 fingerprint detection available\nT1078.002 (Valid Accounts) — conf 95%, off-hours anomaly → SUPPORTING SIGNAL · merged into T1570 scope (jsmith credential context), not a separate hypothesis' },
   ],
   2: [
-    { type:'env',    agent:'hyp',  msg:'get_topology() → 8 segments · 10.0.0.0/8 · 2,412 endpoints verified' },
-    { type:'env',    agent:'hyp',  msg:'get_asset("WIN-DC01") → Tier-0 DC · crown jewel · 10.0.1.10 confirmed' },
-    { type:'env',    agent:'hyp',  msg:'get_account("jsmith") → Corp Workstations · off-hours anomaly · MFA enrolled' },
     { type:'tool',   agent:'hyp',  msg:'search_hunts("T1570") → TH-2026-038 confirmed · 9 hosts · jsmith tool-transfer pivot chain' },
     { type:'relay',  agent:'hyp',  to:'ts',   msg:'T1570 confirmed in prior hunt — do you have a recommended host-hop limit for DC-proximity lateral movement hunts? Checking SK-045.' },
     { type:'relay',  agent:'ts',   to:'hyp',  msg:'yes — SK-045 specifies 2-hop threshold for vCenter-adjacent lateral movement · apply single-hop limit for jsmith pivot chain relative to WIN-DC01',
@@ -128,11 +122,9 @@ const feedSteps = {
       detail:'Prior run (TH-2025-091) found zero JA3 hits — pivoting to a different detection path: short-lived Let\'s Encrypt certs (<24hr lifetime) + non-browser user-agent + regular beacon interval. This path was not previously hunted and covers Cobalt Strike malleable C2 profiles.' },
     { type:'relay',  agent:'hyp',  to:'orch', msg:'hypothesis package ready · 4 branches resolved · ready for analyst gate',
       detail:'Package summary:\n• H-01 · Lateral Tool Transfer (T1570): conf 92% · 14-host scope · 1-hop limit · jsmith pivot context\n• H-02 · LSASS Credential Dumping (T1003.001): conf 82% · DC VLAN scope · SK-029 exclusion list pre-loaded\n• H-03 · Kerberoasting (T1558.003): conf 74% · full endpoint scope · 147 SPN exclusions\n• H-04 · C2 Beacon via HTTPS (T1071.001): conf 78% · net-new cert-chain path · proxy+DNS sources\nHandoff includes: env context, exclusion lists, branch decisions, TTP mappings.' },
-    { type:'relay',  agent:'orch', to:'ts',   msg:'hypothesis package received and analyst-approved · begin tradecraft analysis · T1570, T1003.001, T1558.003, T1071.001 in scope' },
-    { type:'relay',  agent:'ts',   to:'orch', msg:'acknowledged · skill repository pre-loaded for T1570, T1003.001, T1558.003, T1071.001 · beginning RAA analysis now' },
   ],
   3: [
-    { type:'tool',   agent:'ts',   msg:'skills_repo.load_skills(["T1570","T1003.001","T1558.003"]) → SK-045, SK-029, SK-038 matched' },
+    { type:'tool',   agent:'ts',   msg:'skills_repo.load_skills(["T1570","T1003.001","T1558.003","T1071.001"]) → SK-045, SK-029, SK-038, SK-071 matched' },
     { type:'reason', agent:'ts',   msg:'SK-045 (vCenter LM): port 902/903 host-jump pattern active · scoping to vCenter + DC segments',
       detail:'SK-045 identifies lateral movement via VMware vCenter API abuse on ports 902/903. Cross-referencing T1570 transfer timestamps to build a correlated pivot chain.' },
     { type:'reason', agent:'ts',   msg:'SK-029 (LSASS EDR evasion): handle 0x1fffff via NtDuplicateObject · AV/EDR processes pre-excluded',
@@ -146,14 +138,14 @@ const feedSteps = {
         ['2026-05-22 01:14','CORP\\jsmith','WIN-FS01','18'],
       ]}
     },
-    { type:'relay',  agent:'data', to:'ts',   msg:'query complete · 47 process chains scored against 30-day baseline · 3 accounts exceed 3σ spike threshold · raw results attached' },
-    { type:'runbook',agent:'ts',   msg:'get_runbook("T1570") → lateral tool transfer · 3 evidence tips loaded · SMB staging + named pipe relay patterns active' },
-    { type:'tool',   agent:'ts',   msg:'running process chain analytic · 47 chains cross-referenced against jsmith account activity…' },
+    { type:'relay',  agent:'data', to:'ts',   msg:'query complete · 47 TGS-REQ spikes scored against 30-day per-account baseline · 3 src_users exceed 3σ threshold · results attached' },
+    { type:'reason', agent:'ts',   msg:'only CORP\\jsmith is anomalous — admin.t (8 req) and svc-backup (3 req) are within expected range for scheduled tasks · sole focus: jsmith spike clusters at 23:17 and 01:12 UTC' },
+    { type:'reason', agent:'ts',   msg:'SK-045 criteria applied to T1570 hunt scope: ADMIN$ file drop (EventCode 5145) paired within 60s of service install (EventCode 7045); named pipe relay (\\\\pipe\\\\svcctl) as high-fidelity secondary indicator',
+      detail:'SK-045 evidence framework:\n• Primary: EventCode 5145 (share=ADMIN$) → EventCode 7045 (service install) on same dest host within 60s window\n• Secondary: named pipe access \\pipe\\svcctl correlating with the same session timeframe\n• Scope threshold: 1-hop from WIN-DC01 (tightened from SK-045 default of 2-hop for a Tier-0 anchor)\nAll 3 patterns present in jsmith sessions — confirms technique match.' },
     { type:'reason', agent:'ts',   msg:'59 hits on T1570 — CORP\\jsmith pivoted 14 hosts across 2 sessions',
       detail:'Session 1 (23:17–00:43 UTC): 31 events · 8 hosts · SMB share staging via \\ADMIN$\nSession 2 (01:12–01:42 UTC): 28 events · 6 new hosts · named pipe relay (\\pipe\\svcctl)\nWIN-DC01 (Tier-0) and WIN-SQL02 (Tier-1) both touched.' },
     { type:'relay',  agent:'ts',   to:'orch', msg:'⚠ LATERAL MOVEMENT CONFIRMED — CORP\\jsmith pivot chain across 14 hosts including WIN-DC01 (Tier-0) · 59 events · recommend flagging to analyst' },
     { type:'relay',  agent:'orch', to:'ts',   msg:'acknowledged and escalated · continue — run T1003.001 credential access check on WIN-DC01 immediately · this is now the priority branch' },
-    { type:'relay',  agent:'ts',   to:'data', msg:'query LSASS access events (Sysmon EventCode 10) on WIN-DC01 only · filter out known AV source images · last 48 hours' },
     { type:'warn',   agent:'data', msg:'Splunk ES query timeout · peak load on sysmon index · retrying with optimised field filter…' },
     { type:'tool',   agent:'data', msg:'querying Sysmon EventCode 10 (ProcessAccess) · WIN-DC01 · non-AV source images · 48h window…',
       spl:'index=sysmon EventCode=10 TargetImage="*lsass.exe" host="WIN-DC01" earliest=-48h | where NOT match(SourceImage,"(?i)(MsMpEng|csagent|SenseIR|CrowdStrike)") | table _time, SourceImage, TargetImage, GrantedAccess, SourceProcessId',
@@ -164,7 +156,9 @@ const feedSteps = {
       ]}
     },
     { type:'relay',  agent:'data', to:'ts',   msg:'3 LSASS access events from non-standard processes on WIN-DC01 · all within jsmith session window · results attached' },
-    { type:'runbook',agent:'ts',   msg:'get_runbook("T1003.001") → LSASS memory access · critical indicator: handle 0x1fffff · FP: exclude signed AV/EDR images' },
+    { type:'reason', agent:'ts',   msg:'rows 2–3 (handle 0x1410) are read-only memory access — benign, typical of monitoring tools · only row 1 (PID 7340, handle 0x1fffff) is PROCESS_ALL_ACCESS — that is the critical hit' },
+    { type:'reason', agent:'ts',   msg:'SK-029 criteria applied: PROCESS_ALL_ACCESS (0x1fffff) on lsass.exe from unsigned or LOLBin source · rundll32.exe with no command-line args is consistent with reflective shellcode injection',
+      detail:'Handle access breakdown:\n• 0x1fffff (PROCESS_ALL_ACCESS) — full read/write/execute on process memory; used by credential dumpers (Mimikatz, Cobalt Strike in-memory dump)\n• 0x1410 (PROCESS_QUERY_INFORMATION | VM_READ) — read-only; used by AV/monitoring tools, cannot dump credentials\nSK-029 fires only on 0x1fffff from non-AV source images. PID 7340 (rundll32.exe, no args, unsigned) is a LOLBin — exact match to SK-029 evasion pattern.' },
     { type:'warn',   agent:'ts',   msg:'🔴 rundll32.exe opened LSASS with PROCESS_ALL_ACCESS (0x1fffff) on WIN-DC01 at 01:38:22 UTC · risk score 94',
       detail:'rundll32.exe (C:\\Windows\\System32\\rundll32.exe) opened lsass.exe with handle 0x1fffff at 01:38:22 UTC. Process tree: explorer.exe → cmd.exe (PID 4812) → rundll32.exe (PID 7340). No command-line args — consistent with reflective shellcode injection. Matches SK-029 LSASS evasion pattern exactly.' },
     { type:'relay',  agent:'ts',   to:'orch', msg:'🔴 CRITICAL FINDING — LSASS credential dump on Tier-0 DC WIN-DC01 · rundll32 PROCESS_ALL_ACCESS · score 94 · recommend immediate analyst escalation' },
@@ -183,20 +177,11 @@ const feedSteps = {
     { type:'relay',  agent:'dl',   to:'rv',   msg:'please validate DL-2026-041-001 (T1570-psexec-admin-drop) · SCCM exclusion applied · EventCode=5145 joined with EventCode=7045' },
     { type:'tool',   agent:'rv',   msg:'validating DL-2026-041-001 · schema check · CIM field mapping · FP rate simulation against 30-day baseline…' },
     { type:'relay',  agent:'rv',   to:'dl',   msg:'DL-2026-041-001 PASS · schema OK · FP rate 1.4% confirmed · SCCM host exclusions verified · cleared for deployment' },
-    { type:'tool',   agent:'dl',   msg:'generating SPL rule for H-02 · T1003.001 — LSASS PROCESS_ALL_ACCESS handle from non-AV process…' },
-    { type:'relay',  agent:'dl',   to:'rv',   msg:'please validate DL-2026-041-002 (T1003.001-lsass-full-access) · SK-029 exclusion list applied · targeting FP < 2%' },
-    { type:'tool',   agent:'rv',   msg:'validating DL-2026-041-002 · schema check · GrantedAccess field mapping · FP simulation…' },
+    { type:'tool',   agent:'dl',   msg:'generating + submitting rules DL-2026-041-002/003/004 to Rule Validation · T1003.001 (SK-029 exclusions), T1558.003 (147-entry SPN list), T1071.001 (JA3 hash set + beacon stdev < 5s)' },
     { type:'relay',  agent:'rv',   to:'dl',   msg:'DL-2026-041-002 PASS · schema OK · FP rate 0.9% · SK-029 exclusions verified · cleared for deployment' },
-    { type:'tool',   agent:'dl',   msg:'tuning H-03 · T1558.003 Kerberoasting rule · applying 147-entry BackupExec + MSSQLSvc SPN exclusion list…' },
-    { type:'relay',  agent:'dl',   to:'rv',   msg:'please validate DL-2026-041-003 (T1558.003-kerberoasting) · SPN exclusion from Hypothesis package applied · targeting FP < 1%' },
-    { type:'tool',   agent:'rv',   msg:'validating DL-2026-041-003 · BackupExec + MSSQLSvc exclusion list integrity check · FP rate simulation…' },
     { type:'relay',  agent:'rv',   to:'dl',   msg:'DL-2026-041-003 PASS · schema OK · FP rate 0.4% · all 147 SPN exclusions verified · cleared for deployment' },
-    { type:'tool',   agent:'dl',   msg:'generating SPL rule for H-04 · T1071.001 — JA3 fingerprint match + beacon interval regularity (stdev < 5s)…' },
-    { type:'relay',  agent:'dl',   to:'rv',   msg:'please validate DL-2026-041-004 (T1071.001-c2-beacon-ja3) · known Cobalt Strike JA3 hashes · 30m bucket interval analysis' },
-    { type:'tool',   agent:'rv',   msg:'validating DL-2026-041-004 · JA3 hash list integrity check · stdev calculation · FP simulation against Zeek baseline…' },
     { type:'relay',  agent:'rv',   to:'dl',   msg:'DL-2026-041-004 PASS · schema OK · FP rate 0.2% · JA3 hashes verified against threat intel feed · cleared for deployment' },
     { type:'relay',  agent:'dl',   to:'orch', msg:'all 4 rules validated · DL-2026-041-001 PASS (T1570) · DL-2026-041-002 PASS (T1003.001) · DL-2026-041-003 PASS (T1558.003) · DL-2026-041-004 PASS (T1071.001) · pushing to Splunk ES now' },
-    { type:'relay',  agent:'orch', to:'dl',   msg:'confirmed · all 4 PASS · package logged to Keep stage · hunt TH-2026-041 entering evidence consolidation' },
     { type:'done',   agent:'dl',   msg:'4 rules deployed to Splunk ES queue · 4 PASS · hunt TH-2026-041 detection coverage active',
       detail:'Deployment summary:\n• DL-2026-041-001 (T1570 — PsExec ADMIN$ drop): PASS · FP 1.4% · severity HIGH\n• DL-2026-041-002 (T1003.001 — LSASS full-access handle): PASS · FP 0.9% · severity CRITICAL\n• DL-2026-041-003 (T1558.003 — Kerberoasting RC4 burst): PASS · FP 0.4% · severity HIGH\n• DL-2026-041-004 (T1071.001 — C2 JA3 beacon): PASS · FP 0.2% · severity CRITICAL\nAll 4 queued in Splunk ES deployment pipeline. No analyst WARN items.' },
   ],
@@ -214,6 +199,10 @@ const _thinkDelayBase = { reason:900, tool:480, relay:250, done:200, warn:680, e
 
 function _highlightSpl(raw) {
   let s = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Quoted strings FIRST — before any spans are injected, so the regex cannot
+  // accidentally match class="spl-xxx" attribute values inside later-added spans
+  // and corrupt the HTML structure.
+  s = s.replace(/"([^"]*?)"/g,'<span class="spl-val">"$1"</span>');
   // Commands (before keywords so "stats count" hits command first)
   ['stats','timechart','chart','table','top','rare','bucket','eval','rex','rename','dedup','sort','head','tail','transaction','lookup','inputlookup','outputlookup','collect','sendemail','anomalydetection'].forEach(c => {
     s = s.replace(new RegExp('\\b(' + c + ')\\b','gi'), '<span class="spl-cmd">$1</span>');
@@ -224,9 +213,7 @@ function _highlightSpl(raw) {
   });
   // Pipes
   s = s.replace(/\|/g,'<span class="spl-pipe">|</span>');
-  // Quoted strings
-  s = s.replace(/"([^"]*?)"/g,'<span class="spl-val">"$1"</span>');
-  // field=value (not inside already-replaced tags)
+  // field=value (not followed by " so span attributes are skipped)
   s = s.replace(/([a-zA-Z_]\w*)=(?!")/g,'<span class="spl-fld">$1</span>=');
   return s;
 }
@@ -419,6 +406,17 @@ function feedAddBlock(e, doStream = false) {
     rWrap.className = 'feed-results';
     rWrap.innerHTML = `<table class="feed-results-table"><thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     el.appendChild(rWrap);
+  }
+
+  // Visual grouping: consecutive messages from the same agent+direction merge into one card
+  const prevBlock = feed.lastElementChild;
+  if (prevBlock &&
+      prevBlock.classList.contains('feed-block') &&
+      !prevBlock.classList.contains('feed-block-sep') &&
+      prevBlock.dataset.agent === agent &&
+      prevBlock.dataset.to === (to || '')) {
+    el.classList.add('feed-block-continued');
+    prevBlock.classList.add('feed-block-precedes-continued');
   }
 
   feed.appendChild(el);
@@ -811,6 +809,41 @@ const closedLearnData = {
     ],
   },
 };
+
+// ── Feed data integrity validator ──────────────────────────────────────────
+// Runs once at page load. Any entry that references an agent key not present
+// in feedAgents / feedAgentColors fires a console.warn immediately, making
+// regressions visible without needing to step through the pipeline manually.
+// To fix a warning: add the missing key to BOTH feedAgents AND feedAgentColors.
+function _validateFeedData() {
+  const known = new Set(Object.keys(feedAgents));
+
+  // 1. feedAgents ↔ feedAgentColors must be in sync
+  const missingColor = Object.keys(feedAgents).filter(k => !feedAgentColors[k]);
+  if (missingColor.length) {
+    console.warn('[pipeline] feedAgents ↔ feedAgentColors mismatch — no color entry for:', missingColor.join(', '));
+  }
+
+  // 2. Check every entry in a feed array
+  function checkEntries(source, entries) {
+    entries.forEach((e, i) => {
+      if (!e || e.sep) return;
+      if (e.agent && !known.has(e.agent)) {
+        console.warn(`[pipeline] ${source}[${i}]: agent "${e.agent}" not in feedAgents — will render as generic 🤖 with no colour`);
+      }
+      if (e.to && !known.has(e.to)) {
+        console.warn(`[pipeline] ${source}[${i}]: to "${e.to}" not in feedAgents — relay header will render as generic 🤖 with no colour`);
+      }
+    });
+  }
+
+  // 3. Validate live feed steps and all closed-hunt archives
+  Object.entries(feedSteps).forEach(([step, entries]) =>
+    checkEntries(`feedSteps[${step}]`, entries));
+  Object.entries(closedHuntFeeds).forEach(([hunt, entries]) =>
+    checkEntries(`closedHuntFeeds['${hunt}']`, entries));
+}
+_validateFeedData();
 
 // ── Load pre-baked pipeline state for closed/archived hunts ──
 function loadClosedPipeline(huntId, keepId) {

@@ -328,16 +328,6 @@ function switchKeepHunt(id) {
     // Show a clear placeholder instead of stale content
     const el = document.getElementById('keep-hunt-creator');
     if (el) el.innerHTML = '';
-    document.getElementById('keep-lock-chip').textContent = 'TH-2026-' + id;
-    const statusEl = document.getElementById('keep-lock-status');
-    if (statusEl) { statusEl.textContent = 'Draft'; statusEl.className = 'chip chip-gray'; }
-    document.getElementById('keep-lock-body').innerHTML = `
-      <div class="lock-4col-cell" style="grid-column:1/-1;padding:20px 18px;">
-        <div style="font-size:12px;color:var(--muted);text-align:center;">
-          📋 Keep stage not available — this hunt is still in <b style="color:var(--text);">Draft</b>.<br>
-          <span style="font-size:11px;">Complete Learn, Observe and Check before a LOCK record can be filed.</span>
-        </div>
-      </div>`;
     document.getElementById('keep-findings-list').innerHTML = '';
     document.getElementById('keep-crit-chip').textContent = '—';
     document.getElementById('keep-high-chip').textContent = '—';
@@ -355,7 +345,6 @@ function switchKeepHunt(id) {
   // Always show the Hunt Report expanded when switching hunts so updated content is visible
   const reportCard = document.getElementById('card-report');
   if (reportCard) reportCard.classList.remove('card-collapsed');
-  // Scroll Keep pane back to top so LOCK Record is visible first
   const keepPane = document.getElementById('subpane-keep');
   if (keepPane) keepPane.scrollTop = 0;
 }
@@ -384,33 +373,8 @@ function renderKeepHunt(id) {
     creatorEl.innerHTML = `${avatarHTML(d.createdBy)}<span>Hunt started by <b>${creator.name}</b></span><span style="color:var(--border2);">·</span><span>${creator.role}</span><span style="color:var(--border2);">·</span><span>${d.createdAt}</span>`;
   }
 
-  // LOCK chip + 4-col body
-  document.getElementById('keep-lock-chip').textContent = d.title;
-  const statusEl = document.getElementById('keep-lock-status');
-  if (statusEl) {
-    statusEl.textContent = d.labelClass === 'chip-red' ? 'Active' : 'Closed';
-    statusEl.className = 'chip ' + (d.labelClass === 'chip-red' ? 'chip-red' : 'chip-gray');
-  }
   // Use per-subhunt lock text if a subhunt is selected
   const activeSH = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
-  const lock = (activeSH && d.subhuntLock && d.subhuntLock[activeSH]) ? d.subhuntLock[activeSH] : d.lock;
-  document.getElementById('keep-lock-body').innerHTML = `
-    <div class="lock-4col-cell">
-      <div class="lock-cell-head"><span class="lock-letter lock-l">L</span><span class="lock-cell-label">Learn</span></div>
-      <div class="lock-cell-text">${lock.l}</div>
-    </div>
-    <div class="lock-4col-cell">
-      <div class="lock-cell-head"><span class="lock-letter lock-o">O</span><span class="lock-cell-label">Observe</span></div>
-      <div class="lock-cell-text">${lock.o}</div>
-    </div>
-    <div class="lock-4col-cell">
-      <div class="lock-cell-head"><span class="lock-letter lock-c">C</span><span class="lock-cell-label">Check</span></div>
-      <div class="lock-cell-text">${lock.c}</div>
-    </div>
-    <div class="lock-4col-cell">
-      <div class="lock-cell-head"><span class="lock-letter lock-k">K</span><span class="lock-cell-label">Keep</span></div>
-      <div class="lock-cell-text"${lock.kItalic?' style="font-style:italic;"':''}>${lock.k}</div>
-    </div>`;
 
   // When a subhunt is selected, scope findings + timeline to that TTP
   let scopedD = d;
@@ -426,7 +390,6 @@ function renderKeepHunt(id) {
 
   renderKeepFindings(scopedD);
   renderKeepTimeline(scopedD);
-  renderGateDecisionLog(id);
   renderEvidenceGraph(d);
 
   // Similar hunts summary

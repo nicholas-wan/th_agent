@@ -126,3 +126,26 @@
 - **Version Control:** GitHub Enterprise (self-hosted, github.corp.internal)
 - **Project Management:** Jira Software (cloud)
 - **Business Applications:** SAP S/4HANA (ERP), Salesforce (CRM)
+
+---
+
+## Crown Jewels
+
+> Assets and accounts with the highest blast radius or direct hunt relevance. Update after any significant infrastructure change or privileged account review.
+
+### Tier-0 Assets
+
+- **Name:** WIN-DC01 | **Icon:** 🖥️ | **Role:** Primary Domain Controller (HQ) | **IP:** 10.0.1.10 | **Segment:** Corp-Core (10.0.1.0/24) | **Blast:** Full domain compromise — all user accounts, GPOs, trusts, and Kerberos infrastructure | **Exposure:** high | **TTP:** T1078.002
+- **Name:** WIN-DC02 | **Icon:** 🖥️ | **Role:** Secondary Domain Controller (HQ) | **IP:** 10.0.1.11 | **Segment:** Corp-Core (10.0.1.0/24) | **Blast:** Full domain compromise — replication partner to DC01; failover DC | **Exposure:** medium
+
+### Tier-1 Assets
+
+- **Name:** WIN-SQL02 | **Icon:** 🗄️ | **Role:** SQL Server — ERP & Finance Backend | **IP:** 10.0.2.20 | **Segment:** App-Tier (10.0.2.0/24) | **Blast:** Finance and ERP data exfiltration; SAP S/4HANA backend | **Exposure:** high | **TTP:** T1505.001
+- **Name:** WIN-FS01 | **Icon:** 📁 | **Role:** File Server — Legacy CIFS Share | **IP:** 10.0.2.30 | **Segment:** App-Tier (10.0.2.0/24) | **Blast:** Internal file share exfiltration; departmental and HR data | **Exposure:** medium
+- **Name:** SIEM01 | **Icon:** 📊 | **Role:** Splunk Enterprise Security (primary indexer) | **IP:** 10.0.3.10 | **Segment:** Security-OOB (10.0.3.0/24) | **Blast:** Loss of all detection visibility across the environment | **Exposure:** low
+
+### Critical Accounts
+
+- **Name:** CORP\jsmith | **Icon:** 👤 | **Type:** Domain Admin | **Group:** Domain Admins | **Exposure:** high | **TTP:** T1078.002 | **Desc:** Primary domain admin — directly targeted in Volt Typhoon lateral movement chain; holds Tier-0 access to all DCs
+- **Name:** svc-backup | **Icon:** ⚙️ | **Type:** Service Account | **Group:** Backup Operators | **Exposure:** medium | **Desc:** Backup service account with local admin on all servers; high-value target for privilege escalation via token impersonation
+- **Name:** svc-splunk | **Icon:** ⚙️ | **Type:** Service Account | **Group:** Security Ops | **Exposure:** low | **Desc:** Splunk indexer service account; read access to all log data across every index
