@@ -3006,6 +3006,19 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
       <div class="faq-cat-label">Detection &amp; Analysis</div>
 
       <details class="faq-item">
+        <summary class="faq-q">Why does RAA run before detection logic in the Check stage?</summary>
+        <div class="faq-a">
+          <p>RAA (Reasoning Augmented Analytics) runs first because a <b>pre-built analytic is a stronger signal than a freshly-written rule</b>. When we already have a vetted analytic for a behaviour, we treat its verdict as superior to a SPL rule for three reasons:</p>
+          <ul>
+            <li><b>It is validated</b> — RAA analytics have been tuned and regression-tested across prior hunts, so their false-positive profile is already known. A new rule has not yet earned that trust.</li>
+            <li><b>It reasons over behaviour, not strings</b> — RAA evaluates process-chain and command-line <i>anomalies</i> against a learned baseline, catching variants that a literal rule match would miss.</li>
+            <li><b>It frames the rule-writing</b> — the RAA findings define exactly which gaps remain, so the Detection Logic agent writes rules to <i>close specific gaps</i> rather than re-deriving the whole hypothesis from scratch.</li>
+          </ul>
+          <p>In short: if a pre-built analytic covers the behaviour, lead with it and let detection logic backfill the gaps it can't see. SPL rules are still essential for environment-specific coverage, scheduling, and alerting — but they sit downstream of the analytic, not ahead of it.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
         <summary class="faq-q">How do I read the Check Summary card?</summary>
         <div class="faq-a">
           <p>The <b>Check Summary</b> card appears at the top of the Check stage and has two states:</p>
