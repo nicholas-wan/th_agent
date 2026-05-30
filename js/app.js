@@ -795,33 +795,23 @@ function runPipeline() {
   btn.disabled = true;
   btn.textContent = '⏳ Running…';
 
-  // Reset pipeline to step 0
-  for (let j = 0; j < 5; j++) {
-    const n = document.getElementById('ps' + j);
-    if (n) n.className = 'ps-node ' + (j === 0 ? 'curr' : 'wait');
-    if (j < 4) {
-      const l = document.getElementById('pl' + j);
-      if (l) l.className = 'ps-line';
-    }
-    const s = document.getElementById('stage-' + j);
-    if (s) s.className = 'stage card' + (j === 0 ? ' show' : '');
-  }
+  // Select the CTI report — this triggers step 0→1, populates TTPs, and starts the feed.
+  // selectReport handles its own 400ms delay for TTP rendering, so we offset all
+  // subsequent stage advances relative to that baseline.
+  selectReport('r1');
+
   const tsPill = document.getElementById('ts-pill');
   const dlPill = document.getElementById('dl-pill');
   if (tsPill) tsPill.style.opacity = '0.4';
   if (dlPill) dlPill.style.opacity = '0.4';
 
-  const body = document.querySelector('.learn-body');
   const scrollToStage = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Advance through each stage with delays.
-  // Timings are computed from the sequential entry chain duration per step
-  // (inter-gap + think delay + typewriter time for every entry in the step).
+  // Advance through stages 2-4 with delays (stage 0→1 is handled by selectReport).
   const steps = [
-    { delay:  8000, step: 1, stage: 'stage-1' },
     { delay: 22000, step: 2, stage: 'stage-2' },
     { delay: 40000, step: 3, stage: 'stage-3' },
     { delay: 74000, step: 4, stage: 'stage-4' },
