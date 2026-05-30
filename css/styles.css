@@ -90,6 +90,8 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .stat-card.c-indigo::after { background: var(--indigo); }
 .stat-card .val { font-size: 28px; font-weight: 700; line-height: 1; margin: 5px 0 3px; }
 .stat-card .note { font-size: 11px; color: var(--sub); }
+.stat-card.clickable { cursor: pointer; transition: transform .15s, border-color .15s; }
+.stat-card.clickable:hover { transform: translateY(-2px); border-color: var(--border2); }
 
 .hunts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
 .hunt-card { background: var(--s1); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: border-color .15s, transform .15s; }
@@ -105,6 +107,20 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .hc-foot { padding: 8px 15px; border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 6px; justify-content: space-between; }
 .hc-open { color: var(--blue); font-weight: 700; font-size: 11px; flex-shrink: 0; opacity: 0; transition: opacity .15s; }
 .hunt-card:hover .hc-open { opacity: 1; }
+
+/* ── Completed Hunts Table ── */
+.completed-hunts-table { background: var(--s1); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.completed-hunts-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.completed-hunts-table thead th { text-align: left; padding: 9px 12px; font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); background: var(--s2); white-space: nowrap; }
+.completed-hunts-table tbody tr { cursor: pointer; transition: background .12s; border-bottom: 1px solid var(--border); }
+.completed-hunts-table tbody tr:last-child { border-bottom: none; }
+.completed-hunts-table tbody tr:hover { background: var(--s2); }
+.completed-hunts-table td { padding: 8px 12px; color: var(--sub); white-space: nowrap; }
+.completed-hunts-table td:nth-child(2) { white-space: normal; color: var(--text); font-weight: 500; max-width: 340px; }
+.completed-hunts-table .cht-id { font-family: monospace; font-size: 11px; color: var(--blue); font-weight: 600; }
+.cht-search { background: var(--s2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 5px 10px; font-size: 11px; color: var(--text); width: 200px; outline: none; }
+.cht-search:focus { border-color: var(--blue); }
+.cht-search::placeholder { color: var(--muted); }
 
 
 /* ═══════════════════════════════════════

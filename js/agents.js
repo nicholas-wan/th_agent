@@ -177,7 +177,7 @@ function openHuntDrawer(id) {
       <span class="kv-k">Hunt ID</span><span class="kv-v">${id}</span>
       <span class="kv-k">Status</span><span class="kv-v" style="color:${active?'var(--blue)':'var(--green)'}">${active?'● Active':'✓ Complete'}</span>
       <span class="kv-k">CTI Source</span><span class="kv-v">CISA AA24-038A</span>
-      <span class="kv-k">Analyst</span><span class="kv-v">jdoe</span>
+      <span class="kv-k">Analyst</span><span class="kv-v">ntan</span>
       <span class="kv-k">LOCK Stage</span><span class="kv-v">${active?'Observe → Check':'Keep (closed)'}</span>
     </div></div>
     ${active ? `<button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="goTab('observe',document.querySelectorAll('.nav-tab')[1])">Open in Observe →</button>` : ''}`;

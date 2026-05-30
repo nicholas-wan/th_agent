@@ -70,10 +70,9 @@
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-weight:700;font-size:16px;">Threat Hunts</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;">LOCK Pattern · Maturity Level 4 · <span style="color:var(--blue);font-weight:600;">Click a hunt to open its pipeline</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">LOCK Pattern · <span style="color:var(--blue);font-weight:600;">Click a hunt to open its pipeline</span></div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline btn-sm">Filter</button>
         <button class="btn btn-primary btn-sm" onclick="openModal()">+ New Hunt</button>
       </div>
     </div>
@@ -84,93 +83,184 @@
     </div>
 
     <div class="stat-row">
-      <div class="stat-card c-red">
+      <div class="stat-card c-green clickable" onclick="goTab('coverage',document.querySelectorAll('.nav-tab')[2])">
+        <div class="label">Rules Deployed</div>
+        <div class="val">8</div>
+        <div class="note">Sent to Det. Eng. →</div>
+      </div>
+      <div class="stat-card c-yellow clickable" onclick="goTab('coverage',document.querySelectorAll('.nav-tab')[2])">
+        <div class="label">Rules in Testing</div>
+        <div class="val">3</div>
+        <div class="note">Back-testing in Splunk →</div>
+      </div>
+      <div class="stat-card c-indigo clickable" onclick="goTab('coverage',document.querySelectorAll('.nav-tab')[2])">
+        <div class="label">MITRE Coverage</div>
+        <div class="val">15</div>
+        <div class="note">Techniques with rules →</div>
+      </div>
+      <div class="stat-card c-red clickable" onclick="openHunt('TH-2026-041');setTimeout(()=>goSubTab('keep',document.getElementById('subtab-keep')),150)">
         <div class="label">Critical Findings</div>
         <div class="val">3</div>
-        <div class="note">+2 this week</div>
+        <div class="note">+2 from TH-2026-041 →</div>
       </div>
-      <div class="stat-card c-yellow">
-        <div class="label">Active Hunts</div>
-        <div class="val">1</div>
-        <div class="note">TH-2026-041</div>
-      </div>
-      <div class="stat-card c-blue">
-        <div class="label">IOCs Matched</div>
-        <div class="val">89</div>
-        <div class="note">342 signatures loaded</div>
-      </div>
-      <div class="stat-card c-green">
-        <div class="label">Assets Covered</div>
-        <div class="val">98%</div>
-        <div class="note">2,412 endpoints</div>
-      </div>
-      <div class="stat-card c-indigo">
-        <div class="label">MITRE Techniques</div>
-        <div class="val">14</div>
-        <div class="note">+5 new TTPs</div>
+      <div class="stat-card c-blue clickable" onclick="openHunt('TH-2026-041')">
+        <div class="label">Hunts Completed</div>
+        <div class="val">2</div>
+        <div class="note">1 active · 2 closed →</div>
       </div>
     </div>
 
+    <!-- ── Active Hunts (full cards) ── -->
+    <div style="font-weight:600;font-size:13px;color:var(--sub);margin-bottom:6px;">Active Hunts</div>
     <div class="hunts-grid">
+      <div class="hunt-card active" onclick="openHunt('TH-2026-042')">
+        <div class="hc-top">
+          <div class="hc-id"><span>TH-2026-042</span> <span class="chip chip-blue">● Active</span></div>
+          <div class="hc-title">Privileged Account Abuse &amp; DCSync Staging — Tier-0 Assets</div>
+          <div class="hc-tags">
+            <span class="chip chip-red">Critical</span>
+            <span class="chip chip-yellow">2 Rules in Testing</span>
+          </div>
+        </div>
+        <div class="hc-stats">
+          <div class="hc-stat"><b>3</b>TTPs</div>
+          <div class="hc-stat"><b>1</b>Critical</div>
+          <div class="hc-stat"><b>18m</b>Runtime</div>
+        </div>
+        <div class="hc-foot"><div style="display:flex;align-items:center;gap:6px;"><div class="live-dot" style="width:5px;height:5px;"></div> Running · Apr 28 2026 · mwebb</div><span class="hc-open">Open →</span></div>
+      </div>
+
       <div class="hunt-card active" onclick="openHunt('TH-2026-041')">
         <div class="hc-top">
           <div class="hc-id"><span>TH-2026-041</span> <span class="chip chip-blue">● Active</span></div>
           <div class="hc-title">Volt Typhoon Lateral Movement &amp; Credential Harvesting — Corp Domain</div>
           <div class="hc-tags">
             <span class="chip chip-red">Critical</span>
-            <span class="chip chip-indigo">Volt Typhoon CTI</span>
-            <span class="chip chip-gray">L4 Multi-Agent</span>
+            <span class="chip chip-yellow">3 Rules in Testing</span>
+            <span class="chip chip-green">1 Rule Deployed</span>
           </div>
         </div>
         <div class="hc-stats">
-          <div class="hc-stat"><b>5</b>Agents</div>
+          <div class="hc-stat"><b>4</b>TTPs</div>
           <div class="hc-stat"><b>3</b>Critical</div>
           <div class="hc-stat"><b>26m</b>Runtime</div>
         </div>
-        <div class="hc-foot"><div style="display:flex;align-items:center;gap:6px;"><div class="live-dot" style="width:5px;height:5px;"></div> Running · Apr 27 2026 · jdoe</div><span class="hc-open">Open →</span></div>
+        <div class="hc-foot"><div style="display:flex;align-items:center;gap:6px;"><div class="live-dot" style="width:5px;height:5px;"></div> Running · Apr 27 2026 · ntan</div><span class="hc-open">Open →</span></div>
       </div>
+    </div>
 
-      <div class="hunt-card" onclick="openHunt('TH-2026-040')">
-        <div class="hc-top">
-          <div class="hc-id"><span>TH-2026-040</span> <span class="chip chip-green">✓ Complete</span></div>
-          <div class="hc-title">Ransomware Pre-cursor BEC Activity — Finance Segment</div>
-          <div class="hc-tags"><span class="chip chip-yellow">High</span><span class="chip chip-gray">Mandiant APT41</span></div>
-        </div>
-        <div class="hc-stats">
-          <div class="hc-stat"><b>3</b>Agents</div>
-          <div class="hc-stat"><b>7</b>Findings</div>
-          <div class="hc-stat"><b>2h 14m</b>Runtime</div>
-        </div>
-        <div class="hc-foot"><span>Closed Apr 24 2026 · Escalated to IR · msmith</span><span class="hc-open">Open →</span></div>
-      </div>
-
-      <div class="hunt-card" onclick="openHunt('TH-2026-039')">
-        <div class="hc-top">
-          <div class="hc-id"><span>TH-2026-039</span> <span class="chip chip-green">✓ Complete</span></div>
-          <div class="hc-title">Supply Chain Compromise Indicators — DevOps Pipeline</div>
-          <div class="hc-tags"><span class="chip chip-yellow">Medium</span><span class="chip chip-gray">CISA AA24-038A</span></div>
-        </div>
-        <div class="hc-stats">
-          <div class="hc-stat"><b>4</b>Agents</div>
-          <div class="hc-stat"><b>2</b>Findings</div>
-          <div class="hc-stat"><b>45m</b>Runtime</div>
-        </div>
-        <div class="hc-foot"><span>Closed Apr 19 2026 · No escalation · jdoe</span><span class="hc-open">Open →</span></div>
-      </div>
-
-      <div class="hunt-card" onclick="openHunt('TH-2026-038')">
-        <div class="hc-top">
-          <div class="hc-id"><span>TH-2026-038</span> <span class="chip chip-gray">Draft</span></div>
-          <div class="hc-title">DNS Tunneling &amp; C2 Beacon Detection — All Segments</div>
-          <div class="hc-tags"><span class="chip chip-gray">Unscored</span><span class="chip chip-gray">Custom IOC List</span></div>
-        </div>
-        <div class="hc-stats">
-          <div class="hc-stat"><b>—</b>Agents</div>
-          <div class="hc-stat"><b>—</b>Findings</div>
-          <div class="hc-stat"><b>Draft</b></div>
-        </div>
-        <div class="hc-foot"><span>Created Apr 27 2026 · Not started · klee</span><span class="hc-open">Open →</span></div>
-      </div>
+    <!-- ── Completed Hunts (compact table) ── -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 6px;">
+      <div style="font-weight:600;font-size:13px;color:var(--sub);">Completed Hunts</div>
+      <input class="cht-search" id="cht-search" placeholder="Search hunts…" oninput="filterCompletedHunts(this.value)" autocomplete="off">
+    </div>
+    <div class="completed-hunts-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Hunt ID</th>
+            <th>Title</th>
+            <th>Severity</th>
+            <th>TTPs</th>
+            <th>Findings</th>
+            <th>Rules Deployed</th>
+            <th>Closed</th>
+            <th>Analyst</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr onclick="openHunt('TH-2026-040')">
+            <td class="cht-id">TH-2026-040</td>
+            <td>Ransomware Pre-cursor BEC Activity — Finance Segment</td>
+            <td><span class="chip chip-yellow">High</span></td>
+            <td>2</td>
+            <td>7</td>
+            <td>3</td>
+            <td>Apr 24 2026</td>
+            <td>msmith</td>
+          </tr>
+          <tr onclick="openHunt('TH-2026-039')">
+            <td class="cht-id">TH-2026-039</td>
+            <td>Supply Chain Compromise Indicators — DevOps Pipeline</td>
+            <td><span class="chip chip-yellow">Medium</span></td>
+            <td>2</td>
+            <td>2</td>
+            <td>2</td>
+            <td>Apr 19 2026</td>
+            <td>jdoe</td>
+          </tr>
+          <tr onclick="openHunt('TH-2026-038')">
+            <td class="cht-id">TH-2026-038</td>
+            <td>Volt Typhoon Living off the Land — Server Farm</td>
+            <td><span class="chip chip-red">Critical</span></td>
+            <td>3</td>
+            <td>4</td>
+            <td>5</td>
+            <td>Feb 14 2026</td>
+            <td>mwebb</td>
+          </tr>
+          <tr onclick="openHunt('TH-2026-018')">
+            <td class="cht-id">TH-2026-018</td>
+            <td>Volt Typhoon Detection Refinement — Kerberoasting &amp; LSASS Tuning</td>
+            <td><span class="chip chip-yellow">Medium</span></td>
+            <td>3</td>
+            <td>1</td>
+            <td>2</td>
+            <td>Feb 22 2026</td>
+            <td>schen</td>
+          </tr>
+          <tr onclick="openHunt('TH-2026-035')">
+            <td class="cht-id">TH-2026-035</td>
+            <td>APT41 Dual-Use Credential Theft — Domain Controllers</td>
+            <td><span class="chip chip-yellow">High</span></td>
+            <td>2</td>
+            <td>2</td>
+            <td>3</td>
+            <td>Jan 08 2026</td>
+            <td>mwebb</td>
+          </tr>
+          <tr onclick="openHunt('TH-2025-091')">
+            <td class="cht-id">TH-2025-091</td>
+            <td>C2 Beacon Detection — JA3 Fingerprint Sweep</td>
+            <td><span class="chip chip-yellow">Medium</span></td>
+            <td>2</td>
+            <td>0</td>
+            <td>1</td>
+            <td>Nov 18 2025</td>
+            <td>mwebb</td>
+          </tr>
+          <tr onclick="openHunt('TH-2025-088')">
+            <td class="cht-id">TH-2025-088</td>
+            <td>TA577 Phishing Cluster — Finance &amp; HR Mailboxes</td>
+            <td><span class="chip chip-yellow">High</span></td>
+            <td>3</td>
+            <td>5</td>
+            <td>2</td>
+            <td>Oct 22 2025</td>
+            <td>psharma</td>
+          </tr>
+          <tr onclick="openHunt('TH-2025-087')">
+            <td class="cht-id">TH-2025-087</td>
+            <td>Insider Threat — Anomalous Data Staging on File Servers</td>
+            <td><span class="chip chip-yellow">Medium</span></td>
+            <td>2</td>
+            <td>1</td>
+            <td>1</td>
+            <td>Oct 10 2025</td>
+            <td>rkowalski</td>
+          </tr>
+          <tr onclick="openHunt('TH-2025-079')">
+            <td class="cht-id">TH-2025-079</td>
+            <td>Golden Ticket &amp; DCSync Detection — Tier-0 Assets</td>
+            <td><span class="chip chip-red">Critical</span></td>
+            <td>3</td>
+            <td>3</td>
+            <td>4</td>
+            <td>Sep 14 2025</td>
+            <td>ntan</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
@@ -197,6 +287,12 @@
             <div class="hsw-title">Volt Typhoon Lateral Movement &amp; Credential Harvesting — Corp Domain</div>
           </div>
         </div>
+        <div class="hunt-switch-item" id="hsw-TH-2026-042" onclick="openHunt('TH-2026-042');closeHuntSwitcher()">
+          <div class="hsw-info">
+            <div class="hsw-id"><span>TH-2026-042</span><span class="chip chip-red" style="font-size:9px;">Active</span></div>
+            <div class="hsw-title">Privileged Account Abuse &amp; DCSync Staging — Tier-0 Assets</div>
+          </div>
+        </div>
         <div class="hunt-switch-item" id="hsw-TH-2026-040" onclick="openHunt('TH-2026-040');closeHuntSwitcher()">
           <div class="hsw-info">
             <div class="hsw-id"><span>TH-2026-040</span><span class="chip chip-green" style="font-size:9px;">Closed</span></div>
@@ -207,12 +303,6 @@
           <div class="hsw-info">
             <div class="hsw-id"><span>TH-2026-039</span><span class="chip chip-green" style="font-size:9px;">Closed</span></div>
             <div class="hsw-title">Supply Chain Compromise Indicators — DevOps Pipeline</div>
-          </div>
-        </div>
-        <div class="hunt-switch-item" id="hsw-TH-2026-038" onclick="openHunt('TH-2026-038');closeHuntSwitcher()">
-          <div class="hsw-info">
-            <div class="hsw-id"><span>TH-2026-038</span><span class="chip chip-gray" style="font-size:9px;">Draft</span></div>
-            <div class="hsw-title">DNS Tunneling &amp; C2 Beacon Detection — All Segments</div>
           </div>
         </div>
       </div>
@@ -1683,7 +1773,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
       <div class="hx-connector">›</div>
       <div class="hx-run current">
         <div class="hx-run-id">TH-2026-041 <span class="chip chip-indigo" style="font-size:9px;">Current</span></div>
-        <div class="hx-run-date">9 May 2026</div>
+        <div class="hx-run-date">27 Apr 2026</div>
         <div class="hx-analyst">
           <div class="hx-avatar" style="background:var(--indigo);">NT</div>
           <span class="hx-analyst-name">Nicholas Tan</span>
@@ -1709,7 +1799,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
               <th style="width:170px;">Metric</th>
               <th>TH-2025-091 · Nov 2025 · Marcus Webb</th>
               <th>TH-2026-018 · Feb 2026 · Sarah Chen</th>
-              <th class="hx-th-cur">TH-2026-041 · May 2026 · Nicholas Tan ●</th>
+              <th class="hx-th-cur">TH-2026-041 · Apr 2026 · Nicholas Tan ●</th>
             </tr>
           </thead>
           <tbody>
@@ -1773,19 +1863,19 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         </div>
         <div class="hx-diff-item di-tune">
           <span class="hx-diff-icon">⚙️</span>
-          <div class="hx-diff-text"><b>T1053.005 scheduled task rule refined</b> — SCCM <code>ConfigMgr_*</code> task name exclusion carried forward from TH-2025-091 context. msiexec/setup parent exclusion re-validated against current May 2026 baseline.</div>
+          <div class="hx-diff-text"><b>T1053.005 scheduled task rule refined</b> — SCCM <code>ConfigMgr_*</code> task name exclusion carried forward from TH-2025-091 context. msiexec/setup parent exclusion re-validated against current Apr 2026 baseline.</div>
         </div>
         <div class="hx-diff-item di-esc">
           <span class="hx-diff-icon">📈</span>
-          <div class="hx-diff-text"><b>T1570 Tool Transfer — RAA hits escalating</b> — 31 hits (Feb) → 59 hits (May), <b>+90% in 3 months</b>. Anomalous Command Lines analytic firing at sustained high volume. Recommend active triage — may indicate ongoing lateral tool staging.</div>
+          <div class="hx-diff-text"><b>T1570 Tool Transfer — RAA hits escalating</b> — 31 hits (Feb) → 59 hits (Apr), <b>+90% in 3 months</b>. Anomalous Command Lines analytic firing at sustained high volume. Recommend active triage — may indicate ongoing lateral tool staging.</div>
         </div>
         <div class="hx-diff-item di-esc">
           <span class="hx-diff-icon">📈</span>
-          <div class="hx-diff-text"><b>T1078.002 Valid Accounts — RAA hits escalating</b> — 8 hits (Feb) → 59 hits (May). Correlates with T1570 spike — likely same activity chain. Recommend correlating <code>Account_Name</code> across both TTPs to identify implicated accounts.</div>
+          <div class="hx-diff-text"><b>T1078.002 Valid Accounts — RAA hits escalating</b> — 8 hits (Feb) → 59 hits (Apr). Correlates with T1570 spike — likely same activity chain. Recommend correlating <code>Account_Name</code> across both TTPs to identify implicated accounts.</div>
         </div>
         <div class="hx-diff-item di-add">
           <span class="hx-diff-icon">✅</span>
-          <div class="hx-diff-text"><b>T1003.001 LSASS — first confirmed RAA hits this run</b> — 0 hits (Nov, Feb) → 3 hits (May). LSASS memory access now being detected by Anomalous Process Chains analytic. Previously generated a redundant SPL rule in TH-2025-091; now correctly deferred to RAA.</div>
+          <div class="hx-diff-text"><b>T1003.001 LSASS — first confirmed RAA hits this run</b> — 0 hits (Nov, Feb) → 3 hits (Apr). LSASS memory access now being detected by Anomalous Process Chains analytic. Previously generated a redundant SPL rule in TH-2025-091; now correctly deferred to RAA.</div>
         </div>
       </div>
 

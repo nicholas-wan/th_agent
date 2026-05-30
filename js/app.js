@@ -82,6 +82,13 @@ const checkHuntMeta = {
     statusClass: 'chip-red', statusText: 'Volt Typhoon · Active',
     active: true,
   },
+  '042': {
+    cti: 'Follow-up from TH-2026-041 — DCSync Staging',
+    ttpCount: '3 extracted · 3 selected',
+    hypCount: '3 hypotheses under test',
+    statusClass: 'chip-red', statusText: 'DCSync Staging · Active',
+    active: true,
+  },
   '040': {
     cti: 'FS-ISAC TLP:AMBER — FIN7 Ransomware',
     ttpCount: '9 extracted · 2 prioritized', hypCount: 'Hunt closed — 2 hypotheses confirmed',
@@ -95,13 +102,6 @@ const checkHuntMeta = {
     statusClass: 'chip-green', statusText: 'Supply Chain · Closed',
     active: false,
     closedMsg: 'This hunt closed on 2026-04-14. Detection queries and final results are archived in the <b>Keep</b> tab.',
-  },
-  '038': {
-    cti: 'Internal Intel — DNS Tunneling',
-    ttpCount: '5 TTPs', hypCount: 'No hypotheses yet',
-    statusClass: 'chip-gray', statusText: 'Draft',
-    active: false,
-    closedMsg: 'This hunt is in <b>draft</b> stage. Complete the Learn stage and approve the agent gate to generate hypotheses before running detections.',
   },
 };
 
@@ -156,9 +156,9 @@ function resetCheckForHunt(huntId) {
 // ── Hunt meta for detail pane header ──
 const huntMeta = {
   'TH-2026-041': { status:'Volt Typhoon · Active', statusClass:'chip-red', title:'Volt Typhoon Lateral Movement & Credential Harvesting — Corp Domain', defaultTab:'learn' },
+  'TH-2026-042': { status:'DCSync Staging · Active', statusClass:'chip-red', title:'Privileged Account Abuse & DCSync Staging — Tier-0 Assets', defaultTab:'learn' },
   'TH-2026-040': { status:'FIN7 Ransomware · Closed', statusClass:'chip-green', title:'Ransomware Pre-cursor BEC Activity — Finance Segment', defaultTab:'keep' },
   'TH-2026-039': { status:'Supply Chain · Closed', statusClass:'chip-green', title:'Supply Chain Compromise Indicators — DevOps Pipeline', defaultTab:'keep' },
-  'TH-2026-038': { status:'Draft', statusClass:'chip-gray', title:'DNS Tunneling & C2 Beacon Detection — All Segments', defaultTab:'learn' },
 };
 
 // ── Subhunt sidebar ──
@@ -276,6 +276,13 @@ function closeMobileNav() {
 }
 
 // ── FAQ search filter ──
+function filterCompletedHunts(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('.completed-hunts-table tbody tr').forEach(row => {
+    row.style.display = term === '' || row.textContent.toLowerCase().includes(term) ? '' : 'none';
+  });
+}
+
 function filterFaq(q) {
   const term = q.toLowerCase().trim();
   // Show/hide individual FAQ items

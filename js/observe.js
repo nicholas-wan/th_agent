@@ -161,27 +161,6 @@ const observeData = {
       Authentication: ['svc-build account used outside build windows', 'Downstream host auth anomalies post-infection'],
     }
   },
-  '038': {
-    normal: [
-      { text: 'DNS queries to corporate resolvers (10.0.0.1, 10.0.0.2) with normal subdomain depth (≤ 3 labels)' },
-      { text: 'DNS TXT record queries for SPF/DKIM validation from mail servers — expected periodic pattern' },
-      { text: 'Standard DNS query volumes: < 100 queries/min per host for workstations, < 1000/min for servers' },
-      { text: 'Authorised monitoring tools making DNS queries with known process signatures (SIEM agents, MDR sensors)' },
-    ],
-    suspicious: [
-      { text: 'High-entropy subdomain queries — random-looking labels > 20 chars suggest DNS tunnelling' },
-      { text: 'DNS TXT record queries from non-mail processes — data exfil via TXT record payload' },
-      { text: 'Query volume spike: > 500 queries/min per workstation or > 5000/min per server from single process' },
-      { text: 'Large DNS response payloads (> 512 bytes) from external resolvers — potential C2 channel data delivery' },
-      { text: 'DNS queries to newly registered or low-reputation domains with no prior baseline history' },
-    ],
-    observables: {
-      Processes: ['Any process making high-volume DNS queries', 'Processes querying non-corporate resolvers', 'Dnscat2, iodine, or similar DNS tunnel tooling'],
-      Network: ['High-entropy subdomains (e.g. a1b2c3.evil.com)', 'DNS TXT queries from non-mail processes', 'Large UDP/TCP DNS payloads > 512 bytes', 'Queries to newly registered domains (< 30 days)'],
-      Files: ['DNS tunnel configuration files', 'Exfiltrated data encoded in DNS labels'],
-      Authentication: ['N/A — DNS tunnelling typically bypasses auth layer'],
-    }
-  },
 };
 
 // ── Helpers ──
