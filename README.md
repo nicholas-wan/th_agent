@@ -155,3 +155,29 @@ Open/close: `el.classList.add/remove('open')`. IDs: `history-overlay` `report-ov
 - ❌ Edit `kb/*-fallback.js` for data — edit `.md` files instead (keep both in sync for skills)
 - ❌ Edit `kb/skills.js` / `kb/runbooks.js` / `kb/environment.js` — legacy empty shells
 - ❌ Add "Tactic Techniques" tab — KB has Platform Attack Techniques only (`skillType: 'domain'`)
+
+---
+
+## Operational Notes & Handoff
+
+**Repo / deploy**
+- Remote: `https://github.com/nicholas-wan/th_agent.git` · branch `main` · served via GitHub Pages.
+- No build step. Serve any static server (not `file://`). HTTP serving overwrites `kb/*-fallback.js` globals from the `.md` files at runtime via `initKbTab()`.
+- **Never push to GitHub unless the user explicitly says "push".** Commit only when asked.
+- Commit trailer: `Co-Authored-By: Claude <noreply@anthropic.com>`.
+- `watchorread.html` is an unrelated standalone file — leave it out of commits (don't `git add .`).
+- Windows checkout: Git warns LF→CRLF on commit — harmless, ignore.
+
+**Editing the demo data — source-of-truth order**
+When numbers/facts conflict across files, `js/pipeline.js` (the agent reasoning feed) is the authoritative tie-breaker — it walks the actual evidence step by step. Reconcile other files to it. The 041 narrative spans 8 files that must agree: `index.html`, `js/app.js`, `js/check.js`, `js/keep.js`, `js/observe.js`, `js/pipeline.js`, `js/report.js`, `kb/iocs.js`. After any data edit, grep the old value across all of these to catch stragglers.
+
+**Vestigial fields:** `keepData.NNN.criticals`/`highs` are NOT displayed — severity chips are computed live from the findings array (`f.sev === 'h'` etc). Edit the findings, not the counters.
+
+**Canonical facts — TH-2026-041 (Volt Typhoon, CISA AA24-038A)**
+Lateral Movement & Credential Harvesting. 8 TTPs extracted / 4 selected as hypotheses:
+- **H-01 T1570** Lateral Tool Transfer (PsExec) — conf 92% · 14 hosts · single CORP\jsmith pivot chain.
+- **H-02 T1003.001** LSASS Credential Dumping — conf 82% · **1 critical full-access (0x1fffff) hit on WIN-DC01 within 3 total ProcessAccess events** (other 2 are read-only `0x1410`, benign). rundll32 variant.
+- **H-03 T1558.003** Kerberoasting — conf 74% · **11 SPNs in 1 burst / 3 bursts total** · RC4 TGS-REQ (EventCode 4769) · threshold **>3 SPNs/user/5m** (NOT "15/hr") · 147 CMDB SPN exclusions · FP 22%→<2%.
+- **H-04 T1071.001** C2 Beacon (HTTPS) — conf **78%** · 2 Cobalt Strike sessions · 185.220.101.47:443/:8443 · beacon ~60s · **JA3 `769c10b06a1a2b7b7a26b0a2be2e88a4`** (the deployed-query hash — this is canonical, supersedes older `3b5074b1…` / `769c10b3d4…`).
+- Supporting signal: T1078.002 (off-hours valid-account auth) — merged into T1570 scope, not a separate hypothesis.
+- 4 rules deployed: `DL-2026-041-001..004`. Threat actor is **Volt Typhoon** everywhere (not APT29 — one generic "APT29" placeholder in the New-Hunt form input is intentional example text).
