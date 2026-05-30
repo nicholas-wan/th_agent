@@ -118,6 +118,26 @@ const observeData = {
       },
     }
   },
+  '042': {
+    normal: [
+      { text: 'Domain Admin accounts authenticate to DCs during scheduled maintenance windows (02:00–04:00 UTC)' },
+      { text: 'AD replication traffic between WIN-DC01 and WIN-DC02 via DRS protocol — expected inter-DC sync' },
+      { text: 'SPN registration changes via SCCM service account during software deployment cycles' },
+      { text: 'EventCode 4672 special privilege logons from IT admin accounts during business hours' },
+    ],
+    suspicious: [
+      { text: 'EventCode 4662 with DS-Replication-Get-Changes extended rights from a non-DC source — DCSync indicator' },
+      { text: 'New SPN registrations on Domain Admin or Tier-0 service accounts outside change-control windows' },
+      { text: 'EventCode 4672 special privilege logon from workstation-class hosts to DCs outside maintenance windows' },
+      { text: 'AD delegation modifications granting replication rights to non-standard accounts' },
+    ],
+    observables: {
+      Processes: ['mimikatz.exe or lsadump::dcsync invocation', 'ntdsutil.exe with ifm parameter', 'secretsdump.py or equivalent'],
+      Network: ['DRS replication traffic from non-DC source IP', 'LDAP queries for replication metadata from workstation subnet'],
+      Authentication: ['CORP\\jsmith 4672 logons on WIN-DC01 in 72h window', 'Any non-admin account with Replicating Directory Changes rights'],
+      'AD Changes': ['New SPN registrations on Tier-0 accounts', 'Delegation changes granting DS-Replication-Get-Changes', 'msDS-AllowedToDelegateTo modifications'],
+    }
+  },
   '040': {
     normal: [
       { text: 'Office macros signed by the enterprise CA root — expected for Finance department document automation workflows' },

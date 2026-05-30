@@ -240,8 +240,8 @@ function openHunt(id) {
   const safePreserved = (preservedTab === 'keep' && !hasKeepData) ? null : preservedTab;
   const targetTab = safePreserved || m.defaultTab || 'learn';
   goSubTab(targetTab, document.getElementById('subtab-' + targetTab));
-  // Render subhunt sidebar for this hunt — hide immediately for active hunts
-  // (shown once hypotheses are generated at pipeline step 2)
+  // Render subhunt sidebar for this hunt — hide for active hunts
+  // (pipeline animation or loadClosedPipeline reveals it later)
   renderSubhuntSidebar(id);
   if (!m.status || !m.status.includes('Closed')) {
     const sidebar = document.getElementById('subhunt-sidebar');
@@ -254,8 +254,10 @@ function openHunt(id) {
   updateSubTabGating();
   // Reset Check sub-pane for the new hunt
   resetCheckForHunt(id);
-  // For closed hunts — populate Learn pipeline with pre-baked archived state
-  if (m.status && m.status.includes('Closed') && typeof loadClosedPipeline === 'function') {
+  // For closed hunts (and seeded active hunts with archived pipeline state)
+  // populate Learn pipeline with pre-baked state
+  const hasArchivedPipeline = (m.status && m.status.includes('Closed')) || closedHuntFeeds?.[keepId];
+  if (hasArchivedPipeline && typeof loadClosedPipeline === 'function') {
     loadClosedPipeline(id, keepId);
   }
 }

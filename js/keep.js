@@ -112,6 +112,56 @@ const keepData = {
       seedData: ['CORP\\jsmith session log (72h)', 'WIN-DC01 EventCode 4672/4768 auth events', 'AD delegation & SPN change audit log']
     }
   },
+  '042': {
+    title: 'TH-2026-042', label: 'DCSync Staging · Active', labelClass: 'chip-red',
+    createdBy: 'marcus', createdAt: 'Apr 28, 2026 · 10:02',
+    criticals: 1, highs: 1,
+    subhunts: [
+      { id:'sh01', label:'SH-01', ttp:'T1078.002', name:'Privileged Account Abuse',  status:'active' },
+      { id:'sh02', label:'SH-02', ttp:'T1484.001', name:'Domain Policy Modification', status:'active' },
+      { id:'sh03', label:'SH-03', ttp:'T1003.006', name:'DCSync',                    status:'active' },
+    ],
+    subhuntLock: {
+      sh01: {
+        l: 'H-01 · T1078.002 scoped from TH-2026-041 follow-up. Enumerate privileged accounts authenticating from WIN-DC01 in the 72h attack window.',
+        o: 'Reviewing EventCode 4672 special privilege logons on WIN-DC01.',
+        c: 'Pending — queries not yet executed.',
+        k: 'Pending.',
+      },
+      sh02: {
+        l: 'H-02 · T1484.001 scoped from AD delegation audit. Check for newly registered SPNs or delegation changes on Tier-0 accounts.',
+        o: 'Reviewing AD change logs and SPN registration events.',
+        c: 'Pending — queries not yet executed.',
+        k: 'Pending.',
+      },
+      sh03: {
+        l: 'H-03 · T1003.006 scoped from DCSync risk. Check for DRS replication requests from non-DC sources.',
+        o: 'Reviewing EventCode 4662 with DS-Replication-Get-Changes extended rights.',
+        c: 'Pending — queries not yet executed.',
+        k: 'Pending.',
+      },
+    },
+    findings: [
+      { sev:'c', title:'Suspicious 4672 logon from non-admin workstation to WIN-DC01', ttp:'T1078.002', host:'WIN-DC01', time:'Apr 28 02:14', status:'open', score:88, sh:'sh01' },
+    ],
+    timeline: [
+      { color:'red', text:'<b>RAA Supervisor Agent</b> — privileged logon anomaly on WIN-DC01', time:'10:14', tag:'T1078.002', host:'WIN-DC01' },
+    ],
+    lock: {
+      l: 'Seeded from TH-2026-041 follow-up recommendation. 3 TTPs scoped: T1078.002, T1484.001, T1003.006. Focus: privileged account abuse and DCSync staging on Tier-0 assets.',
+      o: 'WIN-DC01 auth logs, AD change audit, SPN registration events in scope.',
+      c: 'Pending — 2 rules in testing, queries not yet executed.',
+      k: 'Pending.',
+    },
+    report: {
+      summary: 'Follow-up hunt to TH-2026-041 investigating potential DCSync staging and privileged account abuse on Tier-0 domain controllers. Seeded with the confirmed CORP\\jsmith pivot chain.',
+      recommendations: [
+        'Complete DCSync detection query execution and review EventCode 4662 results.',
+        'Audit all AD delegation changes on Tier-0 accounts in the 72h attack window.',
+        'Cross-reference with TH-2026-041 findings for full attack chain timeline.',
+      ]
+    }
+  },
   '040': {
     title: 'TH-2026-040', label: 'FIN7 Ransomware · Closed', labelClass: 'chip-yellow',
     createdBy: 'marcus', createdAt: 'Apr 24, 2026 · 13:15',

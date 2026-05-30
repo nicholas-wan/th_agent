@@ -804,6 +804,27 @@ const closedHuntFeeds = {
     { type:'done',   agent:'dl',   msg:'4 rules deployed to Splunk ES · hunt TH-2026-039 archived · 2 hypotheses confirmed · 5 findings documented',
       detail:'Deployment summary:\n• DL-2026-039-001 (T1195.002 — unsigned build artifact): PASS · FP 0.8% · severity CRITICAL\n• DL-2026-039-002 (T1574.002 — DLL sideloading): PASS · FP 1.2% · severity HIGH\n• DL-2026-039-003 (T1071.001 — CS C2 JA3 beacon): PASS · FP 0.3% · severity CRITICAL\n• DL-2026-039-004 (T1053.005 — scheduled task persistence): PASS · FP 1.6% · severity HIGH' },
   ],
+  '042': [
+    { sep: 'Select Intel' },
+    { type:'tool',   agent:'orch', msg:'pipeline initialised for TH-2026-042 · seeded from TH-2026-041 follow-up recommendation · 3 TTPs scoped · Tier-0 DC focus' },
+    { type:'tool',   agent:'data', msg:'connected to Splunk ES · 4 indices confirmed · security(90d) wineventlog(30d) sysmon(7d) · CIM normalised · ready' },
+    { sep: 'TTP Extraction' },
+    { type:'reason', agent:'hyp',  msg:'3 TTPs extracted from TH-2026-041 follow-up · all scoped for hypothesis generation — T1078.002, T1484.001, T1003.006',
+      detail:'Seeded from confirmed CORP\\jsmith pivot chain. Focus: privileged account abuse post-lateral-movement.\n• T1078.002 (Privileged Account Abuse) — 95% · jsmith authenticated to WIN-DC01 with Domain Admin rights\n• T1484.001 (Domain Policy Modification) — 78% · check for delegation changes or new SPN registrations on Tier-0 accounts\n• T1003.006 (DCSync) — 82% · check for DRS replication requests from non-DC sources' },
+    { type:'tool',   agent:'data', msg:'Tier-0 baseline complete · 890K events in scope · EventCode 4662/4672/4768 indexed · WIN-DC01 + WIN-DC02 in scope' },
+    { type:'reason', agent:'orch', msg:'scope decision: all 3 TTPs selected for hypothesis generation — follow-up scope from TH-2026-041',
+      detail:'All 3 TTPs are directly seeded from the confirmed TH-2026-041 attack chain. No triage needed — this is a targeted follow-up hunt, not a broad CTI sweep.' },
+    { sep: 'Hypotheses' },
+    { type:'reason', agent:'hyp',  msg:'🎯 H-01 (T1078.002): privileged account abuse · confidence 95% · jsmith Domain Admin auth on WIN-DC01 confirmed',
+      detail:'CORP\\jsmith authenticated to WIN-DC01 with Domain Admin rights during the attack window. Enumerate all accounts that authenticated from WIN-DC01 in the 72h prior to detection. Cross-reference against AD for unusual delegation assignments.' },
+    { type:'reason', agent:'hyp',  msg:'🔔 H-02 (T1484.001): domain policy modification · confidence 78% · check for delegation and SPN changes on Tier-0',
+      detail:'If the attacker gained DC access, they may have modified AD delegation or registered new SPNs to enable DCSync or Golden Ticket attacks. Scope: AD change audit logs, SPN registration events on all Tier-0 accounts.' },
+    { type:'reason', agent:'hyp',  msg:'🔴 H-03 (T1003.006): DCSync · confidence 82% · check for DRS replication requests from non-DC sources',
+      detail:'DCSync allows credential extraction from AD without touching LSASS. Detected via EventCode 4662 with DS-Replication-Get-Changes and DS-Replication-Get-Changes-All extended rights from a non-DC source. If confirmed, all domain credentials are compromised.' },
+    { sep: 'Detection' },
+    { type:'relay',  agent:'dl', to:'orch', msg:'2 detection rules drafted · DL-2026-042-001 (T1078.002 privileged logon anomaly) and DL-2026-042-002 (T1003.006 DCSync replication) · back-testing in progress' },
+    { type:'reason', agent:'orch', msg:'pipeline in progress — 2 rules in back-test · awaiting results before deployment to Det. Eng.' },
+  ],
 };
 
 // ── Per-hunt Learn stage data for closed hunts ──
@@ -822,6 +843,16 @@ const closedLearnData = {
       { id:'T1071.001', name:'Web Protocols C2',                   tactic:'C&amp;C',          tc:'chip-indigo', ph:3, rules:'1 live'  },
       { id:'T1547.001', name:'Registry Run Keys / Startup Folder', tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
       { id:'T1053.005', name:'Scheduled Task/Job: Sched. Task',    tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
+    ],
+  },
+  '042': {
+    reportIcon: '🔐', reportTitle: 'TH-2026-041 Follow-up — Privileged Account Abuse & DCSync Staging',
+    reportSource: 'Internal (seeded from TH-2026-041)', reportDate: 'Apr 28, 2026',
+    prioritized: new Set(['T1078.002','T1484.001','T1003.006']),
+    ttps: [
+      { id:'T1078.002', name:'Valid Accounts: Domain Accounts',  tactic:'Def. Evasion',  tc:'chip-red',    ph:0, rules:'1 live',  reason:'jsmith Domain Admin auth on WIN-DC01 · seeded from TH-2026-041 confirmed pivot chain' },
+      { id:'T1484.001', name:'Domain Policy Modification',       tactic:'Def. Evasion',  tc:'chip-yellow', ph:0, rules:'none',    reason:'Check for delegation changes or new SPN registrations on Tier-0 accounts' },
+      { id:'T1003.006', name:'OS Credential Dumping: DCSync',    tactic:'Cred. Access',  tc:'chip-red',    ph:0, rules:'none',    reason:'DRS replication from non-DC source would mean full domain compromise' },
     ],
   },
   '039': {
@@ -888,8 +919,9 @@ function loadClosedPipeline(huntId, keepId) {
   if (lhcHunt)  lhcHunt.textContent  = huntId;
   if (lhcCti)   lhcCti.textContent   = cm ? cm.cti : '';
   if (lhcTtps)  lhcTtps.textContent  = cm ? cm.ttpCount : '';
-  if (lhcHyp)   { lhcHyp.textContent = '2 confirmed'; lhcHyp.style.color = ''; }
-  if (lhcStage) lhcStage.textContent = 'Learn · Detection';
+  const isActive = cm && cm.active;
+  if (lhcHyp)   { lhcHyp.textContent = cm ? cm.hypCount : '2 confirmed'; lhcHyp.style.color = ''; }
+  if (lhcStage) lhcStage.textContent = isActive ? 'Learn · Check' : 'Learn · Detection';
 
   // Show context panel + agents card
   const ctxPanel  = document.getElementById('learn-hunt-context');
@@ -930,11 +962,11 @@ function loadClosedPipeline(huntId, keepId) {
 
   // Feed status
   const feedStatus = document.getElementById('feed-status');
-  if (feedStatus) feedStatus.textContent = 'archived';
+  if (feedStatus) feedStatus.textContent = isActive ? 'in progress' : 'archived';
   const dot      = document.getElementById('agents-feed-dot');
   const agStatus = document.getElementById('agents-feed-status');
-  if (dot)      dot.style.opacity     = '0.35';
-  if (agStatus) agStatus.textContent  = 'archived · ' + huntId;
+  if (dot)      dot.style.opacity     = isActive ? '1' : '0.35';
+  if (agStatus) agStatus.textContent  = (isActive ? 'running · ' : 'archived · ') + huntId;
 
   // Populate feed with pre-baked entries (no typewriter)
   const entries = closedHuntFeeds[keepId] || [];
@@ -947,11 +979,19 @@ function loadClosedPipeline(huntId, keepId) {
   const tokEl = document.getElementById('feed-token-count');
   if (tokEl) {
     tokEl.style.display = '';
-    tokEl.textContent = keepId === '040' ? '~8,400 tok' : '~7,100 tok';
+    const tokCounts = { '040': '~8,400 tok', '039': '~7,100 tok', '042': '~4,200 tok' };
+    tokEl.textContent = tokCounts[keepId] || '~6,000 tok';
   }
 
   // ── Lock pipeline stepper ──
-  pipelineLocked = true;
+  // Active hunts: gate Keep tab (maxStep=3 unlocks Observe+Check only)
+  // Closed hunts: unlock all tabs
+  if (isActive) {
+    pipelineLocked = false;
+    maxStep = 3;
+  } else {
+    pipelineLocked = true;
+  }
   if (typeof updateSubTabGating === 'function') updateSubTabGating();
   const pipelineEl = document.querySelector('.pipeline');
   if (pipelineEl) pipelineEl.classList.add('pipeline-locked');
@@ -968,7 +1008,9 @@ function loadClosedPipeline(huntId, keepId) {
     if (s0body) {
       // Archived notice replaces the old info-bar
       const oldInfoBar = s0body.querySelector('.info-bar');
-      if (oldInfoBar) oldInfoBar.innerHTML = `<span class="ib-icon">🔒</span><span>This hunt is <b>closed and archived</b>. The intelligence report and TTP selection are locked. View the <b>Keep</b> tab for the final hunt record.</span>`;
+      if (oldInfoBar) oldInfoBar.innerHTML = isActive
+        ? `<span class="ib-icon">⚡</span><span>This hunt is <b>active</b>. TTPs have been extracted and hypotheses generated. Detection rules are <b>in testing</b> — check the <b>Check</b> tab for query results.</span>`
+        : `<span class="ib-icon">🔒</span><span>This hunt is <b>closed and archived</b>. The intelligence report and TTP selection are locked. View the <b>Keep</b> tab for the final hunt record.</span>`;
 
       // Hide repo search (marked for restoration)
       const srchWrap = s0body.querySelector('.repo-search-wrap');
@@ -1028,9 +1070,16 @@ function loadClosedPipeline(huntId, keepId) {
     const customWrap = document.getElementById('custom-ttp-wrap');
     if (customWrap) { customWrap.setAttribute('data-archived-hidden', '1'); customWrap.style.display = 'none'; }
 
-    // Update the Stage 1 info-bar to reflect archived state
+    // Update the Stage 1 info-bar to reflect state
     const s1InfoBar = document.querySelector('#stage-1 .info-bar');
-    if (s1InfoBar) s1InfoBar.innerHTML = `<span class="ib-icon">🔒</span><span>TTPs were extracted and prioritized during this hunt. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. This view is read-only — see the <b>Keep</b> tab for the full hunt record.</span>`;
+    if (s1InfoBar) s1InfoBar.innerHTML = isActive
+      ? `<span class="ib-icon">⚡</span><span>TTPs extracted and hypotheses generated. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. Detection rules are now <b>in testing</b>.</span>`
+      : `<span class="ib-icon">🔒</span><span>TTPs were extracted and prioritized during this hunt. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. This view is read-only — see the <b>Keep</b> tab for the full hunt record.</span>`;
+  }
+
+  // Reveal subhunt sidebar (was hidden by resetPipeline; now hypotheses are loaded)
+  if (typeof renderSubhuntSidebar === 'function') {
+    renderSubhuntSidebar(huntId);
   }
 }
 
