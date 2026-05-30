@@ -412,7 +412,7 @@
                 <thead><tr><th class="ttp-sel-col"></th><th>ID</th><th>Technique</th><th>Tactic</th><th>Prior hunts</th><th>Rules</th><th>Source</th></tr></thead>
                 <tbody id="ttp-tbody"></tbody>
               </table>
-              <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+              <div id="ttp-btn-bar" style="padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;justify-content:flex-end;">
                 <button class="btn btn-outline btn-sm" onclick="selectRecommendedTTPs()">Select Recommended</button>
                 <button class="btn btn-outline btn-sm" onclick="selectAllTTPs()">Select All</button>
                 <button class="btn btn-primary btn-sm" id="ttp-confirm-btn" onclick="confirmTTPSelection()" disabled style="opacity:0.4;cursor:not-allowed;">Select TTPs to continue →</button>

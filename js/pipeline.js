@@ -1088,6 +1088,14 @@ function loadClosedPipeline(huntId, keepId) {
 
   // For non-041 hunts, dynamically render stages 2-4 from hunt data
   if (!is041) _renderDynamicStages(keepId, huntId);
+
+  // Hide/show TTP selection buttons (only interactive for 041 live pipeline)
+  const ttpBtnBar = document.getElementById('ttp-btn-bar');
+  if (ttpBtnBar) {
+    if (!is041) { ttpBtnBar.setAttribute('data-archived-hidden', '1'); ttpBtnBar.style.display = 'none'; }
+    else        { ttpBtnBar.removeAttribute('data-archived-hidden'); ttpBtnBar.style.display = ''; }
+  }
+
   updateAgentPills(4);
   for (let i = 0; i < 5; i++) _setAgentProgStep(i, 'done');
   ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'done'));
@@ -1192,6 +1200,7 @@ function loadClosedPipeline(huntId, keepId) {
           ? `<td>${t.name}<br><span style="font-size:10px;color:var(--blue);margin-top:2px;display:block;">${t.reason}</span></td>`
           : `<td>${t.name}</td>`;
         return `<tr class="${isPri ? 'ttp-row-prioritized' : ''}">
+          <td class="ttp-sel-col">${isPri ? '<span style="color:var(--green);">☑</span>' : ''}</td>
           ${idCell}
           ${nameCell}
           <td><span class="chip ${t.tc}">${t.tactic}</span></td>
