@@ -434,6 +434,28 @@ function updateTTPSelectionUI() {
   }
 }
 
+// Recommended TTPs per report — the subset that feeds hypothesis generation
+const recommendedTTPs = {
+  'r1': new Set(['T1570','T1003.001','T1558.003','T1071.001']),
+};
+
+function selectAllTTPs() {
+  const rows = reportTTPDetails[activeReportId] || [];
+  rows.forEach(t => {
+    if (!selectedTTPIds.has(t.id)) toggleTTPRow(t.id);
+  });
+}
+
+function selectRecommendedTTPs() {
+  const rec = recommendedTTPs[activeReportId];
+  if (!rec) return selectAllTTPs();
+  const rows = reportTTPDetails[activeReportId] || [];
+  // Clear current selection first
+  rows.forEach(t => { if (selectedTTPIds.has(t.id)) toggleTTPRow(t.id); });
+  // Select only recommended
+  rows.forEach(t => { if (rec.has(t.id)) toggleTTPRow(t.id); });
+}
+
 function confirmTTPSelection() {
   if (selectedTTPIds.size === 0) return;
   const n     = selectedTTPIds.size;
