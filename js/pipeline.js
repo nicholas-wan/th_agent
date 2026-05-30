@@ -906,6 +906,138 @@ function _validateFeedData() {
 }
 _validateFeedData();
 
+// ── Render stages 2-4 dynamically for non-041 hunts ──
+function _renderDynamicStages(keepId, huntId) {
+  const kd = (typeof keepData !== 'undefined') ? keepData[keepId] : null;
+  const ld = closedLearnData[keepId];
+  const subs = kd?.subhunts || [];
+  const locks = kd?.subhuntLock || {};
+  const cm = (typeof checkHuntMeta !== 'undefined') ? checkHuntMeta[keepId] : null;
+  const isActive = cm && cm.active;
+
+  // ── Stage 2: Hypotheses ──
+  const s2body = document.querySelector('#stage-2 .card-body');
+  if (s2body && subs.length) {
+    const statusIcon = s => s === 'confirmed' ? '✅' : s === 'active' ? '🔵' : '⬜';
+    const statusChip = s => s === 'confirmed'
+      ? '<span class="chip chip-green" style="font-size:10px;">Confirmed</span>'
+      : s === 'active'
+        ? '<span class="chip chip-blue" style="font-size:10px;">Active</span>'
+        : '<span class="chip chip-gray" style="font-size:10px;">Pending</span>';
+    const confMap = {};
+    // Extract confidence from feed if available
+    const feed = closedHuntFeeds[keepId] || [];
+    feed.forEach(e => {
+      if (e.msg && e.msg.includes('confidence')) {
+        subs.forEach(sh => {
+          if (e.msg.includes(sh.ttp)) {
+            const m = e.msg.match(/confidence (\d+)%/);
+            if (m) confMap[sh.ttp] = m[1];
+          }
+        });
+      }
+    });
+
+    s2body.innerHTML = `
+      <div class="info-bar"><span class="ib-icon">${isActive ? '⚡' : '🔒'}</span><span>${isActive
+        ? 'The <b>Hypothesis Agent</b> generated these hunt hypotheses. Detection rules are <b>in testing</b>.'
+        : 'The <b>Hypothesis Agent</b> generated these hunt hypotheses. This view is read-only.'}</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${subs.map((sh, i) => {
+          const lk = locks[sh.id] || {};
+          const conf = confMap[sh.ttp] || '—';
+          return `<div class="hyp-card" style="cursor:default;">
+            <div class="hyp-head">
+              <span class="hyp-num">H-0${i+1}</span>
+              <div class="hyp-text">${lk.l || sh.name}</div>
+            </div>
+            <div class="hyp-meta">
+              <span class="chip chip-red" style="font-size:10px;">${sh.ttp}</span>
+              ${statusChip(sh.status)}
+              ${conf !== '—' ? `<span class="chip chip-indigo" style="font-size:10px;">Confidence ${conf}%</span>` : ''}
+            </div>
+            <div class="hyp-rationale" style="font-size:11px;color:var(--sub);margin-top:4px;">${lk.o || ''}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // ── Stage 3: RAA Supervisor Agent ──
+  const s3body = document.querySelector('#stage-3 .card-body');
+  const s3head = document.querySelector('#stage-3 .card-head');
+  if (s3head) {
+    // Update header chip to reflect this hunt's hypothesis
+    const chipEl = s3head.querySelector('.chip');
+    if (chipEl) chipEl.textContent = subs.length ? subs[0].label + ' · Splunk ES' : 'Splunk ES';
+  }
+  if (s3body && subs.length) {
+    // Determine RAA coverage: process-chain and command-line only cover host-based TTPs
+    const raaScope = subs.map(sh => {
+      const hostBased = ['T1078','T1003','T1059','T1053','T1547','T1570','T1484'].some(p => sh.ttp.startsWith(p));
+      return { ...sh, inScope: hostBased };
+    });
+    s3body.innerHTML = `
+      <div class="info-bar"><span class="ib-icon">📌</span><span>The RAA Supervisor Agent queries <b>running analytics</b> against Splunk logs and surfaces hits matching each hypothesis. TTPs with no analytic coverage are passed to the Detection Logic Agent.</span></div>
+      <div>
+        <div class="label" style="margin-bottom:7px;">Analytic Coverage</div>
+        <table class="ttp-table">
+          <thead><tr><th>Hypothesis</th><th>TTP</th><th>RAA Analytic</th><th>Status</th></tr></thead>
+          <tbody>
+            ${raaScope.map(sh => `<tr>
+              <td>${sh.label}</td>
+              <td class="ttp-id">${sh.ttp}</td>
+              <td>${sh.inScope ? 'Process Chain / Command Line' : '<span style="color:var(--muted);">Out of scope</span>'}</td>
+              <td>${sh.inScope
+                ? '<span class="chip chip-yellow" style="font-size:10px;">Queried</span>'
+                : '<span class="chip chip-gray" style="font-size:10px;">→ Detection Logic</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="label" style="margin-bottom:7px;">Coverage Gaps → Detection Logic</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--sub);">
+          ${raaScope.filter(sh => !sh.inScope).map(sh =>
+            `<div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-gray" style="font-size:10px;">${sh.ttp}</span>${sh.name} — outside RAA process-chain scope. New SPL rule needed.</div>`
+          ).join('') || '<div style="color:var(--green);">All TTPs covered by RAA analytics.</div>'}
+        </div>
+      </div>`;
+  }
+
+  // ── Stage 4: Detection Logic Agent ──
+  const s4body = document.querySelector('#stage-4 .card-body');
+  if (s4body) {
+    // Pull rule info from feed entries
+    const feedEntries = closedHuntFeeds[keepId] || [];
+    const ruleEntries = feedEntries.filter(e => e.msg && (e.msg.includes('rule') || e.msg.includes('DL-')));
+    const ruleMsg = ruleEntries.length ? ruleEntries[ruleEntries.length - 1].msg : '';
+    s4body.innerHTML = `
+      <div class="info-bar"><span class="ib-icon">${isActive ? '⚡' : '🔒'}</span><span>${isActive
+        ? 'Detection rules are <b>in testing</b>. Run queries in the <b>Check</b> tab to validate.'
+        : 'Detection rules were generated and validated during this hunt.'}</span></div>
+      <div>
+        <div class="label" style="margin-bottom:7px;">Rules Generated</div>
+        <table class="ttp-table">
+          <thead><tr><th>Hypothesis</th><th>TTP</th><th>Rule</th><th>Status</th></tr></thead>
+          <tbody>
+            ${subs.map((sh, i) => `<tr>
+              <td>${sh.label}</td>
+              <td class="ttp-id">${sh.ttp}</td>
+              <td>DL-${huntId.replace('TH-','')}-00${i+1}</td>
+              <td>${isActive
+                ? '<span class="chip chip-yellow" style="font-size:10px;">Testing</span>'
+                : '<span class="chip chip-green" style="font-size:10px;">Deployed</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${ruleMsg ? `<div style="font-size:11px;color:var(--sub);margin-top:8px;padding:8px 10px;background:var(--s2);border-radius:var(--radius-sm);border:1px solid var(--border);">${ruleMsg}</div>` : ''}
+      <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+        <button class="btn btn-primary btn-sm" onclick="goSubTab('check',document.getElementById('subtab-check'))">Run in Check →</button>
+      </div>`;
+  }
+}
+
 // ── Load pre-baked pipeline state for closed/archived hunts ──
 function loadClosedPipeline(huntId, keepId) {
   const cm = (typeof checkHuntMeta !== 'undefined') ? checkHuntMeta[keepId] : null;
@@ -941,6 +1073,7 @@ function loadClosedPipeline(huntId, keepId) {
   }
 
   // Advance pipeline bar to fully completed state (silent — no streaming)
+  const is041 = keepId === '041';
   maxStep = 4;
   for (let j = 0; j < 5; j++) {
     const n = document.getElementById('ps' + j);
@@ -952,6 +1085,9 @@ function loadClosedPipeline(huntId, keepId) {
     const s = document.getElementById('stage-' + j);
     if (s) s.className = 'stage card show';
   }
+
+  // For non-041 hunts, dynamically render stages 2-4 from hunt data
+  if (!is041) _renderDynamicStages(keepId, huntId);
   updateAgentPills(4);
   for (let i = 0; i < 5; i++) _setAgentProgStep(i, 'done');
   ['orch','hyp','data','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'done'));
@@ -1069,6 +1205,10 @@ function loadClosedPipeline(huntId, keepId) {
     // Hide custom TTP add form (marked for restoration)
     const customWrap = document.getElementById('custom-ttp-wrap');
     if (customWrap) { customWrap.setAttribute('data-archived-hidden', '1'); customWrap.style.display = 'none'; }
+    // Hide gate-1 for non-041 hunts (041-specific content; dynamic stages replace it)
+    const gate1 = document.getElementById('gate-1');
+    if (gate1 && !is041) { gate1.setAttribute('data-archived-hidden', '1'); gate1.style.display = 'none'; }
+    if (gate1 && is041)  { gate1.removeAttribute('data-archived-hidden'); gate1.style.display = ''; }
 
     // Update the Stage 1 info-bar to reflect state
     const s1InfoBar = document.querySelector('#stage-1 .info-bar');

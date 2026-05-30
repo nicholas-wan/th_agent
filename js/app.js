@@ -230,6 +230,9 @@ function openHunt(id) {
   if (activeItem) activeItem.classList.add('hsw-active');
   // Navigate to hunt-detail pane, highlight Hunts nav tab (hunt-detail is a sub-view of Hunts)
   goTab('hunt-detail', document.querySelector('.nav-tab'));
+  // Show/hide Run Pipeline button — only for active hunts with live animation (041)
+  const pipelineBtn = document.getElementById('run-pipeline-btn');
+  if (pipelineBtn) pipelineBtn.style.display = (m.status && m.status.includes('Closed')) ? 'none' : '';
   // Reset pipeline bar + feed to clean state before populating for this hunt
   if (typeof resetPipeline === 'function') resetPipeline();
   // Render observe data for this hunt
@@ -249,16 +252,17 @@ function openHunt(id) {
   }
   // Sync Keep sub-pane to the selected hunt
   switchKeepHunt(keepId);
-  // Re-apply pipeline gating — switchKeepHunt restores Keep tab opacity for hunts
-  // with data, which would undo the grey set by resetPipeline. Gate wins.
-  updateSubTabGating();
   // Reset Check sub-pane for the new hunt
   resetCheckForHunt(id);
-  // For closed hunts (and seeded active hunts with archived pipeline state)
-  // populate Learn pipeline with pre-baked state
-  const hasArchivedPipeline = (m.status && m.status.includes('Closed')) || closedHuntFeeds?.[keepId];
+  // Load pipeline state and apply tab gating
+  // For hunts with archived pipeline data: loadClosedPipeline sets pipelineLocked/maxStep
+  // and calls updateSubTabGating with the correct state.
+  // For 041 (live demo): tabs stay locked until runPipeline advances them.
+  const hasArchivedPipeline = (m.status && m.status.includes('Closed')) || (typeof closedHuntFeeds !== 'undefined' && closedHuntFeeds[keepId]);
   if (hasArchivedPipeline && typeof loadClosedPipeline === 'function') {
     loadClosedPipeline(id, keepId);
+  } else {
+    updateSubTabGating();
   }
 }
 
@@ -781,6 +785,11 @@ function selHyp(el) {
 // ── Run Pipeline simulation ──
 function runPipeline() {
   const btn = document.getElementById('run-pipeline-btn');
+
+  // Only the primary demo hunt (041) has live pipeline animation data.
+  // Other hunts load via loadClosedPipeline — don't re-run the 041 animation.
+  const currentHunt = document.getElementById('hd-id')?.textContent || '';
+  if (currentHunt !== 'TH-2026-041') return;
 
   // Disable button during run
   btn.disabled = true;

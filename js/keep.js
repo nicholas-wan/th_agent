@@ -154,12 +154,28 @@ const keepData = {
       k: 'Pending.',
     },
     report: {
+      status: 'Active', statusClass: 'chip-red',
       summary: 'Follow-up hunt to TH-2026-041 investigating potential DCSync staging and privileged account abuse on Tier-0 domain controllers. Seeded with the confirmed CORP\\jsmith pivot chain.',
+      approach: 'H-01 (Privileged Account Abuse) scoped from TH-2026-041 jsmith pivot chain. Enumerating all accounts that authenticated from WIN-DC01 in the 72h attack window. H-02 (Domain Policy Modification) checking for newly registered SPNs or delegation changes on Tier-0 accounts. H-03 (DCSync) checking for DRS replication requests from non-DC sources via EventCode 4662.',
+      impact: [
+        { val:'1', lbl:'Critical finding', color:'var(--red)' },
+        { val:'18m', lbl:'Runtime so far', color:'var(--text)' },
+        { val:'2', lbl:'Rules in testing', color:'var(--yellow)' },
+        { val:'3', lbl:'TTPs scoped', color:'var(--blue)' },
+      ],
       recommendations: [
         'Complete DCSync detection query execution and review EventCode 4662 results.',
         'Audit all AD delegation changes on Tier-0 accounts in the 72h attack window.',
         'Cross-reference with TH-2026-041 findings for full attack chain timeline.',
+        'Schedule follow-up hunt TH-2026-043 (Golden Ticket detection & krbtgt rotation verification).',
       ]
+    },
+    pivot: {
+      huntId: 'TH-2026-043',
+      hypothesis: 'If DCSync was successful, the attacker has extracted the krbtgt hash and can forge Golden Tickets for persistent domain access. Pivot to a Golden Ticket detection hunt: monitor for TGT requests with anomalous lifetimes, validate krbtgt double-reset completion, and sweep for Kerberos tickets issued before the reset timestamp.',
+      techniques: ['T1558.001','T1550.003','T1098'],
+      rationale: 'DCSync gives the attacker the krbtgt hash — Golden Ticket forgery is the natural next step. Even after krbtgt rotation, tickets forged before the reset remain valid for their lifetime. A dedicated hunt confirms the rotation was effective and no forged tickets are still in use.',
+      seedData: ['krbtgt reset timestamps', 'EventCode 4769 TGT anomalies (lifetime > policy)', 'AD replication metadata from TH-2026-042']
     }
   },
   '040': {
@@ -367,11 +383,12 @@ function switchKeepHunt(id) {
   const hasData = !!keepData[id];
 
   // Dim the Keep sub-tab for hunts with no Keep data (drafts / unsupported hunts)
+  // Don't override pipeline gating — updateSubTabGating() handles active-hunt locking
   const keepTab = document.getElementById('subtab-keep');
-  if (keepTab) {
-    keepTab.style.opacity = hasData ? '' : '0.38';
-    keepTab.style.pointerEvents = hasData ? '' : 'none';
-    keepTab.title = hasData ? '' : 'Keep stage not yet available for this hunt';
+  if (keepTab && !hasData) {
+    keepTab.style.opacity = '0.38';
+    keepTab.style.pointerEvents = 'none';
+    keepTab.title = 'Keep stage not yet available for this hunt';
   }
 
   if (!hasData) {
@@ -787,7 +804,7 @@ function deleteNote(hunt, id) {
 }
 
 function renderNotes() {
-  const notes = huntNotes[activeKeepHunt];
+  const notes = huntNotes[activeKeepHunt] || [];
   const list = document.getElementById('notes-list');
   const countEl = document.getElementById('keep-notes-count');
   const noteLabel = notes.length + (notes.length === 1 ? ' note' : ' notes');
