@@ -27,4 +27,5 @@ const iocRepository = [
   { id:'IOC-007', type:'Hash',    value:'b2e7f1a4c03d8e92f1b7c4a5d3e309', hunt:'TH-2026-040', ttp:'T1574.002', sev:'h', status:'monitoring', analyst:'marcus', ts:'2026-04-24 14:10', note:'DLL sideloading payload via signed binary' },
   { id:'IOC-008', type:'IP',      value:'91.108.56.183',                 hunt:'TH-2026-039', ttp:'T1195.002', sev:'h', status:'monitoring', analyst:'priya',  ts:'2026-04-14 11:30', note:'Supply chain C2 — attributed to APT cluster via CTI' },
   { id:'IOC-009', type:'Domain',  value:'pkg-update.npmjs-cdn.com',      hunt:'TH-2026-039', ttp:'T1195.002', sev:'h', status:'blocked',    analyst:'priya',  ts:'2026-04-14 11:45', note:'Malicious NPM mirror domain — used in supply chain implant' },
+  { id:'IOC-010', type:'Domain',  value:'update.cdn-cache.net',          hunt:'TH-2026-039', ttp:'T1071.001', sev:'h', status:'blocked',    analyst:'alice',  ts:'2026-04-14 10:55', note:'Cobalt Strike C2 callback domain — beacon 60s interval, blocked at perimeter DNS' },
 ];

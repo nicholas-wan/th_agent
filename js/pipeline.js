@@ -7,10 +7,13 @@
 let maxStep = -1;
 let pipelineLocked = false; // true for closed/archived hunts — setStep is a no-op
 
-// Snapshots of Stage 0 / Stage 1 original content — captured at first load
+// Snapshots of Stage 0–4 original content — captured at first load
 let _origTtpTbody      = null;
 let _origStage0InfoBar = '';
 let _origStage1InfoBar = '';
+let _origStage2Body    = '';
+let _origStage3Body    = '';
+let _origStage4Body    = '';
 
 function updateAgentPills(i) {
   const pills = [
@@ -739,6 +742,13 @@ function resetPipeline() {
   // Restore Stage 1 info-bar
   const s1ib = document.querySelector('#stage-1 .info-bar');
   if (s1ib && _origStage1InfoBar) s1ib.innerHTML = _origStage1InfoBar;
+  // Restore Stages 2-4 (overwritten by _renderDynamicStages for non-041 hunts)
+  const s2 = document.getElementById('stage-2');
+  if (s2 && _origStage2Body) s2.innerHTML = _origStage2Body;
+  const s3 = document.getElementById('stage-3');
+  if (s3 && _origStage3Body) s3.innerHTML = _origStage3Body;
+  const s4 = document.getElementById('stage-4');
+  if (s4 && _origStage4Body) s4.innerHTML = _origStage4Body;
   // Reset repo-loaded-badge
   const badge = document.getElementById('repo-loaded-badge');
   if (badge) badge.style.display = 'none';
@@ -844,6 +854,13 @@ const closedLearnData = {
       { id:'T1547.001', name:'Registry Run Keys / Startup Folder', tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
       { id:'T1053.005', name:'Scheduled Task/Job: Sched. Task',    tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
     ],
+    rules: [
+      { id:'DL-2026-040-001', ttp:'T1566.001', name:'Office macro exec', sev:'HIGH' },
+      { id:'DL-2026-040-002', ttp:'T1490',     name:'vssadmin shadow deletion', sev:'HIGH' },
+      { id:'DL-2026-040-003', ttp:'T1204',     name:'User execution macro', sev:'HIGH' },
+      { id:'DL-2026-040-004', ttp:'T1574.002', name:'DISM sideload', sev:'HIGH' },
+      { id:'DL-2026-040-005', ttp:'T1486',     name:'File encryption pattern', sev:'HIGH' },
+    ],
   },
   '042': {
     reportIcon: '🔐', reportTitle: 'TH-2026-041 Follow-up — Privileged Account Abuse & DCSync Staging',
@@ -867,6 +884,12 @@ const closedLearnData = {
       { id:'T1041',     name:'Exfiltration over C2 Channel',       tactic:'Exfiltration',     tc:'chip-red',    ph:0, rules:'none'    },
       { id:'T1547.001', name:'Registry Run Keys / Startup Folder', tactic:'Persistence',      tc:'chip-indigo', ph:1, rules:'1 live'  },
       { id:'T1566.001', name:'Phishing: Spearphishing Attachment', tactic:'Initial Access',   tc:'chip-red',    ph:1, rules:'1 live'  },
+    ],
+    rules: [
+      { id:'DL-2026-039-001', ttp:'T1195.002', name:'Unsigned build artifact', sev:'HIGH' },
+      { id:'DL-2026-039-002', ttp:'T1574.002', name:'DLL sideloading', sev:'HIGH' },
+      { id:'DL-2026-039-003', ttp:'T1071.001', name:'CS C2 JA3 beacon', sev:'HIGH' },
+      { id:'DL-2026-039-004', ttp:'T1053.005', name:'Scheduled task persistence', sev:'HIGH' },
     ],
   },
 };
@@ -1011,6 +1034,16 @@ function _renderDynamicStages(keepId, huntId) {
     const feedEntries = closedHuntFeeds[keepId] || [];
     const ruleEntries = feedEntries.filter(e => e.msg && (e.msg.includes('rule') || e.msg.includes('DL-')));
     const ruleMsg = ruleEntries.length ? ruleEntries[ruleEntries.length - 1].msg : '';
+    // For active hunts, extract TTP→ruleId mappings from feed so rule IDs
+    // match the feed narrative (not sequential subhunt index)
+    const ttpRuleMap = {};
+    if (isActive) {
+      feedEntries.forEach(e => {
+        if (!e.msg) return;
+        const re = /(DL-[\d]+-[\d]+-[\d]+)\s*\(?(T\d{4}(?:\.\d{3})?)/g;
+        let m; while ((m = re.exec(e.msg)) !== null) ttpRuleMap[m[2]] = m[1];
+      });
+    }
     s4body.innerHTML = `
       <div class="info-bar"><span class="ib-icon">${isActive ? '⚡' : '🔒'}</span><span>${isActive
         ? 'Detection rules are <b>in testing</b>. Run queries in the <b>Check</b> tab to validate.'
@@ -1018,16 +1051,29 @@ function _renderDynamicStages(keepId, huntId) {
       <div>
         <div class="label" style="margin-bottom:7px;">Rules Generated</div>
         <table class="ttp-table">
-          <thead><tr><th>Hypothesis</th><th>TTP</th><th>Rule</th><th>Status</th></tr></thead>
+          <thead><tr><th>${ld && ld.rules ? 'Rule' : 'Hypothesis'}</th><th>TTP</th><th>Rule ID</th><th>Status</th></tr></thead>
           <tbody>
-            ${subs.map((sh, i) => `<tr>
-              <td>${sh.label}</td>
-              <td class="ttp-id">${sh.ttp}</td>
-              <td>DL-${huntId.replace('TH-','')}-00${i+1}</td>
-              <td>${isActive
-                ? '<span class="chip chip-yellow" style="font-size:10px;">Testing</span>'
-                : '<span class="chip chip-green" style="font-size:10px;">Deployed</span>'}</td>
-            </tr>`).join('')}
+            ${(ld && ld.rules ? ld.rules : subs).map((item, i) => {
+              if (ld && ld.rules) {
+                return `<tr>
+              <td>${item.name}</td>
+              <td class="ttp-id">${item.ttp}</td>
+              <td>${item.id}</td>
+              <td><span class="chip chip-green" style="font-size:10px;">Deployed</span></td>
+            </tr>`;
+              }
+              const defaultId = 'DL-' + huntId.replace('TH-','') + '-00' + (i+1);
+              const ruleId = isActive ? (ttpRuleMap[item.ttp] || null) : defaultId;
+              return `<tr>
+              <td>${item.label}</td>
+              <td class="ttp-id">${item.ttp}</td>
+              <td>${ruleId || '<span style="color:var(--muted);">—</span>'}</td>
+              <td>${!isActive
+                ? '<span class="chip chip-green" style="font-size:10px;">Deployed</span>'
+                : ruleId
+                  ? '<span class="chip chip-yellow" style="font-size:10px;">Testing</span>'
+                  : '<span class="chip chip-gray" style="font-size:10px;">Pending</span>'}</td>
+            </tr>`; }).join('')}
           </tbody>
         </table>
       </div>
@@ -1232,12 +1278,18 @@ function loadClosedPipeline(huntId, keepId) {
   }
 }
 
-// ── Capture original Stage 0 / Stage 1 content for restoration on hunt switch ──
+// ── Capture original Stage 0–4 content for restoration on hunt switch ──
 ;(function() {
   const tb   = document.getElementById('ttp-tbody');
   const s0ib = document.querySelector('#stage-0 .info-bar');
   const s1ib = document.querySelector('#stage-1 .info-bar');
+  const s2  = document.getElementById('stage-2');
+  const s3  = document.getElementById('stage-3');
+  const s4  = document.getElementById('stage-4');
   if (tb)   _origTtpTbody      = tb.innerHTML;
   if (s0ib) _origStage0InfoBar = s0ib.innerHTML;
   if (s1ib) _origStage1InfoBar = s1ib.innerHTML;
+  if (s2)   _origStage2Body    = s2.innerHTML;
+  if (s3)   _origStage3Body    = s3.innerHTML;
+  if (s4)   _origStage4Body    = s4.innerHTML;
 })();

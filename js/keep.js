@@ -8,7 +8,7 @@ const keepData = {
   '041': {
     title: 'TH-2026-041', label: 'Volt Typhoon · Active', labelClass: 'chip-red',
     createdBy: 'alice', createdAt: 'Apr 27, 2026 · 09:15',
-    criticals: 3, highs: 3,
+    criticals: 2, highs: 4,
     subhunts: [
       { id:'sh01', label:'SH-01', ttp:'T1570',     name:'Lateral Tool Transfer',    status:'confirmed' },
       { id:'sh02', label:'SH-02', ttp:'T1003.001', name:'LSASS Credential Dumping', status:'confirmed' },
@@ -44,10 +44,10 @@ const keepData = {
     findings: [
       { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · RAA Supervisor Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
       { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · RAA Supervisor Agent · T1570 · 5m ago',      drawer:'tradecraft' },
-      { sev:'c', title:'Cobalt Strike C2 Beacon — JA3 rule match',           meta:'185.220.101.47 · Detection Logic Agent · T1071.001 · 8m ago',    drawer:'detection'  },
+      { sev:'h', title:'Cobalt Strike C2 Beacon — JA3 rule match',           meta:'185.220.101.47 · Detection Logic Agent · T1071.001 · 8m ago',    drawer:'detection'  },
       { sev:'h', title:'Kerberoasting — RC4 TGS-REQ anomaly, 11 SPNs',       meta:'corp.local · RAA Supervisor Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
       { sev:'h', title:'Registry Run Key — Validated persistence rule',      meta:'SRV-APP03 · Rule Validation Agent · T1547.001 · 15m ago',        drawer:'validation' },
-      { sev:'h', title:'DNS TXT Exfiltration Pattern',                       meta:'evilc2[.]net · Detection Logic Agent · T1041 · 19m ago',         drawer:'detection'  },
+      { sev:'m', title:'DNS TXT Exfiltration Pattern',                       meta:'evilc2[.]net · Detection Logic Agent · T1041 · 19m ago',         drawer:'detection'  },
       { sev:'m', title:'Off-Hours Valid Account Auth — CORP\\jsmith',        meta:'WIN-DC01 · RAA Supervisor Agent · T1078.002 · 22m ago',   drawer:'tradecraft' },
       { sev:'m', title:'Scheduled Task Persistence — svcupd.exe',            meta:'SRV-APP03 · Detection Logic Agent · T1053.005 · 31m ago', drawer:'detection'  },
     ],
@@ -76,7 +76,7 @@ const keepData = {
       impact: [
         { val:'14', lbl:'Hosts involved', color:'var(--red)' },
         { val:'26m', lbl:'Detection to containment', color:'var(--text)' },
-        { val:'3', lbl:'Critical findings', color:'var(--red)' },
+        { val:'2', lbl:'Critical findings', color:'var(--red)' },
         { val:'4', lbl:'Rules deployed', color:'var(--green)' },
       ],
       recommendations: [
@@ -115,7 +115,7 @@ const keepData = {
   '042': {
     title: 'TH-2026-042', label: 'DCSync Staging · Active', labelClass: 'chip-red',
     createdBy: 'marcus', createdAt: 'Apr 28, 2026 · 10:02',
-    criticals: 1, highs: 1,
+    criticals: 1, highs: 0,
     subhunts: [
       { id:'sh01', label:'SH-01', ttp:'T1078.002', name:'Privileged Account Abuse',  status:'active' },
       { id:'sh02', label:'SH-02', ttp:'T1484.001', name:'Domain Policy Modification', status:'active' },
@@ -181,7 +181,7 @@ const keepData = {
   '040': {
     title: 'TH-2026-040', label: 'FIN7 Ransomware · Closed', labelClass: 'chip-yellow',
     createdBy: 'marcus', createdAt: 'Apr 24, 2026 · 13:15',
-    criticals: 2, highs: 6,
+    criticals: 0, highs: 2,
     subhunts: [
       { id:'sh01', label:'SH-01', ttp:'T1566.001', name:'Phishing Email Delivery',    status:'confirmed' },
       { id:'sh02', label:'SH-02', ttp:'T1490',     name:'Ransomware Pre-staging',     status:'confirmed' },
@@ -201,27 +201,22 @@ const keepData = {
       },
     },
     findings: [
-      { sev:'c', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · RAA Supervisor Agent · T1490 · 3d ago',        drawer:'tradecraft' },
-      { sev:'c', title:'Phishing Payload Execution — Office Macro',        meta:'WIN-WS012 · Detection Logic Agent · T1204 · 3d ago',             drawer:'detection'  },
-      { sev:'h', title:'DLL Sideloading — DISM.exe',                       meta:'WIN-WS012 · Rule Validation Agent · T1574.002 · 3d ago',         drawer:'validation' },
-      { sev:'h', title:'Data Encrypted for Impact',                        meta:'WIN-FS02 · RAA Supervisor Agent · T1486 · 3d ago',         drawer:'tradecraft' },
-      { sev:'h', title:'Credential Access via LSASS Dump',                 meta:'WIN-DC02 · Detection Logic Agent · T1003.001 · 3d ago',           drawer:'detection'  },
-      { sev:'m', title:'Phishing Email — Malicious Attachment Opened',     meta:'mail.corp.local · Detection Logic Agent · T1566.001 · 3d ago',   drawer:'detection'  },
+      { sev:'h', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · RAA Supervisor Agent · T1490 · 3d ago',        drawer:'tradecraft' },
+      { sev:'h', title:'Phishing Payload Execution — Office Macro',        meta:'WIN-WS012 · Detection Logic Agent · T1204 · 3d ago',             drawer:'detection'  },
+      { sev:'m', title:'DLL Sideloading — DISM.exe',                       meta:'WIN-WS012 · Rule Validation Agent · T1574.002 · 3d ago',         drawer:'validation' },
     ],
     lock: {
       l: 'Ingested FS-ISAC TLP:AMBER report on FIN7 ransomware TTPs. Extracted 9 ATT&amp;CK techniques. 2 hypotheses generated: phishing delivery and pre-ransomware staging.',
       o: 'H-01 confirmed (phishing macro delivery to 3 hosts). H-02 confirmed (ransomware staging — shadow copy deletion on FS02).',
       c: 'SPL queries executed in Splunk ES. 8 hits on H-01 (index=security). MITRE coverage: 6 confirmed.',
-      k: 'Hunt closed. 6 findings documented. FS02 isolated. 5 new detection rules deployed to SIEM.',
+      k: 'Hunt closed. 3 findings documented. FS02 isolated. 5 new detection rules deployed to SIEM.',
       kItalic: false,
       raa: { relevant: true, note: 'RAA triggered — Process Chain Anomaly, 12 hits (T1204 macro chain, T1490 shadow copy deletion)' },
     },
     timeline: [
-      { color:'red',    text:'<b>RAA Supervisor Agent</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
-      { color:'red',    text:'<b>Detection Logic Agent</b> — data encryption pattern detected on FS02',                   time:'14:19', tag:'T1486',     host:'WIN-FS02'  },
-      { color:'orange', text:'<b>Rule Validation Agent</b> — DLL sideloading rule matched DISM.exe',                      time:'14:05', tag:'T1574.002', host:'WIN-WS012' },
-      { color:'yellow', text:'<b>Detection Logic Agent</b> — Office macro execution flagged on WIN-WS012',                time:'13:47', tag:'T1204',     host:'WIN-WS012' },
-      { color:'blue',   text:'<b>RAA Supervisor Agent</b> — phishing email linked to FIN7 campaign',                     time:'13:30', tag:'T1566.001', host:'EXT'       },
+      { color:'yellow', text:'<b>RAA Supervisor Agent</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
+      { color:'orange', text:'<b>Detection Logic Agent</b> — Office macro execution flagged on WIN-WS012',                time:'13:47', tag:'T1204',     host:'WIN-WS012' },
+      { color:'indigo', text:'<b>Rule Validation Agent</b> — DLL sideloading rule matched DISM.exe',                      time:'14:05', tag:'T1574.002', host:'WIN-WS012' },
       { color:'green',  text:'<b>Orchestrator Agent</b> — Hunt TH-2026-040 started, 5 agents deployed',                  time:'13:15', tag:'',          host:'SYSTEM'    },
     ],
     report: {
@@ -230,7 +225,7 @@ const keepData = {
       approach: 'H-01 (phishing delivery) was confirmed via <span class="report-ioc">T1204</span> — Office macro execution flagged on WIN-WS012 linked to a TA577-attributed phishing campaign. H-02 (ransomware staging) was confirmed via <span class="report-ioc">T1490</span> — <span class="report-ioc">vssadmin delete shadows /all</span> detected on WIN-FS02 with a command-line anomaly score of 97. DLL sideloading via <span class="report-ioc">DISM.exe</span> was identified as the persistence mechanism between initial access and the ransomware deployment stage.',
       impact: [
         { val:'2h 14m', lbl:'Hunt duration', color:'var(--text)' },
-        { val:'6', lbl:'Findings', color:'var(--yellow)' },
+        { val:'3', lbl:'Findings', color:'var(--yellow)' },
         { val:'1', lbl:'Server isolated', color:'var(--red)' },
         { val:'5', lbl:'Rules deployed', color:'var(--green)' },
       ],
@@ -268,7 +263,7 @@ const keepData = {
   '039': {
     title: 'TH-2026-039', label: 'Supply Chain · Closed', labelClass: 'chip-gray',
     createdBy: 'priya', createdAt: 'Apr 14, 2026 · 10:15',
-    criticals: 1, highs: 4,
+    criticals: 0, highs: 1,
     subhunts: [
       { id:'sh01', label:'SH-01', ttp:'T1195.002', name:'Trojanised Build Artifact',  status:'confirmed' },
       { id:'sh02', label:'SH-02', ttp:'T1071.001', name:'Cobalt Strike C2 via HTTPS', status:'confirmed' },
@@ -288,25 +283,20 @@ const keepData = {
       },
     },
     findings: [
-      { sev:'c', title:'Trojanised Build Tool — Supply Chain Compromise',  meta:'build-srv01 · Detection Logic Agent · T1195.002 · 2w ago',            drawer:'detection'  },
-      { sev:'h', title:'DLL Sideloading via Legitimate Binary',            meta:'10 hosts · Rule Validation Agent · T1574.002 · 2w ago',               drawer:'validation' },
-      { sev:'h', title:'C2 Beacon — Cobalt Strike over HTTPS',             meta:'update.cdn-cache[.]net · Detection Logic Agent · T1071.001 · 2w ago', drawer:'detection'  },
-      { sev:'h', title:'Scheduled Task Persistence — svchost wrapper',     meta:'SRV-BUILD01 · RAA Supervisor Agent · T1053.005 · 2w ago',      drawer:'tradecraft' },
-      { sev:'m', title:'Exfiltration over C2 Channel',                     meta:'update.cdn-cache[.]net · Detection Logic Agent · T1041 · 2w ago',     drawer:'detection'  },
+      { sev:'h', title:'Trojanised Build Tool — Supply Chain Compromise',  meta:'build-srv01 · Detection Logic Agent · T1195.002 · 2w ago',            drawer:'detection'  },
+      { sev:'m', title:'C2 Beacon — Cobalt Strike over HTTPS',             meta:'update.cdn-cache[.]net · Detection Logic Agent · T1071.001 · 2w ago', drawer:'detection'  },
     ],
     lock: {
       l: 'Ingested CISA supply chain advisory (SolarWinds-pattern). Extracted 7 ATT&amp;CK techniques. 2 hypotheses generated: trojanised build artifacts and C2 staging.',
       o: 'H-01 confirmed (trojanised build tool on SRV-BUILD01). H-02 confirmed (Cobalt Strike C2 via HTTPS).',
       c: 'SPL queries executed in Splunk ES. 6 hits on H-01 (index=windows/sysmon). MITRE coverage: 5 confirmed.',
-      k: 'Hunt closed. 5 findings documented. SRV-BUILD01 re-imaged. 4 new detection rules deployed.',
+      k: 'Hunt closed. 2 findings documented. SRV-BUILD01 re-imaged. 4 new detection rules deployed.',
       kItalic: false,
       raa: { relevant: true, partial: true, note: 'RAA partial — Process Chain triggered (8 hits, T1574.002). T1071.001 deferred to SPL (network-layer; outside RAA scope)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Detection Logic Agent</b> — trojanised build artifact confirmed on SRV-BUILD01',  time:'11:03', tag:'T1195.002' },
-      { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon over HTTPS, JA3 match',                     time:'10:52', tag:'T1071.001' },
-      { color:'indigo', text:'<b>Rule Validation Agent</b> — DLL sideloading confirmed on 10 hosts',               time:'10:44', tag:'T1574.002' },
-      { color:'yellow', text:'<b>RAA Supervisor Agent</b> — scheduled task persistence detected',                  time:'10:38', tag:'T1053.005' },
+      { color:'orange', text:'<b>Detection Logic Agent</b> — trojanised build artifact confirmed on SRV-BUILD01',  time:'11:03', tag:'T1195.002' },
+      { color:'yellow', text:'<b>Detection Logic Agent</b> — C2 beacon over HTTPS, JA3 match',                     time:'10:52', tag:'T1071.001' },
       { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-039 started, 5 agents deployed',            time:'10:15', tag:''          },
     ],
     report: {
@@ -316,7 +306,7 @@ const keepData = {
       impact: [
         { val:'10', lbl:'Hosts exposed', color:'var(--yellow)' },
         { val:'4d', lbl:'Dwell time', color:'var(--red)' },
-        { val:'5', lbl:'Findings', color:'var(--text)' },
+        { val:'2', lbl:'Findings', color:'var(--text)' },
         { val:'4', lbl:'Rules deployed', color:'var(--green)' },
       ],
       recommendations: [
