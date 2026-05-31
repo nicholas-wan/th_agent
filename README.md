@@ -181,3 +181,35 @@ Lateral Movement & Credential Harvesting. 8 TTPs extracted / 4 selected as hypot
 - **H-04 T1071.001** C2 Beacon (HTTPS) — conf **78%** · 2 Cobalt Strike sessions · 185.220.101.47:443/:8443 · beacon ~60s · **JA3 `769c10b06a1a2b7b7a26b0a2be2e88a4`** (the deployed-query hash — this is canonical, supersedes older `3b5074b1…` / `769c10b3d4…`).
 - Supporting signal: T1078.002 (off-hours valid-account auth) — merged into T1570 scope, not a separate hypothesis.
 - 4 rules deployed: `DL-2026-041-001..004`. Threat actor is **Volt Typhoon** everywhere (not APT29 — one generic "APT29" placeholder in the New-Hunt form input is intentional example text).
+
+**Canonical facts — TH-2026-042 (follow-up from 041)**
+Privileged Account Abuse & DCSync Staging — Tier-0 Assets. 3 TTPs, all selected:
+- **H-01 T1078.002** Privileged Account Abuse — conf 95% · jsmith Domain Admin auth on WIN-DC01.
+- **H-02 T1484.001** Domain Policy Modification — conf 78% · check delegation/SPN changes.
+- **H-03 T1003.006** DCSync — conf 82% · DRS replication from non-DC sources.
+- 2 rules in testing: `DL-2026-042-001..002`. Proposed next hunt: **TH-2026-043** (Golden Ticket detection).
+- Keep tab is gated (locked) — hunt is still in Check stage.
+
+**Homepage layout**
+- **Stat cards** (top): Rules Deployed · Rules in Testing · MITRE Coverage · Critical Findings · Hunts Completed. All clickable — navigate to Coverage tab or hunt detail.
+- **Active Hunts**: full cards, descending chronological order. Currently 042 and 041.
+- **Completed Hunts**: compact searchable table. 9 rows from narrative-referenced hunts.
+- Hunt card tags show detection engineering output (e.g. "3 Rules in Testing", "2 Rules Deployed"), not CTI source jargon.
+- Hunt card stats show TTPs / Findings / Runtime (not agent count — that's a platform constant).
+
+**Hunt lifecycle & tab gating**
+- **041 (live demo)**: all LOCK tabs locked on open. `runPipeline()` triggers the animated pipeline (selects r1 report, populates TTPs, advances stages 0→4 on timers). Only 041 has `feedSteps` data for live animation.
+- **042 (active, pre-loaded)**: loaded via `loadClosedPipeline` using `closedHuntFeeds['042']`. Stages 2-4 rendered dynamically from `keepData` subhunts via `_renderDynamicStages()`. Observe + Check open, Keep gated (`maxStep=3`). Run Pipeline button visible but no-ops (guarded).
+- **040, 039 (closed)**: loaded via `loadClosedPipeline`. All tabs open (`pipelineLocked=true`). Run Pipeline button hidden. Stages 2-4 rendered dynamically.
+- **Adding a new hunt**: add entries to `huntMeta` + `checkHuntMeta` (app.js), `keepData` + `huntNotes` (keep.js), `observeData` (observe.js), `closedHuntFeeds` + `closedLearnData` (pipeline.js). Add a card or table row in index.html + a hunt-switcher entry. For active hunts, set `checkHuntMeta.active = true`.
+
+**Data objects per hunt** (minimum for a working hunt):
+
+| Object | File | Required for |
+|---|---|---|
+| `huntMeta[id]` | `js/app.js` | Detail pane header, defaultTab |
+| `checkHuntMeta[keepId]` | `js/app.js` | Check context strip, `active` flag for gating |
+| `keepData[keepId]` | `js/keep.js` | Subhunts, findings, timeline, report, pivot |
+| `observeData[keepId]` | `js/observe.js` | Observe tab baseline |
+| `closedHuntFeeds[keepId]` | `js/pipeline.js` | Agent reasoning feed (triggers `loadClosedPipeline`) |
+| `closedLearnData[keepId]` | `js/pipeline.js` | Learn stage TTP table + report card |
