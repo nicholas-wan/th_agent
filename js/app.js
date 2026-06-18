@@ -1406,7 +1406,7 @@ function buildReport() {
     </div>
 
     <div class="report-section">
-      <div class="report-sh">RAA Corroboration (2 analytics triggered)</div>
+      <div class="report-sh">Investigation Corroboration (2 analytics triggered)</div>
       <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1570</span><span style="flex:1;">Command Line Anomaly — jsmith pivot chain</span><span style="font-size:10px;color:var(--green);">59 hits</span></div>
       <div class="report-row"><span class="chip chip-green" style="font-size:9px;">T1003.001</span><span style="flex:1;">Process Chain Anomaly — rundll32→LSASS on WIN-DC01</span><span style="font-size:10px;color:var(--green);">Confirmed</span></div>
     </div>

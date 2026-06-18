@@ -10,7 +10,7 @@ js/agents.js             agentData{} drawer content
 js/observe.js            Hunt Observe stage — data, edit mode, CRUD functions
 js/report.js             Hunt Report modal functions
 js/pipeline.js           LOCK pipeline feed — steps, pills, topology, play
-js/check.js              Check stage — rules, queries, RAA, velocityData, findingComments
+js/check.js              Check stage — rules, queries, Investigation alert retrieval, velocityData, findingComments
 js/keep.js               Keep stage — findings, timeline, TTP selector, notes
 js/kb-tab.js             KB tab — platform attack techniques, runbooks, env pane, RV modal
 kb/
@@ -100,7 +100,7 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 | 1 | 🎛️ | Orchestrator Agent | `orchestrator` | blue |
 | 2 | 💡 | Hypothesis Agent | `hypothesis` | teal |
 | 3 | 🗄️ | Data Engineering Agent | `dataeng` | indigo |
-| 4 | 🧠 | RAA Supervisor Agent | `tradecraft` | yellow |
+| 4 | 🧠 | Investigation Agent | `tradecraft` | yellow |
 | 5 | ⚙️ | Detection Logic Agent | `detection` | green |
 
 Orchestrator spawns all. Hypothesis runs first. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
@@ -134,7 +134,7 @@ Learn sidebar and Observe panel both show these — keep in sync. Adding a tool:
 |---|---|---|
 | Learn | L | CTI → TTP extraction → hypotheses |
 | Observe | O | Editable environment baseline per hunt |
-| Check | C | SPL rule testing + RAA analysis |
+| Check | C | SPL rule testing + targeted SOC/Analytics alert retrieval, including RAA |
 | Keep | K | Findings, timeline, evidence, hunt report |
 
 ---

@@ -72,20 +72,20 @@ const agentData = {
     </div>` },
 
   orchestrator: { title:'Orchestrator Agent', sub:'Hunt Coordination & Synthesis · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives the parsed CTI from the Data Engineering Agent, assigns analytical tasks to the RAA Supervisor Agent and Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives the parsed CTI from the Data Engineering Agent, assigns targeted investigation tasks to the Investigation Agent and rule-generation tasks to the Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
     <div class="ds"><div class="ds-head">Agent Topology</div>
       <div style="font-size:11px;color:var(--sub);line-height:2;">
         🎛️ Orchestrator<br>
         &nbsp;&nbsp;├─ 💡 Hypothesis Agent <span style="color:var(--muted);font-size:10px;">(spawned first · generates hypotheses)</span><br>
         &nbsp;&nbsp;├─ 🗄️ Data Engineering Agent<br>
-        &nbsp;&nbsp;├─ 🧠 RAA Supervisor Agent<br>
+        &nbsp;&nbsp;├─ 🧠 Investigation Agent<br>
         &nbsp;&nbsp;├─ ⚙️ Detection Logic Agent<br>
         &nbsp;&nbsp;└─ ✅ Rule Validation Agent
       </div>
     </div>` },
 
   dataeng: { title:'Data Engineering Agent', sub:'Telemetry Ingestion & Normalization · Streaming', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Connects to Splunk Enterprise Security via MCP (Model Context Protocol) and makes enriched, CIM-normalised telemetry available to all downstream agents. It translates hunt hypotheses into SPL queries, exposes relevant data models and field extractions, and streams event context into the shared agent workspace so the RAA Supervisor Agent and Detection Logic Agent can operate on structured, hunt-ready data.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Connects to Splunk Enterprise Security via MCP (Model Context Protocol) and makes enriched, CIM-normalised telemetry available to all downstream agents. It translates hunt hypotheses into SPL queries, exposes relevant data models and field extractions, and streams event context into the shared agent workspace so the Investigation Agent can retrieve relevant SOC and Analytics alerts and the Detection Logic Agent can generate hunt-ready rules.</div></div>
     <div class="ds"><div class="ds-head">🔌 MCP Connection</div>
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;">
         <span style="font-size:18px;">🟠</span>
@@ -115,7 +115,7 @@ const agentData = {
         &nbsp;&nbsp;| eval cmdline=lower(CommandLine)<br>
         &nbsp;&nbsp;| where match(cmdline,"powershell|encoded|bypass")<br>
         &nbsp;&nbsp;| stats count by host,ParentProcessName,cmdline<br>
-        <span style="color:var(--muted);">— feeding RAA Supervisor Agent · 342 events/min</span>
+        <span style="color:var(--muted);">— feeding Investigation Agent · 342 events/min</span>
       </div>
     </div>
     <div class="ds"><div class="ds-head">Normalisation Stats</div>
@@ -127,9 +127,9 @@ const agentData = {
       </div>
     </div>` },
 
-  tradecraft: { title:'RAA Supervisor Agent', sub:'Reasoning Augmented Analytics · ALERTING', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Applies reasoning-augmented analytics to score process behaviour against adversary tradecraft models. Specialises in two core detections: <b>command-line anomaly scoring</b> (flags unusual flag combinations, encoded payloads, LOLBin abuse) and <b>process chain anomaly</b> (detects unexpected parent-child relationships against a learned baseline). Outputs enriched hypotheses with confidence scores for the Orchestrator.</div></div>
-    <div class="ds"><div class="ds-head">📊 Active RAA Analytics</div>
+  tradecraft: { title:'Investigation Agent', sub:'Targeted SOC/Analytics Alert Retrieval · ALERTING', body:`
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Performs targeted retrieval of SOC and Analytics alerts relevant to each threat hypothesis. It queries Splunk-backed alert sources, including RAA process-chain and command-line analytics, authentication anomalies, and network detections, then returns corroborating evidence, coverage gaps, and confidence context to the Orchestrator.</div></div>
+    <div class="ds"><div class="ds-head">📊 Retrieved Alert Sources</div>
       <div class="ioc-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
         <div style="display:flex;align-items:center;gap:7px;"><span class="chip chip-red" style="font-size:9px;">ALERTING</span><span style="font-size:11px;font-weight:600;color:var(--text);">Process Chain Anomaly</span></div>
         <div style="font-size:10px;color:var(--muted);padding-left:6px;">↳ Detects unexpected parent-child relationships against learned baseline · 3 hits this hunt</div>
@@ -146,7 +146,7 @@ const agentData = {
 ` },
 
   detection: { title:'Detection Logic Agent', sub:'Hunting Rule Creation · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Translates hypotheses and RAA Supervisor Agent outputs into executable detection rules. Generates multi-format output: KQL for Microsoft Sentinel, Sigma for SIEM-agnostic distribution, Splunk SPL, and YARA-L for endpoint platforms. Rules are automatically passed to the Rule Validation Agent before deployment.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Translates hypotheses and Investigation Agent coverage gaps into executable detection rules. Generates multi-format output: KQL for Microsoft Sentinel, Sigma for SIEM-agnostic distribution, Splunk SPL, and YARA-L for endpoint platforms. Rules are automatically passed to the Rule Validation Agent before deployment.</div></div>
     <div class="ds"><div class="ds-head">Output Formats</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;font-size:11px;">
         <span class="chip chip-blue">KQL</span><span class="chip chip-indigo">Sigma</span><span class="chip chip-gray">Splunk SPL</span><span class="chip chip-gray">YARA-L</span>
@@ -185,4 +185,3 @@ function openHuntDrawer(id) {
 }
 
 function closeDrawer() { document.getElementById('drawer').classList.remove('open'); }
-

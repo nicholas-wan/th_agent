@@ -1,5 +1,5 @@
 ﻿/* ── check.js ────────────────────────────────────────────────────────────
-   Check stage — rule filter, query iterations, RAA results, velocity data,
+   Check stage — rule filter, query iterations, Investigation alert retrieval, velocity data,
    finding comments. Loaded after pipeline.js, before keep.js.
    ──────────────────────────────────────────────────────────────────────── */
 // ── Coverage rule filter ──
@@ -501,7 +501,7 @@ const closedCheckSummaries = {
       { label: 'Queries', val: '2 confirmed', cls: 'chip-red' },
       { label: 'Gaps', val: 'None', cls: 'chip-green' },
     ],
-    assessment: '<b>Full coverage achieved — hunt closed.</b> RAA Process Chain Anomaly confirmed the macro execution delivery chain on WIN-WS012 (T1204) and shadow copy deletion on WIN-FS02 (T1490 — anomaly score 97). Both SPL detection queries returned positive results corroborating RAA findings. Complete evidence chain handed off to IR. WIN-FS02 isolated and restored from backup.',
+    assessment: '<b>Full coverage achieved — hunt closed.</b> RAA Process Chain Anomaly confirmed the macro execution delivery chain on WIN-WS012 (T1204) and shadow copy deletion on WIN-FS02 (T1490 — anomaly score 97). Both SPL detection queries returned positive results corroborating Investigation Agent findings. Complete evidence chain handed off to IR. WIN-FS02 isolated and restored from backup.',
   },
   '039': {
     status: 'chip-green', statusLabel: '✓ Closed — results archived',
@@ -527,7 +527,7 @@ const closedRAAResults = {
           'WINWORD.EXE → cmd.exe → powershell.exe on WIN-WS012 — Office macro execution chain outside baseline',
           'vssadmin.exe delete shadows /all on WIN-FS02 — anomaly score 97, no scheduled backup in CMDB window',
         ],
-        interp: '<b>High-confidence T1204 + T1490.</b> Office macro execution chain on WIN-WS012 matches FIN7 delivery TTP. Shadow copy deletion on WIN-FS02 is a definitive ransomware pre-staging indicator. RAA findings were corroborated by both SPL detection queries — full evidence chain confirmed.',
+        interp: '<b>High-confidence T1204 + T1490.</b> Office macro execution chain on WIN-WS012 matches FIN7 delivery TTP. Shadow copy deletion on WIN-FS02 is a definitive ransomware pre-staging indicator. Investigation Agent findings were corroborated by both SPL detection queries — full evidence chain confirmed.',
       },
     ],
   },
@@ -567,7 +567,7 @@ function renderCheckSummary(postRun, dataOverride) {
     const d = checkData[_activeHuntId];
     if (!d) { card.style.display = 'none'; return; }
     s = postRun ? d.summaryPost : d.summaryPre;
-    subtitle = 'Combined RAA + detection query assessment';
+    subtitle = 'Combined Investigation alerts + detection query assessment';
   }
   const tagsHTML = s.tags.map(t =>
     `<span class="chip ${t.cls}" style="font-size:10px;">${t.label}: ${t.val}</span>`
@@ -684,7 +684,7 @@ function renderRAAResults(dataOverride) {
   if (!d.relevant) {
     bodyHTML = `<div class="raa-no-coverage">
       <span class="raa-scope-icon">🔭</span>
-      <span><b style="color:var(--text);">RAA out of scope for this hypothesis</b><br>${d.reason}</span>
+      <span><b style="color:var(--text);">No retrieved alert coverage for this hypothesis</b><br>${d.reason}</span>
     </div>`;
   } else {
     bodyHTML = d.analytics.map(a => {
@@ -716,15 +716,15 @@ function renderRAAResults(dataOverride) {
 
   const subhuntBanner = subhuntLabel
     ? `<div style="display:flex;align-items:center;gap:8px;padding:7px 15px;background:rgba(59,130,246,.05);border-bottom:1px solid rgba(59,130,246,.12);font-size:11px;color:var(--muted);">
-        <span>RAA scope for</span>
+        <span>Investigation scope for</span>
         <span class="chip chip-blue" style="font-size:10px;">${subhuntLabel}</span>
       </div>`
     : '';
 
   card.innerHTML = `<div class="card-head" onclick="toggleCollapse('raa-card',event)">
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <span class="card-title">🔬 RAA — Reasoning Augmented Analytics</span>
-      <span style="font-size:10px;color:var(--muted);">Process Chain Anomaly &middot; Command Line Anomaly</span>
+      <span class="card-title">🔬 Investigation Agent — Relevant Alerts</span>
+      <span style="font-size:10px;color:var(--muted);">SOC alerts &middot; RAA analytics &middot; Splunk evidence</span>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <span class="chip chip-green" style="font-size:10px;">● Always On</span>

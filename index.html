@@ -357,7 +357,7 @@
       </div>
       <div class="ps-line" id="pl2"></div>
       <div class="ps-node wait" id="ps3" onclick="setStep(3)">
-        <div class="ps-icon">🧠</div><div class="ps-label">RAA Supervisor Agent</div>
+        <div class="ps-icon">🧠</div><div class="ps-label">Investigation Agent</div>
       </div>
       <div class="ps-line" id="pl3"></div>
       <div class="ps-node wait" id="ps4" onclick="setStep(4)">
@@ -519,7 +519,7 @@
             <button class="btn btn-outline btn-sm" onclick="setStep(1)">← Back</button>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:9px;">
-            <div class="info-bar"><span class="ib-icon">📌</span><span>The <b>Hypothesis Agent</b> generated these hunt hypotheses from the extracted TTPs, informed by past hunt history and analyst notes. <b>Select a hypothesis</b> to focus the RAA Supervisor Agent's analysis, then click <b>Send to Tradecraft →</b> to proceed with adversary behaviour review.</span></div>
+            <div class="info-bar"><span class="ib-icon">📌</span><span>The <b>Hypothesis Agent</b> generated these hunt hypotheses from the extracted TTPs, informed by past hunt history and analyst notes. <b>Select a hypothesis</b> to focus the Investigation Agent's targeted alert retrieval, then click <b>Send to Investigation →</b> to proceed with relevant alert review.</span></div>
             <div class="hyp-recall">
               <!-- Header -->
               <div class="hyp-recall-head">
@@ -649,11 +649,11 @@
                 <span class="chip chip-indigo" style="font-size:9px;">recommendation</span>
               </div>
               <div class="agent-gate-reasoning">
-                H-01 has the highest confidence and prior confirmation — PsExec lateral movement was confirmed across 9 hosts in TH-2026-038. Sending to RAA Supervisor Agent with Splunk ES as data source. Single-hop threshold and batch-job exclusion window pre-applied from Marcus and Priya's analyst notes.
+                H-01 has the highest confidence and prior confirmation — PsExec lateral movement was confirmed across 9 hosts in TH-2026-038. Sending to Investigation Agent to retrieve relevant SOC and Analytics alerts from Splunk ES. Single-hop threshold and batch-job exclusion window pre-applied from Marcus and Priya's analyst notes.
               </div>
               <div class="agent-gate-prompt"><span class="agent-gate-prompt-dot"></span>Pipeline paused — your decision needed to continue</div>
               <div class="agent-gate-actions">
-                <button class="btn btn-primary" onclick="agentApprove(3)">✓ Approve — Send to Tradecraft</button>
+                <button class="btn btn-primary" onclick="agentApprove(3)">✓ Approve — Send to Investigation</button>
                 <button class="btn btn-outline btn-sm" onclick="agentModify('gate-2')">✎ Change hypothesis</button>
                 <button class="btn btn-outline btn-sm" style="color:var(--muted);" onclick="agentOverride(2,3)">↗ Override</button>
               </div>
@@ -691,17 +691,17 @@
           </div>
         </div>
 
-        <!-- Stage 3: RAA Supervisor Agent -->
+        <!-- Stage 3: Investigation Agent -->
         <div class="stage card" id="stage-3">
           <div class="card-head" onclick="toggleStage('stage-3', event)">
-            <span class="card-title">🧠 RAA Supervisor Agent<span class="stage-chevron">▾</span></span>
+            <span class="card-title">🧠 Investigation Agent<span class="stage-chevron">▾</span></span>
             <div style="display:flex;gap:7px;align-items:center;">
               <span class="chip chip-indigo">H-01 · Splunk ES</span>
               <button class="btn btn-outline btn-sm" onclick="setStep(2)">← Back</button>
             </div>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
-            <div class="info-bar"><span class="ib-icon">📌</span><span>The RAA Supervisor Agent queries your <b>2 running analytics</b> against Splunk logs and surfaces hits that match the hypothesis. TTPs with no analytic coverage are flagged as gaps and passed to the Detection Logic Agent to craft new rules.</span></div>
+            <div class="info-bar"><span class="ib-icon">📌</span><span>The Investigation Agent performs targeted retrieval of relevant SOC and Analytics alerts, including RAA hits, against Splunk logs and surfaces evidence that matches the hypothesis. TTPs with no relevant alert coverage are flagged as gaps and passed to the Detection Logic Agent to craft new rules.</span></div>
 
             <!-- Analytic results -->
             <div>
@@ -734,9 +734,9 @@
               </div>
             </div>
 
-            <!-- RAA-covered TTPs -->
+            <!-- Investigation-confirmed TTPs -->
             <div>
-              <div class="label" style="margin-bottom:7px;">Handled by RAA — detections confirmed, no new rule needed</div>
+              <div class="label" style="margin-bottom:7px;">Confirmed by Investigation Agent — relevant alerts found, no new rule needed</div>
               <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--sub);">
                 <div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-yellow" style="font-size:10px;">T1570</span><span>Tool Transfer / PsExec</span><span style="margin-left:auto;color:var(--green);font-size:10px;">✓ Anomalous Command Lines — 59 hits</span></div>
                 <div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-yellow" style="font-size:10px;">T1078.002</span><span>Valid Accounts</span><span style="margin-left:auto;color:var(--green);font-size:10px;">✓ Anomalous Command Lines — 59 hits</span></div>
@@ -760,7 +760,7 @@
                 <span class="chip chip-indigo" style="font-size:9px;">recommendation</span>
               </div>
               <div class="agent-gate-reasoning">
-                Tradecraft analysis complete. <b>3 TTPs deferred to RAA</b>: T1570, T1078.002, T1003.001 — RAA analytics returned confirmed hits; no new rule needed. <b>3 gaps requiring new rules</b>: T1053.005 (Scheduled Task), T1547.001 (Registry Run Key) — no existing analytic; T1558.003 (Kerberoasting) — RAA partial coverage but <b>0 hits returned</b>, TGS-REQ patterns outside process chain scope, new EventCode 4769 rule needed. <b>1 TTP skipped</b>: T1021.006 — no Sysmon telemetry, logging gap flagged. Alice's SCCM exclusion and Marcus's SPN exclusion list pre-applied. Ready to generate <b>3 new SPL rules</b>.
+                Investigation complete. <b>3 TTPs covered by retrieved alerts</b>: T1570, T1078.002, T1003.001 — relevant SOC/Analytics alerts, including RAA hits, confirmed activity; no new rule needed. <b>3 gaps requiring new rules</b>: T1053.005 (Scheduled Task), T1547.001 (Registry Run Key) — no existing analytic; T1558.003 (Kerberoasting) — RAA partial coverage but <b>0 hits returned</b>, TGS-REQ patterns outside process chain scope, new EventCode 4769 rule needed. <b>1 TTP skipped</b>: T1021.006 — no Sysmon telemetry, logging gap flagged. Alice's SCCM exclusion and Marcus's SPN exclusion list pre-applied. Ready to generate <b>3 new SPL rules</b>.
               </div>
               <div class="agent-gate-prompt"><span class="agent-gate-prompt-dot"></span>Pipeline paused — your decision needed to continue</div>
               <div class="agent-gate-actions">
@@ -808,11 +808,11 @@
               <span style="color:var(--border2);">·</span>
               <span class="chip chip-yellow" style="font-size:10px;">New</span><span>T1558.003 — Kerberoasting</span>
               <span style="color:var(--border2);">·</span>
-              <span style="color:var(--green);font-size:11px;">✓ RAA</span><span style="color:var(--muted);">T1570 · T1078.002 · T1003.001</span>
+              <span style="color:var(--green);font-size:11px;">✓ Alerts</span><span style="color:var(--muted);">T1570 · T1078.002 · T1003.001</span>
               <span style="color:var(--border2);">·</span>
               <span style="color:var(--muted);">T1021.006 skipped — no telemetry</span>
             </div>
-            <div class="info-bar"><span class="ib-icon">📌</span><span>TTPs are deferred to RAA only when RAA analytics returned <b>confirmed hits</b>. T1570, T1078.002, and T1003.001 had active hits — no new rule needed. <b>T1558.003 (Kerberoasting)</b> had RAA partial coverage but <b>0 hits</b> — a targeted EventCode 4769 rule is generated. Click <b>Run in Check →</b> to execute and test the 3 new rules with results.</span></div>
+            <div class="info-bar"><span class="ib-icon">📌</span><span>TTPs skip new SPL generation only when the Investigation Agent retrieves <b>confirmed relevant alerts</b>. T1570, T1078.002, and T1003.001 had active RAA hits — no new rule needed. <b>T1558.003 (Kerberoasting)</b> had RAA partial coverage but <b>0 hits</b> — a targeted EventCode 4769 rule is generated. Click <b>Run in Check →</b> to execute and test the 3 new rules with results.</span></div>
 
             <div style="display:flex;flex-direction:column;gap:10px;">
               <!-- Rule 1 -->
@@ -882,15 +882,15 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 
             </div>
 
-            <!-- RAA deferred TTPs -->
+            <!-- Investigation-confirmed TTPs -->
             <div style="background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-sm);padding:11px 13px;">
-              <div class="label" style="color:var(--green);margin-bottom:8px;">✓ Deferred to RAA — confirmed hits, no SPL query generated</div>
+              <div class="label" style="color:var(--green);margin-bottom:8px;">✓ Confirmed by Investigation Agent — no SPL query generated</div>
               <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--sub);">
                 <div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-yellow" style="font-size:10px;">T1570</span><span>Tool Transfer / PsExec</span><span style="margin-left:auto;font-size:10px;color:var(--green);">Anomalous Command Lines · 59 hits</span></div>
                 <div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-yellow" style="font-size:10px;">T1078.002</span><span>Valid Accounts</span><span style="margin-left:auto;font-size:10px;color:var(--green);">Anomalous Command Lines · 59 hits</span></div>
                 <div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-yellow" style="font-size:10px;">T1003.001</span><span>LSASS Memory Access</span><span style="margin-left:auto;font-size:10px;color:var(--green);">Anomalous Process Chains · 3 hits</span></div>
               </div>
-              <div style="margin-top:8px;font-size:10px;color:var(--muted);border-top:1px solid rgba(16,185,129,.15);padding-top:7px;">RAA analytics returned confirmed hits for these techniques — generating a redundant SPL rule would create duplicate alerts. TTPs where RAA returned 0 hits (T1558.003) receive a new targeted rule regardless of coverage.</div>
+              <div style="margin-top:8px;font-size:10px;color:var(--muted);border-top:1px solid rgba(16,185,129,.15);padding-top:7px;">Retrieved RAA analytics returned confirmed hits for these techniques — generating a redundant SPL rule would create duplicate alerts. TTPs where RAA returned 0 hits (T1558.003) receive a new targeted rule regardless of coverage.</div>
             </div>
           </div>
         </div>
@@ -932,7 +932,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
             <div class="agent-pill" id="ap-ts" style="opacity:.4">
               <div class="ap-icon" style="background:rgba(245,158,11,.18)">🧠</div>
               <div style="flex:1;">
-                <div class="ap-name">RAA Supervisor Agent</div>
+                <div class="ap-name">Investigation Agent</div>
                 <div class="ap-status" id="ap-ts-status">Awaiting hypotheses</div>
                 <div class="pbar"><div class="pfill" id="ap-ts-fill" style="width:0%;background:var(--blue)"></div></div>
               </div>
@@ -942,7 +942,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
               <div class="ap-icon" style="background:rgba(16,185,129,.18)">⚙️</div>
               <div style="flex:1;">
                 <div class="ap-name">Detection Logic Agent</div>
-                <div class="ap-status" id="ap-dl-status">Awaiting tradecraft notes</div>
+                <div class="ap-status" id="ap-dl-status">Awaiting investigation notes</div>
                 <div class="pbar"><div class="pfill" id="ap-dl-fill" style="width:0%;background:var(--green)"></div></div>
               </div>
               <span class="chip chip-gray" id="ap-dl-chip" style="font-size:10px;">Waiting</span>
@@ -1471,7 +1471,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
           <button class="ffp" onclick="setFeedFilter('orch',this)">🎛️ Orch</button>
           <button class="ffp" onclick="setFeedFilter('hyp',this)">💡 Hypothesis</button>
           <button class="ffp" onclick="setFeedFilter('data',this)">🗄️ Data Eng</button>
-          <button class="ffp" onclick="setFeedFilter('ts',this)">🧠 RAA</button>
+          <button class="ffp" onclick="setFeedFilter('ts',this)">🧠 Investigation</button>
           <button class="ffp" onclick="setFeedFilter('dl',this)">⚙️ Detection</button>
         </div>
         <div id="agents-reasoning-feed" class="agents-feed-log">
@@ -1550,10 +1550,10 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
               <text x="208" y="64" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">Data Eng</text>
               <text id="topo-lbl-data" x="208" y="74" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
 
-              <!-- RAA Supervisor (bottom-left) -->
+              <!-- Investigation Agent (bottom-left) -->
               <circle id="topo-c-ts" cx="52" cy="185" r="15" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('ts')"/>
               <text x="52" y="190" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#f59e0b">🧠</text>
-              <text x="52" y="207" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">RAA</text>
+              <text x="52" y="207" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">INV</text>
               <text id="topo-lbl-ts" x="52" y="217" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
 
               <!-- Detection Logic (bottom-right) -->
@@ -1657,7 +1657,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
             <div class="agents-legend-row" id="aleg-ts">
               <div class="alr-main">
                 <div class="agents-legend-dot" style="background:#f59e0b;"></div>
-                <span class="agents-legend-name">🧠 RAA Supervisor</span>
+                <span class="agents-legend-name">🧠 Investigation Agent</span>
                 <span class="agents-legend-status" id="aleg-ts-s">idle</span>
               </div>
               <div class="alr-model">
@@ -1699,7 +1699,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
               <div class="agents-prog-step" id="aprog-0"><span class="aprog-dot">○</span><span class="aprog-label">Select Intel</span></div>
               <div class="agents-prog-step" id="aprog-1"><span class="aprog-dot">○</span><span class="aprog-label">TTP Extraction</span></div>
               <div class="agents-prog-step" id="aprog-2"><span class="aprog-dot">○</span><span class="aprog-label">Hypotheses</span></div>
-              <div class="agents-prog-step" id="aprog-3"><span class="aprog-dot">○</span><span class="aprog-label">Tradecraft</span></div>
+              <div class="agents-prog-step" id="aprog-3"><span class="aprog-dot">○</span><span class="aprog-label">Investigation</span></div>
               <div class="agents-prog-step" id="aprog-4"><span class="aprog-dot">○</span><span class="aprog-label">Detection Logic</span></div>
             </div>
           </div>
@@ -1877,7 +1877,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         </div>
         <div class="hx-diff-item di-add">
           <span class="hx-diff-icon">✅</span>
-          <div class="hx-diff-text"><b>T1003.001 LSASS — first confirmed RAA hits this run</b> — 0 hits (Nov, Feb) → 3 hits (Apr). LSASS memory access now being detected by Anomalous Process Chains analytic. Previously generated a redundant SPL rule in TH-2025-091; now correctly deferred to RAA.</div>
+          <div class="hx-diff-text"><b>T1003.001 LSASS — first confirmed Investigation hits this run</b> — 0 hits (Nov, Feb) → 3 hits (Apr). LSASS memory access now being detected by Anomalous Process Chains analytic. Previously generated a redundant SPL rule in TH-2025-091; now correctly treated as covered by retrieved alerts.</div>
         </div>
       </div>
 
@@ -1929,7 +1929,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
           <div class="agent-row" onclick="openAgentDrawer('tradecraft',this)">
             <div style="display:flex;align-items:flex-start;gap:9px;">
               <div class="ar-av" style="background:rgba(245,158,11,.18);flex-shrink:0;margin-top:1px;">🧠</div>
-              <div><div class="ar-name">RAA Supervisor Agent</div><div class="ar-desc">Supervises Reasoning Augmented Analytics — runs continuously against Splunk telemetry, scores process chains and command-line patterns against adversary behaviour models, and surfaces anomaly hits to the hunt pipeline.</div></div>
+              <div><div class="ar-name">Investigation Agent</div><div class="ar-desc">Retrieves targeted SOC and Analytics alerts relevant to the threat hypothesis, including RAA hits from continuous Splunk analytics, and surfaces corroborating evidence to the hunt pipeline.</div></div>
             </div>
           </div>
           <div class="agent-row" onclick="openAgentDrawer('detection',this)">
@@ -2727,7 +2727,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
 
           <div style="margin-top:12px;padding:9px 11px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-sm);font-size:11px;color:var(--sub);">
             <b style="color:var(--text);">✓ Gaps flagged → rules queued by Detection Logic Agent</b>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;margin-bottom:6px;">The RAA Supervisor Agent identifies uncovered techniques during hypothesis review. The Detection Logic Agent generates rules to close them — analytics do not change.</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;margin-bottom:6px;">The Investigation Agent identifies uncovered techniques during hypothesis review by retrieving relevant SOC and Analytics alerts, including RAA. The Detection Logic Agent generates rules to close remaining gaps — analytics do not change.</div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               <div style="display:flex;align-items:center;gap:6px;"><span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;">T1021.006</span><span>WMI Lateral Movement</span><span style="margin-left:auto;color:var(--muted);font-size:10px;">rule queued ›</span></div>
               <div style="display:flex;align-items:center;gap:6px;"><span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;">T1027</span><span>PowerShell Obfuscation / AMSI Bypass</span><span style="margin-left:auto;color:var(--muted);font-size:10px;">rule queued ›</span></div>
@@ -3021,9 +3021,9 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         <summary class="faq-q">What happens in each LOCK stage?</summary>
         <div class="faq-a">
           <ul>
-            <li><b>Learn</b>: Paste a CTI report or threat brief. The Hypothesis Agent extracts TTPs, maps them to MITRE ATT&CK, and proposes hunt hypotheses. The Tradecraft and Detection Logic agents then load relevant context and draft SPL stubs.</li>
+            <li><b>Learn</b>: Paste a CTI report or threat brief. The Hypothesis Agent extracts TTPs, maps them to MITRE ATT&CK, and proposes hunt hypotheses. The Investigation and Detection Logic agents then load relevant context and draft SPL stubs.</li>
             <li><b>Observe</b>: Define and document your environment baseline for this hunt. Edit what normal looks like, what suspicious looks like, and the expected observables per category (Processes, Network, Files, Authentication). Sub-hunts each have their own Observe profile.</li>
-            <li><b>Check</b>: Run SPL queries in the embedded query runner, review RAA (Reasoning Augmented Analytics) findings, and track hypothesis coverage. The Check Summary card rolls up RAA + query results to show which gaps have been addressed.</li>
+            <li><b>Check</b>: Run SPL queries in the embedded query runner, review Investigation Agent alert retrieval, including RAA (Reasoning Augmented Analytics), and track hypothesis coverage. The Check Summary card rolls up retrieved alerts + query results to show which gaps have been addressed.</li>
             <li><b>Keep</b>: Log confirmed findings, attach evidence, build a timeline of adversary activity, and generate the final hunt report for stakeholders.</li>
           </ul>
         </div>
@@ -3042,7 +3042,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         <summary class="faq-q">What is the Observe stage used for — can I skip it?</summary>
         <div class="faq-a">
           <p>The Observe stage is your <b>hunt-specific baseline document</b>. It tells the agents (and the team) what "normal" looks like in this environment for the scope of this hunt, and what adversary artifacts to watch for.</p>
-          <p>You can technically skip it, but agents in the Check stage use Observe data to calibrate thresholds, choose exclusions, and interpret RAA findings. Skipping it means agents fall back to generic defaults, which increases false positives.</p>
+          <p>You can technically skip it, but agents in the Check stage use Observe data to calibrate thresholds, choose exclusions, and interpret retrieved SOC and Analytics alerts. Skipping it means agents fall back to generic defaults, which increases false positives.</p>
           <p>Click <b>✏ Edit</b> in the Observe tab to update any item — existing entries become inline text fields, and you can add or remove entries per section.</p>
         </div>
       </details>
@@ -3065,7 +3065,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
             <li><b>🎛️ Orchestrator Agent</b> — spawns and coordinates all other agents; manages task routing and pipeline state.</li>
             <li><b>💡 Hypothesis Agent</b> — runs first; analyses CTI, extracts TTPs, and formulates testable hypotheses. Completes before the others start.</li>
             <li><b>🗄️ Data Engineering Agent</b> — identifies required log sources, validates index availability, and ensures the data pipeline is ready for query.</li>
-            <li><b>🧠 RAA Supervisor Agent (Tradecraft)</b> — applies threat tradecraft knowledge to interpret anomalies and flag process-chain or command-line deviations that rule-based queries may miss.</li>
+            <li><b>🧠 Investigation Agent</b> — performs targeted retrieval of relevant SOC and Analytics alerts, including RAA, and interprets process-chain, command-line, authentication, and network evidence against the threat hypothesis.</li>
             <li><b>⚙️ Detection Logic Agent</b> — drafts, tunes, and validates SPL detection rules; integrates FP exclusions from the Observe baseline.</li>
           </ul>
           <p>Click any agent card in the <b>Agents</b> tab or the Observe panel to open its detail drawer.</p>
@@ -3080,8 +3080,8 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
             <li><b>Process Chain Anomaly</b> — detects unusual parent-child process relationships that deviate from known-good baselines.</li>
             <li><b>Command Line Anomaly</b> — flags suspicious argument patterns (LOLBin abuse, encoded commands, unusual flags) in process execution telemetry.</li>
           </ul>
-          <p>RAA findings appear at the top of the Check stage. The <b>Check Summary</b> card below RAA shows whether your SPL queries have addressed the specific gaps RAA identified — if a RAA finding has no corresponding query, the gap is flagged as open.</p>
-          <p>Not all RAA findings will be applicable to every hunt; use analyst judgement when interpreting results.</p>
+          <p>Investigation Agent findings appear at the top of the Check stage. The <b>Check Summary</b> card below the retrieved alert panel shows whether your SPL queries have addressed the specific gaps the Investigation Agent identified — if a retrieved alert gap has no corresponding query, the gap is flagged as open.</p>
+          <p>Not all retrieved alerts will be applicable to every hunt; use analyst judgement when interpreting results.</p>
         </div>
       </details>
 
@@ -3104,7 +3104,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
           <ul>
             <li><b>It is validated</b> — RAA analytics have been tuned and regression-tested across prior hunts, so their false-positive profile is already known. A new rule has not yet earned that trust.</li>
             <li><b>It reasons over behaviour, not strings</b> — RAA evaluates process-chain and command-line <i>anomalies</i> against a learned baseline, catching variants that a literal rule match would miss.</li>
-            <li><b>It frames the rule-writing</b> — the RAA findings define exactly which gaps remain, so the Detection Logic agent writes rules to <i>close specific gaps</i> rather than re-deriving the whole hypothesis from scratch.</li>
+            <li><b>It frames the rule-writing</b> — the Investigation Agent findings define exactly which gaps remain, so the Detection Logic agent writes rules to <i>close specific gaps</i> rather than re-deriving the whole hypothesis from scratch.</li>
           </ul>
           <p>In short: if a pre-built analytic covers the behaviour, lead with it and let detection logic backfill the gaps it can't see. SPL rules are still essential for environment-specific coverage, scheduling, and alerting — but they sit downstream of the analytic, not ahead of it.</p>
         </div>
@@ -3115,7 +3115,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
         <div class="faq-a">
           <p>The <b>Check Summary</b> card appears at the top of the Check stage and has two states:</p>
           <ul>
-            <li><b>Pre-run</b>: Shows the RAA findings count and how many hypotheses have been mapped to queries. Prompts you to run queries to complete the assessment.</li>
+            <li><b>Pre-run</b>: Shows the retrieved alert count and how many hypotheses have been mapped to queries. Prompts you to run queries to complete the assessment.</li>
             <li><b>Post-run</b>: After at least one query is executed, the card shows a combined assessment — which RAA gaps were addressed by the query results, and which remain open. An overall verdict (Covered / Partial / Gap) is assigned per hypothesis.</li>
           </ul>
           <p>The summary is per-hunt and resets if you switch to a different hunt. It does not persist between sessions.</p>
@@ -3204,7 +3204,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
   </div>
   <div class="chat-msgs" id="chat-msgs">
     <div class="msg ai"><div class="msg-av">⚡</div><div class="msg-bubble">I have full context on TH-2026-041. Ask me about findings, TTPs, agents, or how to refine your hypotheses.</div></div>
-    <div class="msg ai"><div class="msg-av">⚡</div><div class="msg-bubble">🔴 <strong>Active alert:</strong> RAA Supervisor Agent flagged LSASS memory access on WIN-DC01 (process chain anomaly, score 94). Recommend immediate isolation.</div></div>
+    <div class="msg ai"><div class="msg-av">⚡</div><div class="msg-bubble">🔴 <strong>Active alert:</strong> Investigation Agent flagged LSASS memory access on WIN-DC01 (process chain anomaly, score 94). Recommend immediate isolation.</div></div>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chat-input" placeholder="Ask about TTPs, findings, queries…" onkeydown="if(event.key==='Enter')sendMsg()">
@@ -3226,7 +3226,7 @@ index=wineventlog EventCode=<span class="spl-kw">4769</span>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🎛️ Orchestrator Agent</div><div class="apick-desc">Hunt coordination &amp; task routing</div></div>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">💡 Hypothesis Agent</div><div class="apick-desc">Threat hypothesis generation from CTI</div></div>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🗄️ Data Engineering Agent</div><div class="apick-desc">CTI ingestion &amp; log normalization</div></div>
-          <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🧠 RAA Supervisor Agent</div><div class="apick-desc">Cmd-line &amp; process chain anomaly</div></div>
+          <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">🧠 Investigation Agent</div><div class="apick-desc">Relevant SOC/Analytics alerts</div></div>
           <div class="apick on" onclick="this.classList.toggle('on')"><div class="apick-name">⚙️ Detection Logic Agent</div><div class="apick-desc">Hunting rule creation (KQL/Sigma)</div></div>
         </div>
       </div>
