@@ -455,6 +455,11 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 
 /* Tool tile grid */
 .tool-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.tool-section-label { grid-column:1 / -1; font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:700; margin:4px 0 1px; }
+.tool-section-tools { order:0; }
+.tool-section-skills { order:10; }
+.tool-tile-tool { order:1; }
+.tool-tile-skill { order:11; }
 .tool-tile { border:1px solid var(--border); border-radius:6px; overflow:hidden; cursor:pointer; background:var(--s2); transition:border-color .12s,background .12s; }
 .tool-tile:hover { border-color:var(--border2); }
 .tool-tile.open { background:var(--s1); }

@@ -530,9 +530,8 @@ function renderGateDecisionLog(huntId) {
   const mods = entries.filter(e => e.decision === 'modified').length;
   if (summary) summary.textContent = mods ? mods + ' modified' : entries.length ? 'all approved' : '';
 
-  const agentColors = { orchestrator:'var(--blue)', hypothesis:'var(--teal)', tradecraft:'var(--yellow)',
-    dataeng:'var(--indigo)', detection:'var(--green)' };
-  const agentIcons  = { orchestrator:'🎛️', hypothesis:'💡', tradecraft:'🧠', dataeng:'🗄️', detection:'⚙️' };
+  const agentColors = { orchestrator:'var(--blue)', hypothesis:'var(--teal)', tradecraft:'var(--yellow)', detection:'var(--green)' };
+  const agentIcons  = { orchestrator:'🎛️', hypothesis:'💡', tradecraft:'🧠', detection:'⚙️' };
   const decLabel = { approved:'✓ Approved', modified:'✏️ Modified', rejected:'✗ Rejected' };
 
   if (!entries.length) {

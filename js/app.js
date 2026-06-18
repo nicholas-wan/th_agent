@@ -490,12 +490,12 @@ function renderHypothesisAgentCard() {
 
   let text;
   if (highConf.length > 0) {
-    text = `I've analysed the ${allTTPs.length} TTPs from ${r.title} and cross-referenced ${pastCount} past hunt${pastCount !== 1 ? 's' : ''} via the Past Hunts tool. `
+    text = `I've analysed the ${allTTPs.length} TTPs from ${r.title} and cross-referenced ${pastCount} past hunt${pastCount !== 1 ? 's' : ''} via the Past Hunts skill. `
          + `${highConf.length} technique${highConf.length !== 1 ? 's' : ''} carry high confidence and prior confirmation — ${ttpList} — matched to prior activity in recent hunts. `
          + `I recommend scoping hypothesis generation to these ${highConf.length} technique${highConf.length !== 1 ? 's' : ''} first. `
          + `The remaining ${selArr.length - highConf.length} are retained as secondary indicators and can be promoted to primary scope at any time.`;
   } else {
-    text = `I've analysed the ${allTTPs.length} TTPs from ${r.title} and cross-referenced past hunts via the Past Hunts tool. `
+    text = `I've analysed the ${allTTPs.length} TTPs from ${r.title} and cross-referenced past hunts via the Past Hunts skill. `
          + `No prior confirmations found for the ${selArr.length} selected technique${selArr.length !== 1 ? 's' : ''} — all are net-new. `
          + `I recommend generating hypotheses for all ${selArr.length} selected technique${selArr.length !== 1 ? 's' : ''} with baseline confidence. `
          + `Prior hunt context will be gathered during the Observe phase.`;
@@ -870,7 +870,7 @@ function avatarHTML(uid, size) {
 }
 
 /* ── Model card ─────────────────────────────────────────────── */
-let agentModels = { orch:'', hyp:'', data:'', ts:'', dl:'' };
+let agentModels = { orch:'', hyp:'', ts:'', dl:'' };
 
 function toggleModelCard() {
   const body = document.getElementById('model-card-body');
@@ -1948,7 +1948,7 @@ setInterval(() => {
 }, 1400);
 
 // ════════════════════════════════════════
-// ENVIRONMENT CONTEXT  (MCP tool)
+// ENVIRONMENT CONTEXT  (skill)
 // ════════════════════════════════════════
 // envData + crownJewels — defined at top of this file; overwritten at runtime from kb/environment.md
 
@@ -2288,7 +2288,7 @@ function filterEcAssets(v)   {}
 function filterEcAccounts(v) {}
 
 // ════════════════════════════════════════
-// TECHNIQUE RUNBOOK  (MCP tool)
+// TECHNIQUE RUNBOOK  (skill)
 // ════════════════════════════════════════
 // runbookData — see kb/runbooks.js
 
@@ -2367,4 +2367,3 @@ function submitSkillDraft() {
   const btn = document.querySelector('#sk-author-pane .btn-primary');
   if (btn) { const orig = btn.textContent; btn.textContent = '✓ Submitted!'; btn.style.background='var(--green)'; setTimeout(()=>{ btn.textContent=orig; btn.style.background=''; }, 2000); }
 }
-

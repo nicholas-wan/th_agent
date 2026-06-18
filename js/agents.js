@@ -5,8 +5,8 @@
 // ── Drawer data ──
 const agentData = {
   hypothesis: { title:'Hypothesis Agent', sub:'Threat Hypothesis Generation · Completed · spawned by Orchestrator', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Hypothesis Agent is the first agent in the hunt pipeline. It reads incoming CTI reports, maps extracted TTPs to the MITRE ATT&CK framework, cross-references past hunt findings via the Past Hunts MCP tool, and generates structured, evidence-backed hunt hypotheses. Each hypothesis includes a confidence score, linked TTPs, supporting CTI sentences, and pre-applied analyst notes from prior runs. Output is handed off to the Orchestrator for scoping and routing.</div></div>
-    <div class="ds"><div class="ds-head">🔌 Tools Used</div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Hypothesis Agent is the first agent in the hunt pipeline. It reads incoming CTI reports, maps extracted TTPs to the MITRE ATT&CK framework, cross-references past hunt findings via the Past Hunts skill, and generates structured, evidence-backed hunt hypotheses. Each hypothesis includes a confidence score, linked TTPs, supporting CTI sentences, and pre-applied analyst notes from prior runs. Output is handed off to the Orchestrator for scoping and routing.</div></div>
+    <div class="ds"><div class="ds-head">🔌 Tools &amp; Skills Used</div>
       <div class="ioc-row"><span class="ioc-t">📖</span>Technique Runbook — <code style="font-size:10px;color:var(--green);">get_runbook(ttp_id)</code> × 14 calls</div>
       <div class="ioc-row"><span class="ioc-t">🗂️</span>Past Hunts — <code style="font-size:10px;color:var(--blue);">search_hunts(ttp)</code> × 3 calls · <code style="font-size:10px;color:var(--blue);">get_hunt(id)</code> × 2 calls</div>
       <div class="ioc-row"><span class="ioc-t">🛡️</span>Coverage Checker — <code style="font-size:10px;color:#f59e0b;">check_coverage(ttp)</code> × 14 calls</div>
@@ -72,58 +72,13 @@ const agentData = {
     </div>` },
 
   orchestrator: { title:'Orchestrator Agent', sub:'Hunt Coordination & Synthesis · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives the parsed CTI from the Data Engineering Agent, assigns targeted investigation tasks to the Investigation Agent and rule-generation tasks to the Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives parsed CTI and tool context, assigns targeted investigation tasks to the Investigation Agent and rule-generation tasks to the Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
     <div class="ds"><div class="ds-head">Agent Topology</div>
       <div style="font-size:11px;color:var(--sub);line-height:2;">
         🎛️ Orchestrator<br>
         &nbsp;&nbsp;├─ 💡 Hypothesis Agent <span style="color:var(--muted);font-size:10px;">(spawned first · generates hypotheses)</span><br>
-        &nbsp;&nbsp;├─ 🗄️ Data Engineering Agent<br>
         &nbsp;&nbsp;├─ 🧠 Investigation Agent<br>
-        &nbsp;&nbsp;├─ ⚙️ Detection Logic Agent<br>
-        &nbsp;&nbsp;└─ ✅ Rule Validation Agent
-      </div>
-    </div>` },
-
-  dataeng: { title:'Data Engineering Agent', sub:'Telemetry Ingestion & Normalization · Streaming', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Connects to Splunk Enterprise Security via MCP (Model Context Protocol) and makes enriched, CIM-normalised telemetry available to all downstream agents. It translates hunt hypotheses into SPL queries, exposes relevant data models and field extractions, and streams event context into the shared agent workspace so the Investigation Agent can retrieve relevant SOC and Analytics alerts and the Detection Logic Agent can generate hunt-ready rules.</div></div>
-    <div class="ds"><div class="ds-head">🔌 MCP Connection</div>
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px;">
-        <span style="font-size:18px;">🟠</span>
-        <div>
-          <div style="font-weight:600;font-size:12px;">Splunk Enterprise Security</div>
-          <div style="font-size:10px;color:var(--green);">MCP Server v2.1 · Connected · REST API</div>
-        </div>
-      </div>
-      <div class="ioc-row" style="margin-top:4px;"><span class="ioc-t">Auth</span>Service account · TLS 1.3</div>
-      <div class="ioc-row"><span class="ioc-t">Host</span>splunk-es.corp:8089</div>
-      <div class="ioc-row"><span class="ioc-t">Role</span>hunt_agent_ro (read-only)</div>
-    </div>
-    <div class="ds"><div class="ds-head">Indices Available</div>
-      <div class="ioc-row"><span class="ioc-t">IDX</span><code style="font-size:10px;color:var(--blue);">main</code> — general endpoint &amp; system events</div>
-      <div class="ioc-row"><span class="ioc-t">IDX</span><code style="font-size:10px;color:var(--blue);">security</code> — Windows Security Event Log</div>
-      <div class="ioc-row"><span class="ioc-t">IDX</span><code style="font-size:10px;color:var(--blue);">windows</code> — Sysmon + WinEvent (4624, 4688, 7045)</div>
-      <div class="ioc-row"><span class="ioc-t">IDX</span><code style="font-size:10px;color:var(--blue);">sysmon</code> — process create, network, registry</div>
-      <div class="ioc-row"><span class="ioc-t">IDX</span><code style="font-size:10px;color:var(--blue);">network</code> — firewall flows, DNS, proxy logs</div>
-    </div>
-    <div class="ds"><div class="ds-head">CIM Data Models Exposed</div>
-      <div class="ioc-row"><span class="ioc-t">DM</span>Authentication · Endpoint · Network Traffic · Intrusion Detection</div>
-      <div style="font-size:10px;color:var(--muted);padding:4px 0 0 6px;">Agents query via <code style="color:var(--blue);">datamodel()</code> accelerated search</div>
-    </div>
-    <div class="ds"><div class="ds-head">Active SPL Context</div>
-      <div style="background:rgba(0,0,0,.35);border-radius:5px;padding:8px;font-size:10px;font-family:monospace;color:#86efac;line-height:1.7;overflow-x:auto;">
-        index=windows EventCode=4688<br>
-        &nbsp;&nbsp;| eval cmdline=lower(CommandLine)<br>
-        &nbsp;&nbsp;| where match(cmdline,"powershell|encoded|bypass")<br>
-        &nbsp;&nbsp;| stats count by host,ParentProcessName,cmdline<br>
-        <span style="color:var(--muted);">— feeding Investigation Agent · 342 events/min</span>
-      </div>
-    </div>
-    <div class="ds"><div class="ds-head">Normalisation Stats</div>
-      <div class="kv-grid">
-        <span class="kv-k">Events/min</span><span class="kv-v">342</span>
-        <span class="kv-k">CIM Schema</span><span class="kv-v">Splunk CIM 5.x</span>
-        <span class="kv-k">Field Coverage</span><span class="kv-v">97.1% mapped</span>
-        <span class="kv-k">Drop rate</span><span class="kv-v">0.2% (malformed)</span>
+        &nbsp;&nbsp;└─ ⚙️ Detection Logic Agent
       </div>
     </div>` },
 

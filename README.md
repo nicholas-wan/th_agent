@@ -99,9 +99,8 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 |---|---|---|---|---|
 | 1 | 🎛️ | Orchestrator Agent | `orchestrator` | blue |
 | 2 | 💡 | Hypothesis Agent | `hypothesis` | teal |
-| 3 | 🗄️ | Data Engineering Agent | `dataeng` | indigo |
-| 4 | 🧠 | Investigation Agent | `tradecraft` | yellow |
-| 5 | ⚙️ | Detection Logic Agent | `detection` | green |
+| 3 | 🧠 | Investigation Agent | `tradecraft` | yellow |
+| 4 | ⚙️ | Detection Logic Agent | `detection` | green |
 
 Orchestrator spawns all. Hypothesis runs first. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
 
@@ -111,20 +110,27 @@ Orchestrator spawns all. Hypothesis runs first. `agentData` keyed by agent key �
 
 ---
 
-## Tools Available (sidebar)
+## Tools and Skills (sidebar)
 
-Card title = **"Tools Available"**. Subtitles = version only (e.g. `v2.1`).
+Cards are split into **Tools** and **Skills**. Subtitles = version only (e.g. `v2.1`).
+
+**Tools**
 
 | Icon | Name | CSS prefix | Color |
 |---|---|---|---|
 | 🟠 | Splunk Enterprise Security | inline | orange |
-| 📚 | Tradecraft | `kb-tool-` | teal |
-| 🏗️ | Environment Context | `ec-tool-` | indigo |
 | ✅ | Rule Validation | `rv-tool-` | purple |
-| 🗂️ | Past Hunts | `ph-tool-` | blue |
 | 🛡️ | Coverage Checker | `cc-tool-` | amber |
 
-Learn sidebar and Observe panel both show these — keep in sync. Adding a tool: add CSS pairs, HTML in both panels, bump count chip.
+**Skills**
+
+| Icon | Name | CSS prefix | Color |
+|---|---|---|---|
+| 📚 | Tradecraft | `kb-tool-` | teal |
+| 🏗️ | Environment Context | `ec-tool-` | indigo |
+| 🗂️ | Past Hunts | `ph-tool-` | blue |
+
+Learn sidebar and Observe panel both show these — keep in sync. Adding a tool/skill: add CSS pairs, HTML in both panels, bump count chip.
 
 ---
 
@@ -147,7 +153,7 @@ Open/close: `el.classList.add/remove('open')`. IDs: `history-overlay` `report-ov
 
 ## Rules / Don'ts
 
-- ❌ "MCP Connected Tools" → ✅ "Tools Available"
+- ❌ "MCP Connected Tools" → ✅ "Tools" / "Skills"
 - ❌ "MCP Server · vX.Y" subtitles → ✅ version only
 - ❌ ev/min → ✅ ev/hr
 - ❌ Inline `<style>` or `<script>` in `index.html`

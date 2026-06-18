@@ -1702,8 +1702,8 @@ function renderSkillsRepo(cat) {
 function toggleSkillCard(el) { el.classList.toggle('open'); }
 function toggleDetChain(el) { el.closest('.det-chain').classList.toggle('open'); }
 function renderSkillCard(sk) {
-  const agentColor = {orchestrator:'blue',hypothesis:'teal',dataeng:'indigo',tradecraft:'yellow',detection:'green',validation:'purple'};
-  const agentIcon  = {orchestrator:'🎛️',hypothesis:'💡',dataeng:'🗄️',tradecraft:'🧠',detection:'⚙️',validation:'✅'};
+  const agentColor = {orchestrator:'blue',hypothesis:'teal',tradecraft:'yellow',detection:'green',validation:'purple'};
+  const agentIcon  = {orchestrator:'🎛️',hypothesis:'💡',tradecraft:'🧠',detection:'⚙️',validation:'✅'};
   const ttpChips = sk.ttps.map(t=>`<span class="chip chip-indigo" style="font-size:9px;padding:1px 5px;">${t}</span>`).join('');
   const rbLinks  = sk.ttps.filter(t => typeof runbookData !== 'undefined' && runbookData[t])
     .map(t=>`<button class="kb-rb-link" onclick="jumpToRunbook('${t}',event)">📖 ${t}</button>`).join('');

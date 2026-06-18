@@ -45,7 +45,7 @@ index=vcenter sourcetype=vmware:vcenter:event
 ## SK-031 — Firewall Anomaly — East-West Lateral Spread
 
 > type: domain | category: lateral-movement | category-label: Lateral Movement | ttps: T1021.001, T1021.002, T1570
-> author: akowalski | version: v1.0 | updated: 2026-03-11 | agents: tradecraft, dataeng
+> author: akowalski | version: v1.0 | updated: 2026-03-11 | agents: tradecraft
 
 Identifies abnormal east-west firewall flows indicative of lateral movement — new RDP/SMB paths between previously unconnected segments or port scans from workstation-class assets. Requires firewall log source onboarding into Splunk (index=firewall).
 
