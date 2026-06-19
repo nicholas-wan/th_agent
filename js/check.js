@@ -456,6 +456,158 @@ const checkData = {
       },
     ],
   },
+  '042': {
+    hypothesis: 'H-03 · T1003.006 · DCSync from non-DC source',
+    queryDesc: 'Detects DS-Replication-Get-Changes-All activity from non-domain-controller principals. This hunt is still in Check: privileged logon abuse has one confirmed alert, Domain Policy Modification remains under review, and DCSync detection is being back-tested.',
+    querySpl: `index=wineventlog EventCode=4662
+| search Properties="*1131f6aa-9c07-11d1-f79f-00c04fc2dcd2*"
+| where NOT match(SubjectUserName, "(?i)^WIN-DC|\\$$|MSOL_|ADSync")
+| stats count, values(ObjectName) as objects, values(src_ip) as sources by SubjectUserName, host
+| where count > 1
+| sort - count`,
+    resultsMeta: '<span class="chip chip-yellow">Back-test pending</span><span class="chip chip-gray" style="font-size:10px;">0.42s sample</span>',
+    resultsHead: '<tr><th>Subject</th><th>Host</th><th>Objects</th><th>Count</th><th>Status</th></tr>',
+    resultsBody: `<tr><td style="font-family:monospace;">CORP\\jsmith</td><td>WIN-DC01</td><td>CN=krbtgt,CN=Users,DC=corp,DC=local</td><td>2</td><td><span class="chip chip-yellow" style="font-size:10px;">review</span></td></tr>`,
+    interp: 'DCSync remains under review. The sample EventCode 4662 activity is suspicious because it involves replication rights on Tier-0 objects, but confirmation requires validating the source host and whether the account held legitimate replication privileges during the 72h attack window.',
+    summaryPre: {
+      status: 'chip-yellow', statusLabel: 'Check in progress',
+      tags: [
+        { label: 'RAA', val: '1 alert', cls: 'chip-red' },
+        { label: 'Rules', val: '2 testing', cls: 'chip-yellow' },
+        { label: 'Gaps', val: 'T1484.001 review', cls: 'chip-yellow' },
+      ],
+      assessment: '<b>TH-2026-042 is in Check.</b> The Investigator Agent retrieved one relevant privileged-logon alert for <b>T1078.002</b> on WIN-DC01. <b>T1484.001</b> has AD change telemetry in scope but no confirmed delegation/SPN modification yet. <b>T1003.006</b> DCSync has a candidate EventCode 4662 pattern and is being back-tested as a new rule.',
+    },
+    summaryPost: {
+      status: 'chip-yellow', statusLabel: '2 rules in testing',
+      tags: [
+        { label: 'Subhunts', val: '3 scoped', cls: 'chip-blue' },
+        { label: 'Rules', val: '2 testing', cls: 'chip-yellow' },
+        { label: 'Findings', val: '1 open', cls: 'chip-red' },
+      ],
+      assessment: '<b>Check is not closed.</b> T1078.002 has one open critical alert requiring analyst validation. T1003.006 has a DCSync candidate rule in back-test. T1484.001 remains a telemetry review item until AD delegation/SPN change evidence is confirmed or ruled out.',
+    },
+    raa: {
+      relevant: true,
+      analytics: [
+        {
+          name: 'Authentication Anomaly',
+          ttps: ['T1078.002'],
+          status: 'triggered',
+          hits: 1,
+          findings: [
+            'CORP\\jsmith received EventCode 4672 special privileges on WIN-DC01 from a workstation-class source outside the maintenance window',
+          ],
+          interp: '<b>Relevant alert retrieved.</b> The privileged logon is consistent with account abuse following the TH-2026-041 pivot chain. This is enough to keep H-01 active, but it does not by itself prove DCSync or delegation modification.',
+        },
+        {
+          name: 'AD Change Review',
+          ttps: ['T1484.001'],
+          status: 'partial',
+          hits: 0,
+          findings: [],
+          interp: '<b>No confirmed AD policy/delegation alert yet.</b> SPN registration and delegation changes are being reviewed from AD audit logs. Keep this as an open Check item rather than a finding.',
+        },
+      ],
+    },
+    raaSubhunts: {
+      sh01: {
+        relevant: true,
+        analytics: [
+          {
+            name: 'Authentication Anomaly',
+            ttps: ['T1078.002'],
+            status: 'triggered',
+            hits: 1,
+            findings: [
+              'EventCode 4672 special privilege logon for CORP\\jsmith on WIN-DC01 at 02:14 UTC',
+            ],
+            interp: 'The alert is relevant to privileged account abuse and matches the 72h follow-up window from TH-2026-041. Analyst validation should confirm whether jsmith had any approved Tier-0 administrative task.',
+          },
+        ],
+      },
+      sh02: {
+        relevant: true,
+        analytics: [
+          {
+            name: 'AD Change Review',
+            ttps: ['T1484.001'],
+            status: 'partial',
+            hits: 0,
+            findings: [],
+            interp: 'No relevant SOC/Analytics alert has confirmed delegation, GPO, or SPN modification yet. Detection remains dependent on AD change-audit query results.',
+          },
+        ],
+      },
+      sh03: {
+        relevant: false,
+        reason: '<b>T1003.006 (DCSync)</b> is confirmed through directory replication events, primarily EventCode 4662 with DS-Replication-Get-Changes rights from non-DC accounts. RAA process/command analytics are not authoritative for this technique; use the DCSync SPL rule under test.',
+        analytics: [],
+      },
+    },
+    genRules: [
+      {
+        id: 'ck-042-t1078',
+        hypothesis: 'H-01 · T1078.002 · Privileged Account Abuse — did the compromised jsmith account receive Tier-0 privileges or authenticate to WIN-DC01 outside the approved administrative window?',
+        ttp: 'T1078.002',
+        badge: 'chip-red',
+        name: 'Privileged Logon to DC — non-admin workstation source',
+        ctx: 'EventCode=4672 special privileges · Tier-0 host scope · excludes DC machine accounts and approved admin jump hosts · index=wineventlog',
+        spl: `index=wineventlog EventCode=4672 host=WIN-DC01
+| where NOT match(SubjectUserName, "(?i)^WIN-DC|\\$$|svc-|adm-")
+| where NOT cidrmatch("10.0.9.0/24", src_ip)
+| table _time, host, SubjectUserName, src_ip, PrivilegeList`,
+        finalBadge: 'WARN',
+        iters: [
+          {
+            num: 'v1', badge: 'WARN', failMode: '', metric: '1 alert · analyst review',
+            spl: `index=wineventlog EventCode=4672 host=WIN-DC01
+| where NOT match(SubjectUserName, "(?i)^WIN-DC|\\$$|svc-|adm-")
+| where NOT cidrmatch("10.0.9.0/24", src_ip)
+| table _time, host, SubjectUserName, src_ip, PrivilegeList`,
+            reason: 'One suspicious privileged logon from CORP\\jsmith. The signal is strong because WIN-DC01 is Tier-0, but the account history still needs analyst validation before escalation.',
+            action: 'Validate approved admin activity and correlate with TH-2026-041 pivot timeline.',
+          },
+        ],
+      },
+      {
+        id: 'ck-042-t1003-006',
+        hypothesis: 'H-03 · T1003.006 · DCSync — did a non-domain-controller principal request directory replication rights after the WIN-DC01 pivot?',
+        ttp: 'T1003.006',
+        badge: 'chip-red',
+        name: 'DCSync Replication Rights from Non-DC Principal',
+        ctx: 'EventCode=4662 · DS-Replication-Get-Changes-All GUID · excludes DC machine accounts, MSOL, and Azure AD Connect · index=wineventlog',
+        spl: `index=wineventlog EventCode=4662
+| search Properties="*1131f6aa-9c07-11d1-f79f-00c04fc2dcd2*"
+| where NOT match(SubjectUserName, "(?i)^WIN-DC|\\$$|MSOL_|ADSync")
+| stats count, values(ObjectName) as objects, values(src_ip) as sources by SubjectUserName, host
+| where count > 1
+| sort - count`,
+        finalBadge: 'WARN',
+        iters: [
+          {
+            num: 'v1', badge: 'FAIL', failMode: 'too-many', metric: 'Too broad · 42 events',
+            spl: `index=wineventlog EventCode=4662
+| search Properties="*1131f6aa*"
+| stats count by SubjectUserName, host`,
+            reason: 'The query caught legitimate DC replication and Azure AD Connect activity. It needs account and source filtering before review volume is manageable.',
+            action: 'Exclude DC machine accounts, MSOL, and ADSync; require more than one replication-right event per subject.',
+          },
+          {
+            num: 'v2', badge: 'WARN', failMode: '', metric: '2 candidate events',
+            spl: `index=wineventlog EventCode=4662
+| search Properties="*1131f6aa-9c07-11d1-f79f-00c04fc2dcd2*"
+| where NOT match(SubjectUserName, "(?i)^WIN-DC|\\$$|MSOL_|ADSync")
+| stats count, values(ObjectName) as objects, values(src_ip) as sources by SubjectUserName, host
+| where count > 1
+| sort - count`,
+            reason: 'Two candidate events remain for CORP\\jsmith. This is suspicious but not yet a confirmed DCSync finding until source host and rights assignment are validated.',
+            action: 'Correlate with AD rights assignment and source IP inventory.',
+          },
+        ],
+      },
+    ],
+  },
 };
 
 // ── Hunt velocity metrics ──
@@ -567,7 +719,7 @@ function renderCheckSummary(postRun, dataOverride) {
     const d = checkData[_activeHuntId];
     if (!d) { card.style.display = 'none'; return; }
     s = postRun ? d.summaryPost : d.summaryPre;
-    subtitle = 'Combined Investigation alerts + detection query assessment';
+    subtitle = 'Combined Investigator alerts + detection query assessment';
   }
   const tagsHTML = s.tags.map(t =>
     `<span class="chip ${t.cls}" style="font-size:10px;">${t.label}: ${t.val}</span>`
@@ -580,6 +732,7 @@ function renderCheckSummary(postRun, dataOverride) {
     <span class="chip ${s.status}" style="font-size:10px;">${s.statusLabel}</span>
   </div>
   <div class="card-body">
+    <div class="section-agent-line" style="margin-bottom:10px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - combines retrieved alerts, query results, coverage status, and remaining gaps</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
     <div class="check-summary-tags">${tagsHTML}</div>
     <div class="check-summary-assessment">
       <span class="check-summary-assessment-label">🤖 Agent assessment</span>
@@ -734,6 +887,7 @@ function renderRAAResults(dataOverride) {
   </div>
   ${subhuntBanner}
   <div class="card-body" style="padding:${d.relevant ? '14px 15px' : '0'};">
+    <div class="section-agent-line" style="margin:${d.relevant ? '0 0 10px' : '14px 15px 0'};"><b>🧠 Investigator Agent</b><span>Relevant Alerts - retrieves targeted SOC and Analytics alerts, including RAA, and explains evidence fit</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
     ${bodyHTML}
   </div>`;
   card.style.display = '';
@@ -802,8 +956,14 @@ function renderGeneratedRulesCard() {
       : 'No rules for selected subhunt';
   }
 
-  body.innerHTML = rules.map((r, idx) => {
+  if (!rules.length) {
+    body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - no rules for this scope; select All subhunts or another subhunt to review available Check-stage rules</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - generates, tunes, and packages SPL rules for uncovered TTPs</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>` + rules.map((r, idx) => {
     const isLast = idx === rules.length - 1;
+    const finalCls = r.finalBadge === 'PASS' ? 'chip-green' : r.finalBadge === 'WARN' ? 'chip-yellow' : 'chip-red';
     const iterHtml = (r.iters && r.iters.length)
       ? `<div style="margin-top:8px;">
            <div style="font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
@@ -824,7 +984,7 @@ function renderGeneratedRulesCard() {
     <div style="${isLast ? '' : 'padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:18px;'}">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
         <span class="chip chip-indigo" style="font-size:10px;padding:1px 6px;">${r.ttp}</span>
-        <span class="chip chip-green" style="font-size:10px;">${r.finalBadge}</span>
+        <span class="chip ${finalCls}" style="font-size:10px;">${r.finalBadge}</span>
         <span style="font-size:12px;color:var(--text);font-weight:600;">${r.name}</span>
       </div>
       ${hypHtml}

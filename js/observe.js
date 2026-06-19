@@ -338,6 +338,7 @@ function renderHuntObserve(id) {
   const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
   const d = shData || huntData;
   const em = observeEditMode;
+  const reasoningBtn = `<button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button>`;
 
   // Subhunt context banner
   const subhuntBannerHTML = shData ? `
@@ -391,20 +392,25 @@ function renderHuntObserve(id) {
   main.innerHTML = `
     ${subhuntBannerHTML}
     ${editToggleHTML}
-    <div class="info-bar"><span class="ib-icon">ℹ️</span><span>The <b>Observe</b> stage defines your environment baseline for this hunt — what normal looks like, what adversary activity looks like, and what artifacts to watch for. This informs agent thresholds and exclusions applied in Learn and Check.</span></div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">✅ What Normal Looks Like</span>
         <span class="chip chip-green" style="font-size:10px;">${d.normal.length} baseline pattern${d.normal.length !== 1 ? 's' : ''}</span>
       </div>
-      <div class="card-body" style="padding:8px 14px;">${normalItemsHTML}${normalAddHTML}</div>
+      <div class="card-body" style="padding:8px 14px;">
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>What Normal Looks Like - defines baseline behavior, exclusions, and normal telemetry for this hunt</span>${reasoningBtn}</div>
+        ${normalItemsHTML}${normalAddHTML}
+      </div>
     </div>
     <div class="card">
       <div class="card-head">
         <span class="card-title">⚠ What Suspicious Looks Like</span>
         <span class="chip chip-yellow" style="font-size:10px;">${d.suspicious.length} adversary pattern${d.suspicious.length !== 1 ? 's' : ''}</span>
       </div>
-      <div class="card-body" style="padding:8px 14px;">${suspItemsHTML}${suspAddHTML}</div>
+      <div class="card-body" style="padding:8px 14px;">
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>What Suspicious Looks Like - defines adversary patterns, anomaly thresholds, and escalation cues</span>${reasoningBtn}</div>
+        ${suspItemsHTML}${suspAddHTML}
+      </div>
     </div>`;
 
   // ── Observables (side panel) ──
@@ -485,10 +491,16 @@ function renderHuntObserve(id) {
         <span class="card-title">🔗 Agent Topology</span>
         <span class="chip chip-blue" style="font-size:10px;">5 agents</span>
       </div>
+      <div class="card-body" style="padding:8px 14px 0;">
+        <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Agent Topology - Observe context routing and agent handoff map</span>${reasoningBtn}</div>
+      </div>
       <div class="topo-svg-wrap">${topoSVG}</div>
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">🔭 Expected Observables</span></div>
-      <div class="card-body" style="padding:8px 14px;">${obsHTML}${catAddHTML}</div>
+      <div class="card-body" style="padding:8px 14px;">
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Expected Observables - artifacts and telemetry categories to watch</span>${reasoningBtn}</div>
+        ${obsHTML}${catAddHTML}
+      </div>
     </div>`;
 }

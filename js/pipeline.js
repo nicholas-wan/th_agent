@@ -12,8 +12,6 @@ let _origTtpTbody      = null;
 let _origStage0InfoBar = '';
 let _origStage1InfoBar = '';
 let _origStage2Body    = '';
-let _origStage3Body    = '';
-let _origStage4Body    = '';
 
 function updateAgentPills(i) {
   const pills = [
@@ -667,7 +665,7 @@ function setStep(i) {
     if (s) s.className = 'stage card' + (j <= i ? ' show' : '');
   }
   updateAgentPills(maxStep);
-  const stageLabels = ['Learn · Select Intel', 'Learn · TTP Extraction', 'Learn · Hypotheses', 'Learn · Investigation', 'Learn · Detection'];
+  const stageLabels = ['Learn · Select Intel', 'Learn · TTP Extraction', 'Learn · Hypotheses'];
   const stageEl = document.getElementById('lhc-stage');
   if (stageEl) stageEl.textContent = stageLabels[i] || stageLabels[0];
   if (maxStep >= 2) {
@@ -741,13 +739,9 @@ function resetPipeline() {
   // Restore Stage 1 info-bar
   const s1ib = document.querySelector('#stage-1 .info-bar');
   if (s1ib && _origStage1InfoBar) s1ib.innerHTML = _origStage1InfoBar;
-  // Restore Stages 2-4 (overwritten by _renderDynamicStages for non-041 hunts)
+  // Restore Stage 2 (overwritten by _renderDynamicStages for non-041 hunts)
   const s2 = document.getElementById('stage-2');
   if (s2 && _origStage2Body) s2.innerHTML = _origStage2Body;
-  const s3 = document.getElementById('stage-3');
-  if (s3 && _origStage3Body) s3.innerHTML = _origStage3Body;
-  const s4 = document.getElementById('stage-4');
-  if (s4 && _origStage4Body) s4.innerHTML = _origStage4Body;
   // Reset repo-loaded-badge
   const badge = document.getElementById('repo-loaded-badge');
   if (badge) badge.style.display = 'none';
@@ -961,9 +955,7 @@ function _renderDynamicStages(keepId, huntId) {
     });
 
     s2body.innerHTML = `
-      <div class="info-bar"><span class="ib-icon">${isActive ? '⚡' : '🔒'}</span><span>${isActive
-        ? 'The <b>Hypothesis Agent</b> generated these hunt hypotheses. Detection rules are <b>in testing</b>.'
-        : 'The <b>Hypothesis Agent</b> generated these hunt hypotheses. This view is read-only.'}</span></div>
+      <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Hunt Hypotheses - generated hunt hypotheses from scoped TTPs and prior hunt context</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${subs.map((sh, i) => {
           const lk = locks[sh.id] || {};
@@ -981,104 +973,9 @@ function _renderDynamicStages(keepId, huntId) {
             <div class="hyp-rationale" style="font-size:11px;color:var(--sub);margin-top:4px;">${lk.o || ''}</div>
           </div>`;
         }).join('')}
-      </div>`;
-  }
-
-  // ── Stage 3: Investigator Agent ──
-  const s3body = document.querySelector('#stage-3 .card-body');
-  const s3head = document.querySelector('#stage-3 .card-head');
-  if (s3head) {
-    // Update header chip to reflect this hunt's hypothesis
-    const chipEl = s3head.querySelector('.chip');
-    if (chipEl) chipEl.textContent = subs.length ? subs[0].label + ' · Splunk ES' : 'Splunk ES';
-  }
-  if (s3body && subs.length) {
-    // Determine RAA coverage: process-chain and command-line only cover host-based TTPs
-    const raaScope = subs.map(sh => {
-      const hostBased = ['T1078','T1003','T1059','T1053','T1547','T1570','T1484'].some(p => sh.ttp.startsWith(p));
-      return { ...sh, inScope: hostBased };
-    });
-    s3body.innerHTML = `
-      <div class="info-bar"><span class="ib-icon">📌</span><span>The Investigator Agent performs targeted retrieval of relevant SOC and Analytics alerts, including RAA hits, against Splunk logs and surfaces evidence matching each hypothesis. TTPs with no relevant alert coverage are passed to the Detection Logic Agent.</span></div>
-      <div>
-        <div class="label" style="margin-bottom:7px;">Analytic Coverage</div>
-        <table class="ttp-table">
-          <thead><tr><th>Hypothesis</th><th>TTP</th><th>Retrieved Alert Source</th><th>Status</th></tr></thead>
-          <tbody>
-            ${raaScope.map(sh => `<tr>
-              <td>${sh.label}</td>
-              <td class="ttp-id">${sh.ttp}</td>
-              <td>${sh.inScope ? 'Process Chain / Command Line' : '<span style="color:var(--muted);">Out of scope</span>'}</td>
-              <td>${sh.inScope
-                ? '<span class="chip chip-yellow" style="font-size:10px;">Queried</span>'
-                : '<span class="chip chip-gray" style="font-size:10px;">→ Detection Logic</span>'}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
       </div>
-      <div>
-        <div class="label" style="margin-bottom:7px;">Coverage Gaps → Detection Logic</div>
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--sub);">
-          ${raaScope.filter(sh => !sh.inScope).map(sh =>
-            `<div style="display:flex;align-items:center;gap:8px;"><span class="chip chip-gray" style="font-size:10px;">${sh.ttp}</span>${sh.name} — outside current retrieved alert coverage. New SPL rule needed.</div>`
-          ).join('') || '<div style="color:var(--green);">All TTPs covered by retrieved analytics.</div>'}
-        </div>
-      </div>`;
-  }
-
-  // ── Stage 4: Detection Logic Agent ──
-  const s4body = document.querySelector('#stage-4 .card-body');
-  if (s4body) {
-    // Pull rule info from feed entries
-    const feedEntries = closedHuntFeeds[keepId] || [];
-    const ruleEntries = feedEntries.filter(e => e.msg && (e.msg.includes('rule') || e.msg.includes('DL-')));
-    const ruleMsg = ruleEntries.length ? ruleEntries[ruleEntries.length - 1].msg : '';
-    // For active hunts, extract TTP→ruleId mappings from feed so rule IDs
-    // match the feed narrative (not sequential subhunt index)
-    const ttpRuleMap = {};
-    if (isActive) {
-      feedEntries.forEach(e => {
-        if (!e.msg) return;
-        const re = /(DL-[\d]+-[\d]+-[\d]+)\s*\(?(T\d{4}(?:\.\d{3})?)/g;
-        let m; while ((m = re.exec(e.msg)) !== null) ttpRuleMap[m[2]] = m[1];
-      });
-    }
-    s4body.innerHTML = `
-      <div class="info-bar"><span class="ib-icon">${isActive ? '⚡' : '🔒'}</span><span>${isActive
-        ? 'Detection rules are <b>in testing</b>. Run queries in the <b>Check</b> tab to validate.'
-        : 'Detection rules were generated and validated during this hunt.'}</span></div>
-      <div>
-        <div class="label" style="margin-bottom:7px;">Rules Generated</div>
-        <table class="ttp-table">
-          <thead><tr><th>${ld && ld.rules ? 'Rule' : 'Hypothesis'}</th><th>TTP</th><th>Rule ID</th><th>Status</th></tr></thead>
-          <tbody>
-            ${(ld && ld.rules ? ld.rules : subs).map((item, i) => {
-              if (ld && ld.rules) {
-                return `<tr>
-              <td>${item.name}</td>
-              <td class="ttp-id">${item.ttp}</td>
-              <td>${item.id}</td>
-              <td><span class="chip chip-green" style="font-size:10px;">Deployed</span></td>
-            </tr>`;
-              }
-              const defaultId = 'DL-' + huntId.replace('TH-','') + '-00' + (i+1);
-              const ruleId = isActive ? (ttpRuleMap[item.ttp] || null) : defaultId;
-              return `<tr>
-              <td>${item.label}</td>
-              <td class="ttp-id">${item.ttp}</td>
-              <td>${ruleId || '<span style="color:var(--muted);">—</span>'}</td>
-              <td>${!isActive
-                ? '<span class="chip chip-green" style="font-size:10px;">Deployed</span>'
-                : ruleId
-                  ? '<span class="chip chip-yellow" style="font-size:10px;">Testing</span>'
-                  : '<span class="chip chip-gray" style="font-size:10px;">Pending</span>'}</td>
-            </tr>`; }).join('')}
-          </tbody>
-        </table>
-      </div>
-      ${ruleMsg ? `<div style="font-size:11px;color:var(--sub);margin-top:8px;padding:8px 10px;background:var(--s2);border-radius:var(--radius-sm);border:1px solid var(--border);">${ruleMsg}</div>` : ''}
-      <div style="margin-top:10px;display:flex;justify-content:flex-end;">
-        <button class="btn btn-primary btn-sm" onclick="goSubTab('check',document.getElementById('subtab-check'))">Run in Check →</button>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" onclick="goSubTab('observe',document.getElementById('subtab-observe'))">Continue to Observe →</button>
       </div>`;
   }
 }
@@ -1098,7 +995,7 @@ function loadClosedPipeline(huntId, keepId) {
   if (lhcTtps)  lhcTtps.textContent  = cm ? cm.ttpCount : '';
   const isActive = cm && cm.active;
   if (lhcHyp)   { lhcHyp.textContent = cm ? cm.hypCount : '2 confirmed'; lhcHyp.style.color = ''; }
-  if (lhcStage) lhcStage.textContent = isActive ? 'Learn · Check' : 'Learn · Detection';
+  if (lhcStage) lhcStage.textContent = 'Learn · Hypotheses';
 
   // Show context panel + agents card
   const ctxPanel  = document.getElementById('learn-hunt-context');
@@ -1141,8 +1038,8 @@ function loadClosedPipeline(huntId, keepId) {
     else        { ttpBtnBar.removeAttribute('data-archived-hidden'); ttpBtnBar.style.display = ''; }
   }
 
-  updateAgentPills(4);
-  for (let i = 0; i < 5; i++) _setAgentProgStep(i, 'done');
+  updateAgentPills(2);
+  for (let i = 0; i < 3; i++) _setAgentProgStep(i, 'done');
   ['orch','hyp','ts','dl'].forEach(a => _setAgentLegendStatus(a, 'done'));
 
   // Show past hunts card
@@ -1172,14 +1069,15 @@ function loadClosedPipeline(huntId, keepId) {
     tokEl.textContent = tokCounts[keepId] || '~6,000 tok';
   }
 
-  // ── Lock pipeline stepper ──
-  // Active hunts: gate Keep tab (maxStep=3 unlocks Observe+Check only)
+  // ── Lock Learn pipeline state ──
+  // Active hunts remain in progress, but LOCK sub-tabs stay accessible.
   // Closed hunts: unlock all tabs
   if (isActive) {
     pipelineLocked = false;
-    maxStep = 3;
+    maxStep = 2;
   } else {
     pipelineLocked = true;
+    maxStep = 2;
   }
   if (typeof updateSubTabGating === 'function') updateSubTabGating();
   const pipelineEl = document.querySelector('.pipeline');
@@ -1198,7 +1096,7 @@ function loadClosedPipeline(huntId, keepId) {
       // Archived notice replaces the old info-bar
       const oldInfoBar = s0body.querySelector('.info-bar');
       if (oldInfoBar) oldInfoBar.innerHTML = isActive
-        ? `<span class="ib-icon">⚡</span><span>This hunt is <b>active</b>. TTPs have been extracted and hypotheses generated. Detection rules are <b>in testing</b> — check the <b>Check</b> tab for query results.</span>`
+        ? `<span class="ib-icon">⚡</span><span>This hunt is <b>active</b>. TTPs have been extracted and hypotheses generated. Continue to <b>Observe</b> for baseline context or <b>Check</b> for query results.</span>`
         : `<span class="ib-icon">🔒</span><span>This hunt is <b>closed and archived</b>. The intelligence report and TTP selection are locked. View the <b>Keep</b> tab for the final hunt record.</span>`;
 
       // Hide repo search (marked for restoration)
@@ -1267,7 +1165,7 @@ function loadClosedPipeline(huntId, keepId) {
     // Update the Stage 1 info-bar to reflect state
     const s1InfoBar = document.querySelector('#stage-1 .info-bar');
     if (s1InfoBar) s1InfoBar.innerHTML = isActive
-      ? `<span class="ib-icon">⚡</span><span>TTPs extracted and hypotheses generated. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. Detection rules are now <b>in testing</b>.</span>`
+      ? `<span class="ib-icon">⚡</span><span>TTPs extracted and hypotheses generated. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. Continue to <b>Observe</b> for baseline context.</span>`
       : `<span class="ib-icon">🔒</span><span>TTPs were extracted and prioritized during this hunt. <b>Highlighted rows</b> (🎯) were selected for hypothesis generation. This view is read-only — see the <b>Keep</b> tab for the full hunt record.</span>`;
   }
 
@@ -1277,18 +1175,14 @@ function loadClosedPipeline(huntId, keepId) {
   }
 }
 
-// ── Capture original Stage 0–4 content for restoration on hunt switch ──
+// ── Capture original Stage 0–2 content for restoration on hunt switch ──
 ;(function() {
   const tb   = document.getElementById('ttp-tbody');
   const s0ib = document.querySelector('#stage-0 .info-bar');
   const s1ib = document.querySelector('#stage-1 .info-bar');
   const s2  = document.getElementById('stage-2');
-  const s3  = document.getElementById('stage-3');
-  const s4  = document.getElementById('stage-4');
   if (tb)   _origTtpTbody      = tb.innerHTML;
   if (s0ib) _origStage0InfoBar = s0ib.innerHTML;
   if (s1ib) _origStage1InfoBar = s1ib.innerHTML;
   if (s2)   _origStage2Body    = s2.innerHTML;
-  if (s3)   _origStage3Body    = s3.innerHTML;
-  if (s4)   _origStage4Body    = s4.innerHTML;
 })();

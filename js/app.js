@@ -59,17 +59,12 @@ function goSubTab(name, el) {
 }
 
 function updateSubTabGating() {
-  const locked = typeof pipelineLocked !== 'undefined' && pipelineLocked;
-  const step   = typeof maxStep !== 'undefined' ? maxStep : -1;
-  // Thresholds: observe=step1, check=step3, keep=step4
-  const gates  = { observe: 1, check: 3, keep: 4 };
-  Object.entries(gates).forEach(([tab, threshold]) => {
+  ['observe', 'check', 'keep'].forEach(tab => {
     const el = document.getElementById('subtab-' + tab);
     if (!el) return;
-    const open = locked || step >= threshold;
-    el.style.opacity       = open ? '' : '0.38';
-    el.style.pointerEvents = open ? '' : 'none';
-    el.title               = open ? '' : 'Complete earlier pipeline stages to unlock';
+    el.style.opacity = '';
+    el.style.pointerEvents = '';
+    el.title = '';
   });
 }
 
@@ -135,10 +130,7 @@ function resetCheckForHunt(huntId) {
         <span class="chip ${cm.statusClass || 'chip-gray'}" style="font-size:10px;">${cm.statusText || 'Inactive'}</span>
       </div>
       <div class="card-body">
-        <div class="info-bar" style="margin:0;">
-          <span class="ib-icon">ℹ️</span>
-          <span>${cm.closedMsg || 'No active check data for this hunt.'}</span>
-        </div>
+        <div class="section-agent-line"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - ${cm.closedMsg || 'no active check data for this hunt'}</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
       </div>`;
       sumCard.style.display = '';
       document.getElementById('raa-card').style.display = 'none';
@@ -243,21 +235,15 @@ function openHunt(id) {
   const safePreserved = (preservedTab === 'keep' && !hasKeepData) ? null : preservedTab;
   const targetTab = safePreserved || m.defaultTab || 'learn';
   goSubTab(targetTab, document.getElementById('subtab-' + targetTab));
-  // Render subhunt sidebar for this hunt — hide for active hunts
-  // (pipeline animation or loadClosedPipeline reveals it later)
+  // Render subhunt sidebar for any hunt that has subhunts.
   renderSubhuntSidebar(id);
-  if (!m.status || !m.status.includes('Closed')) {
-    const sidebar = document.getElementById('subhunt-sidebar');
-    if (sidebar) sidebar.style.display = 'none';
-  }
   // Sync Keep sub-pane to the selected hunt
   switchKeepHunt(keepId);
   // Reset Check sub-pane for the new hunt
   resetCheckForHunt(id);
-  // Load pipeline state and apply tab gating
-  // For hunts with archived pipeline data: loadClosedPipeline sets pipelineLocked/maxStep
-  // and calls updateSubTabGating with the correct state.
-  // For 041 (live demo): tabs stay locked until runPipeline advances them.
+  // Load pipeline state and refresh tab access
+  // For hunts with archived pipeline data: loadClosedPipeline sets pipeline state.
+  // LOCK sub-tabs remain available immediately for every hunt.
   const hasArchivedPipeline = (m.status && m.status.includes('Closed')) || (typeof closedHuntFeeds !== 'undefined' && closedHuntFeeds[keepId]);
   if (hasArchivedPipeline && typeof loadClosedPipeline === 'function') {
     loadClosedPipeline(id, keepId);
@@ -822,21 +808,14 @@ function runPipeline() {
   // subsequent stage advances relative to that baseline.
   selectReport('r1');
 
-  const tsPill = document.getElementById('ts-pill');
-  const dlPill = document.getElementById('dl-pill');
-  if (tsPill) tsPill.style.opacity = '0.4';
-  if (dlPill) dlPill.style.opacity = '0.4';
-
   const scrollToStage = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Advance through stages 2-4 with delays (stage 0→1 is handled by selectReport).
+  // Advance through hypothesis generation. Observe/Check are separate LOCK tabs.
   const steps = [
     { delay: 22000, step: 2, stage: 'stage-2' },
-    { delay: 40000, step: 3, stage: 'stage-3' },
-    { delay: 74000, step: 4, stage: 'stage-4' },
   ];
 
   steps.forEach(({ delay, step, stage }) => {
@@ -846,11 +825,11 @@ function runPipeline() {
     }, delay);
   });
 
-  // Re-enable button after full run (~87s for all 5 steps)
+  // Re-enable button after Learn completes.
   setTimeout(() => {
     btn.disabled = false;
     btn.textContent = '▶ Run Pipeline';
-  }, 90000);
+  }, 26000);
 }
 
 
@@ -1027,10 +1006,10 @@ function renderSimilarHunts(huntId) {
   const matches = similarHunts[huntId] || [];
   document.getElementById('sim-hunt-count').textContent = matches.length + ' match' + (matches.length !== 1 ? 'es' : '');
   if (!matches.length) {
-    list.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0;">No similar hunts found.</div>';
+    list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div><div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0;">No similar hunts found.</div>`;
     return;
   }
-  list.innerHTML = matches.map(h => `
+  list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>` + matches.map(h => `
     <div class="sim-hunt">
       <div class="sim-hunt-head">
         <span class="chip chip-blue" style="font-size:10px;">${h.id}</span>
@@ -1136,7 +1115,7 @@ function renderHuntPivot(id) {
   const seedHTML = p.seedData.map(s => `<div class="report-rec-item" style="font-size:11px;">📎 ${s}</div>`).join('');
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="info-bar" style="background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.2);"><span class="ib-icon">🔀</span><span>A completed hunt is a new starting point. The agent identified an unresolved thread from this hunt's findings that warrants a follow-on investigation — seeding the next Learn stage automatically.</span></div>
+      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Agent Pivot Recommendation - identifies unresolved threads, proposes a follow-on hunt, and seeds the next Learn stage</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
       <div>
         <div class="label" style="margin-bottom:5px;">Proposed Next Hunt — <span style="color:var(--blue);font-weight:600;">${p.huntId}</span></div>
         <div style="font-size:12px;color:var(--sub);line-height:1.6;">${p.hypothesis}</div>

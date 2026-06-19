@@ -55,6 +55,13 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 .card-title { font-weight: 600; font-size: 13px; }
 .card-body { padding: 14px 15px; }
 
+/* LOCK section agent attribution */
+.section-agent-line { display:flex; align-items:center; gap:8px; min-width:0; padding:7px 10px; border:1px solid rgba(59,130,246,.14); border-radius:var(--radius-sm); background:rgba(59,130,246,.04); font-size:11px; color:var(--sub); line-height:1.4; }
+.section-agent-line b { flex:0 1 auto; min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); font-weight:700; }
+.section-agent-line span { flex:1 1 120px; min-width:0; white-space:normal; }
+.section-agent-line button { margin-left:auto; flex-shrink:0; border:none; background:none; color:var(--blue); font:inherit; font-size:10px; font-weight:700; cursor:pointer; padding:0; }
+.section-agent-line button:hover { color:var(--text); }
+
 /* ── tab system (no ID display overrides) ── */
 .tab-pane { display: none; flex: 1; overflow: auto; flex-direction: column; }
 .tab-pane.on { display: flex; }

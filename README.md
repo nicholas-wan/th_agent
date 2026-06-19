@@ -136,12 +136,12 @@ Learn sidebar and Observe panel both show these — keep in sync. Adding a tool/
 
 ## LOCK Pipeline Stages
 
-| Stage | ID | Role |
-|---|---|---|
-| Learn | L | CTI → TTP extraction → hypotheses |
-| Observe | O | Editable environment baseline per hunt |
-| Check | C | SPL rule testing + targeted SOC/Analytics alert retrieval, including RAA |
-| Keep | K | Findings, timeline, evidence, hunt report |
+| Stage | ID | Agent owner | Role |
+|---|---|---|---|
+| Learn | L | Hypothesis Agent | CTI → TTP extraction → hypotheses |
+| Observe | O | Hypothesis Agent | Editable environment baseline per hunt |
+| Check | C | Investigator Agent + Detection Logic Agent | Targeted SOC/Analytics alert retrieval, including RAA + SPL rule testing |
+| Keep | K | Supervisor Agent | Findings, timeline, evidence, hunt report |
 
 ---
 
@@ -194,7 +194,7 @@ Privileged Account Abuse & DCSync Staging — Tier-0 Assets. 3 TTPs, all selecte
 - **H-02 T1484.001** Domain Policy Modification — conf 78% · check delegation/SPN changes.
 - **H-03 T1003.006** DCSync — conf 82% · DRS replication from non-DC sources.
 - 2 rules in testing: `DL-2026-042-001..002`. Proposed next hunt: **TH-2026-043** (Golden Ticket detection).
-- Keep tab is gated (locked) — hunt is still in Check stage.
+- Keep tab remains visible and accessible — hunt is still in Check stage, so Keep content is marked pending where appropriate.
 
 **Homepage layout**
 - **Stat cards** (top): Rules Deployed · Rules in Testing · MITRE Coverage · Critical Findings · Hunts Completed. All clickable — navigate to Coverage tab or hunt detail.
@@ -203,9 +203,9 @@ Privileged Account Abuse & DCSync Staging — Tier-0 Assets. 3 TTPs, all selecte
 - Hunt card tags show detection engineering output (e.g. "3 Rules in Testing", "2 Rules Deployed"), not CTI source jargon.
 - Hunt card stats show TTPs / Findings / Runtime (not agent count — that's a platform constant).
 
-**Hunt lifecycle & tab gating**
-- **041 (live demo)**: all LOCK tabs locked on open. `runPipeline()` triggers the animated pipeline (selects r1 report, populates TTPs, advances stages 0→4 on timers). Only 041 has `feedSteps` data for live animation.
-- **042 (active, pre-loaded)**: loaded via `loadClosedPipeline` using `closedHuntFeeds['042']`. Stages 2-4 rendered dynamically from `keepData` subhunts via `_renderDynamicStages()`. Observe + Check open, Keep gated (`maxStep=3`). Run Pipeline button visible but no-ops (guarded).
+**Hunt lifecycle & tab access**
+- **041 (live demo)**: LOCK sub-tabs are available on open. `runPipeline()` triggers the animated pipeline (selects r1 report, populates TTPs, advances stages 0→4 on timers). Only 041 has `feedSteps` data for live animation.
+- **042 (active, pre-loaded)**: loaded via `loadClosedPipeline` using `closedHuntFeeds['042']`. Stages 2-4 rendered dynamically from `keepData` subhunts via `_renderDynamicStages()`. Learn, Observe, Check, and Keep are all available immediately. Run Pipeline button visible but no-ops (guarded).
 - **040, 039 (closed)**: loaded via `loadClosedPipeline`. All tabs open (`pipelineLocked=true`). Run Pipeline button hidden. Stages 2-4 rendered dynamically.
 - **Adding a new hunt**: add entries to `huntMeta` + `checkHuntMeta` (app.js), `keepData` + `huntNotes` (keep.js), `observeData` (observe.js), `closedHuntFeeds` + `closedLearnData` (pipeline.js). Add a card or table row in index.html + a hunt-switcher entry. For active hunts, set `checkHuntMeta.active = true`.
 
@@ -214,7 +214,7 @@ Privileged Account Abuse & DCSync Staging — Tier-0 Assets. 3 TTPs, all selecte
 | Object | File | Required for |
 |---|---|---|
 | `huntMeta[id]` | `js/app.js` | Detail pane header, defaultTab |
-| `checkHuntMeta[keepId]` | `js/app.js` | Check context strip, `active` flag for gating |
+| `checkHuntMeta[keepId]` | `js/app.js` | Check context strip, `active` flag for Check rendering |
 | `keepData[keepId]` | `js/keep.js` | Subhunts, findings, timeline, report, pivot |
 | `observeData[keepId]` | `js/observe.js` | Observe tab baseline |
 | `closedHuntFeeds[keepId]` | `js/pipeline.js` | Agent reasoning feed (triggers `loadClosedPipeline`) |

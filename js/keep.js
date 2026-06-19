@@ -372,15 +372,6 @@ function switchKeepHunt(id) {
   activeKeepHunt = id;
   const hasData = !!keepData[id];
 
-  // Dim the Keep sub-tab for hunts with no Keep data (drafts / unsupported hunts)
-  // Don't override pipeline gating — updateSubTabGating() handles active-hunt locking
-  const keepTab = document.getElementById('subtab-keep');
-  if (keepTab && !hasData) {
-    keepTab.style.opacity = '0.38';
-    keepTab.style.pointerEvents = 'none';
-    keepTab.title = 'Keep stage not yet available for this hunt';
-  }
-
   if (!hasData) {
     // Show a clear placeholder instead of stale content
     const el = document.getElementById('keep-hunt-creator');
@@ -389,7 +380,7 @@ function switchKeepHunt(id) {
     document.getElementById('keep-crit-chip').textContent = '—';
     document.getElementById('keep-high-chip').textContent = '—';
     document.getElementById('report-doc-body').innerHTML =
-      '<div style="padding:20px;font-size:12px;color:var(--muted);text-align:center;">No report — hunt is Draft.</div>';
+      `<div style="padding:12px 14px 0;"><div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div></div><div style="padding:20px;font-size:12px;color:var(--muted);text-align:center;">No report — hunt is Draft.</div>`;
     const chip = document.getElementById('report-status-chip');
     if (chip) { chip.textContent = 'Draft'; chip.className = 'chip chip-gray'; }
     return;
@@ -516,7 +507,7 @@ function renderEvidenceGraph(d) {
     </g>`;
   }).join('');
 
-  wrap.innerHTML = `<svg class="ev-graph-svg" viewBox="0 0 ${maxX} ${maxY}" xmlns="http://www.w3.org/2000/svg">${defs}${edgeSvg}${nodeSvg}</svg>`;
+  wrap.innerHTML = `<div class="section-agent-line" style="margin:10px 12px 0;"><b>🎛️ Supervisor Agent</b><span>Attack Graph - evidence relationships and investigation chain summary</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div><svg class="ev-graph-svg" viewBox="0 0 ${maxX} ${maxY}" xmlns="http://www.w3.org/2000/svg">${defs}${edgeSvg}${nodeSvg}</svg>`;
 }
 
 function renderGateDecisionLog(huntId) {
@@ -582,12 +573,13 @@ function renderKeepFindings(d) {
   const fl = document.getElementById('keep-findings-list');
   const huntComments = findingComments[activeKeepHunt] || {};
   const usersObj = typeof users !== 'undefined' ? users : {};
+  const supervisorLine = `<div class="section-agent-line" style="margin:10px 0;"><b>🎛️ Supervisor Agent</b><span>Findings - hunt record curation, severity summary, and analyst handoff</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>`;
 
   if (!filtered.length) {
-    fl.innerHTML = `<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">No findings for this subhunt.</div>`;
+    fl.innerHTML = `${supervisorLine}<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">No findings for this subhunt.</div>`;
   } else {
     const fullFindings = d.findings;
-    fl.innerHTML = filtered.map(f => {
+    fl.innerHTML = supervisorLine + filtered.map(f => {
       const globalIdx = fullFindings.indexOf(f);
       const comments = huntComments[globalIdx] || [];
       const commentCount = comments.length;
