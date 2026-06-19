@@ -10,7 +10,7 @@ js/agents.js             agentData{} drawer content
 js/observe.js            Hunt Observe stage — data, edit mode, CRUD functions
 js/report.js             Hunt Report modal functions
 js/pipeline.js           LOCK pipeline feed — steps, pills, topology, play
-js/check.js              Check stage — rules, queries, Investigation alert retrieval, velocityData, findingComments
+js/check.js              Check stage — rules, queries, Investigator alert retrieval, velocityData, findingComments
 js/keep.js               Keep stage — findings, timeline, TTP selector, notes
 js/kb-tab.js             KB tab — platform attack techniques, runbooks, env pane, RV modal
 kb/
@@ -99,7 +99,7 @@ Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP ser
 |---|---|---|---|---|
 | 1 | 🎛️ | Orchestrator Agent | `orchestrator` | blue |
 | 2 | 💡 | Hypothesis Agent | `hypothesis` | teal |
-| 3 | 🧠 | Investigation Agent | `tradecraft` | yellow |
+| 3 | 🧠 | Investigator Agent | `tradecraft` | yellow |
 | 4 | ⚙️ | Detection Logic Agent | `detection` | green |
 
 Orchestrator spawns all. Hypothesis runs first. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.

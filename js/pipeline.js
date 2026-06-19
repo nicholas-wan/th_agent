@@ -48,7 +48,7 @@ const feedAgents = {
   hyp:  { icon:'💡', name:'Hypothesis' },
   orch: { icon:'🎛️', name:'Orchestrator' },
   data: { icon:'🟠', name:'Splunk ES' },
-  ts:   { icon:'🧠', name:'Investigation' },
+  ts:   { icon:'🧠', name:'Investigator' },
   dl:   { icon:'⚙️',  name:'Detection Logic' },
   rv:   { icon:'✅', name:'Rule Validation' },
 };
@@ -169,11 +169,11 @@ const feedSteps = {
     { type:'tool',   agent:'rv',   msg:'scanning 847 deployed Splunk ES rules for LSASS + rundll32 + PROCESS_ALL_ACCESS coverage…' },
     { type:'relay',  agent:'rv',   to:'orch', msg:'checked all 847 rules — no deployed rule covers rundll32→LSASS with PROCESS_ALL_ACCESS · detection gap confirmed · WIN-DC01 is currently blind to this technique' },
     { type:'relay',  agent:'orch', to:'dl',   msg:'critical gap confirmed by Validation · T1003.001 LSASS on WIN-DC01 is priority-1 rule for Detection Logic · escalating ahead of T1053.005 and T1547.001' },
-    { type:'done',   agent:'ts',   msg:'tradecraft complete · T1570 confirmed · T1003.001 confirmed · T1558.003 forwarded · T1071.001 forwarded to Detection Logic',
+    { type:'done',   agent:'ts',   msg:'investigation complete · T1570 confirmed · T1003.001 confirmed · T1558.003 forwarded · T1071.001 forwarded to Detection Logic',
       detail:'RAA summary:\n• T1570: 59 confirmed hits · jsmith 14-host pivot chain · PASS TO KEEP\n• T1003.001: 1 critical hit · rundll32 LSASS 0x1fffff on WIN-DC01 · PASS TO KEEP\n• T1558.003: 0 hits above tuned threshold after SPN exclusion · needs rule refinement\n• T1071.001: network-layer technique outside RAA scope · forwarded to Detection Logic for JA3 analysis\nAll 4 hypotheses forwarded to Detection Logic for rule generation.' },
   ],
   4: [
-    { type:'relay',  agent:'dl',   to:'ts',   msg:'received tradecraft package · confirming FP exclusions for T1003.001 — which process images should I whitelist for LSASS access?' },
+    { type:'relay',  agent:'dl',   to:'ts',   msg:'received Investigator Agent package · confirming FP exclusions for T1003.001 — which process images should I whitelist for LSASS access?' },
     { type:'relay',  agent:'ts',   to:'dl',   msg:'exclude: MsMpEng.exe, csagent.sys, SenseIR.exe, CrowdStrike sensor PID · trigger only on PROCESS_ALL_ACCESS (0x1fffff) from unsigned or LOLBin source',
       detail:'SK-029 exclusion list validated against 6 months of endpoint telemetry. These 4 exclusions reduce FP rate from 34% to under 2% while preserving all known LSASS evasion patterns.' },
     { type:'tool',   agent:'dl',   msg:'generating SPL rule for H-01 · T1570 — PsExec ADMIN$ file drop + service install correlation…' },
@@ -984,7 +984,7 @@ function _renderDynamicStages(keepId, huntId) {
       </div>`;
   }
 
-  // ── Stage 3: Investigation Agent ──
+  // ── Stage 3: Investigator Agent ──
   const s3body = document.querySelector('#stage-3 .card-body');
   const s3head = document.querySelector('#stage-3 .card-head');
   if (s3head) {
@@ -999,7 +999,7 @@ function _renderDynamicStages(keepId, huntId) {
       return { ...sh, inScope: hostBased };
     });
     s3body.innerHTML = `
-      <div class="info-bar"><span class="ib-icon">📌</span><span>The Investigation Agent performs targeted retrieval of relevant SOC and Analytics alerts, including RAA hits, against Splunk logs and surfaces evidence matching each hypothesis. TTPs with no relevant alert coverage are passed to the Detection Logic Agent.</span></div>
+      <div class="info-bar"><span class="ib-icon">📌</span><span>The Investigator Agent performs targeted retrieval of relevant SOC and Analytics alerts, including RAA hits, against Splunk logs and surfaces evidence matching each hypothesis. TTPs with no relevant alert coverage are passed to the Detection Logic Agent.</span></div>
       <div>
         <div class="label" style="margin-bottom:7px;">Analytic Coverage</div>
         <table class="ttp-table">

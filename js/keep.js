@@ -42,13 +42,13 @@ const keepData = {
       },
     },
     findings: [
-      { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · Investigation Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
-      { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · Investigation Agent · T1570 · 5m ago',      drawer:'tradecraft' },
+      { sev:'c', title:'LSASS Memory Access — Process Chain Anomaly',        meta:'WIN-DC01 · Investigator Agent · T1003.001 · 2m ago',   drawer:'tradecraft' },
+      { sev:'c', title:'Lateral Movement via PsExec — 14 hosts',             meta:'10.0.0.0/8 · Investigator Agent · T1570 · 5m ago',      drawer:'tradecraft' },
       { sev:'h', title:'Cobalt Strike C2 Beacon — JA3 rule match',           meta:'185.220.101.47 · Detection Logic Agent · T1071.001 · 8m ago',    drawer:'detection'  },
-      { sev:'h', title:'Kerberoasting — RC4 TGS-REQ anomaly, 11 SPNs',       meta:'corp.local · Investigation Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
+      { sev:'h', title:'Kerberoasting — RC4 TGS-REQ anomaly, 11 SPNs',       meta:'corp.local · Investigator Agent · T1558.003 · 11m ago', drawer:'tradecraft' },
       { sev:'h', title:'Registry Run Key — Validated persistence rule',      meta:'SRV-APP03 · Rule Validation Agent · T1547.001 · 15m ago',        drawer:'validation' },
       { sev:'m', title:'DNS TXT Exfiltration Pattern',                       meta:'evilc2[.]net · Detection Logic Agent · T1041 · 19m ago',         drawer:'detection'  },
-      { sev:'m', title:'Off-Hours Valid Account Auth — CORP\\jsmith',        meta:'WIN-DC01 · Investigation Agent · T1078.002 · 22m ago',   drawer:'tradecraft' },
+      { sev:'m', title:'Off-Hours Valid Account Auth — CORP\\jsmith',        meta:'WIN-DC01 · Investigator Agent · T1078.002 · 22m ago',   drawer:'tradecraft' },
       { sev:'m', title:'Scheduled Task Persistence — svcupd.exe',            meta:'SRV-APP03 · Detection Logic Agent · T1053.005 · 31m ago', drawer:'detection'  },
     ],
     lock: {
@@ -60,10 +60,10 @@ const keepData = {
       raa: { relevant: true, note: 'RAA triggered — 2 analytics confirmed · T1570 (14-host pivot chain) · T1003.001 (LSASS dump on WIN-DC01)' },
     },
     timeline: [
-      { color:'red',    text:'<b>Investigation Agent</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
-      { color:'blue',   text:'<b>Investigation Agent</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570',     host:'CORP NET'  },
+      { color:'red',    text:'<b>Investigator Agent</b> — process chain anomaly, LSASS access flagged CRITICAL', time:'09:41', tag:'T1003.001', host:'WIN-DC01'  },
+      { color:'blue',   text:'<b>Investigator Agent</b> — PsExec process chain confirmed, 14 hosts',            time:'09:38', tag:'T1570',     host:'CORP NET'  },
       { color:'orange', text:'<b>Detection Logic Agent</b> — C2 beacon rule matched, JA3 hit on 185.220.101.47',  time:'09:35', tag:'T1071.001', host:'EXT'       },
-      { color:'yellow', text:'<b>Investigation Agent</b> — EventCode 4769 TGS-REQ anomaly, Kerberoasting pattern (11 SPNs)',    time:'09:32', tag:'T1558.003', host:'corp.local' },
+      { color:'yellow', text:'<b>Investigator Agent</b> — EventCode 4769 TGS-REQ anomaly, Kerberoasting pattern (11 SPNs)',    time:'09:32', tag:'T1558.003', host:'corp.local' },
       { color:'indigo', text:'<b>Rule Validation Agent</b> — persistence rule triggered, svcupd.exe registry key',time:'09:29', tag:'T1547.001', host:'SRV-APP03' },
       { color:'green',  text:'<b>Detection Logic Agent</b> — SPL rules validated and pushed to SIEM',             time:'09:18', tag:'',          host:'SYSTEM'    },
       { color:'blue',   text:'<b>Orchestrator Agent</b> — Hunt TH-2026-041 started, 6 agents deployed',          time:'09:15', tag:'',          host:'SYSTEM'    },
@@ -84,7 +84,7 @@ const keepData = {
         'Suspend CORP\\jsmith and rotate all credentials authenticated from that account in the past 72 hours.',
         'Push perimeter block for <span class="report-ioc">185.220.101.47/32</span> and audit all outbound connections on port 443 for matching JA3 hashes.',
         'Audit every host CORP\\jsmith authenticated to in the 72h window — the pivot chain touched 14 hosts including WIN-DC01, WIN-SQL02, and WIN-FS01.',
-        'Schedule full EDR coverage audit — WIN-DC01 LSASS access was detected via Investigation Agent alert retrieval, not a deployed rule.',
+        'Schedule full EDR coverage audit — WIN-DC01 LSASS access was detected via Investigator Agent alert retrieval, not a deployed rule.',
       ]
     },
     graph: {
@@ -145,7 +145,7 @@ const keepData = {
       { sev:'c', title:'Suspicious 4672 logon from non-admin workstation to WIN-DC01', ttp:'T1078.002', host:'WIN-DC01', time:'Apr 28 02:14', status:'open', score:88, sh:'sh01' },
     ],
     timeline: [
-      { color:'red', text:'<b>Investigation Agent</b> — privileged logon anomaly on WIN-DC01', time:'10:14', tag:'T1078.002', host:'WIN-DC01' },
+      { color:'red', text:'<b>Investigator Agent</b> — privileged logon anomaly on WIN-DC01', time:'10:14', tag:'T1078.002', host:'WIN-DC01' },
     ],
     lock: {
       l: 'Seeded from TH-2026-041 follow-up recommendation. 3 TTPs scoped: T1078.002, T1484.001, T1003.006. Focus: privileged account abuse and DCSync staging on Tier-0 assets.',
@@ -201,7 +201,7 @@ const keepData = {
       },
     },
     findings: [
-      { sev:'h', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · Investigation Agent · T1490 · 3d ago',        drawer:'tradecraft' },
+      { sev:'h', title:'Ransomware Pre-deployment — Shadow Copy Deletion', meta:'WIN-FS02 · Investigator Agent · T1490 · 3d ago',        drawer:'tradecraft' },
       { sev:'h', title:'Phishing Payload Execution — Office Macro',        meta:'WIN-WS012 · Detection Logic Agent · T1204 · 3d ago',             drawer:'detection'  },
       { sev:'m', title:'DLL Sideloading — DISM.exe',                       meta:'WIN-WS012 · Rule Validation Agent · T1574.002 · 3d ago',         drawer:'validation' },
     ],
@@ -214,7 +214,7 @@ const keepData = {
       raa: { relevant: true, note: 'RAA triggered — Process Chain Anomaly, 12 hits (T1204 macro chain, T1490 shadow copy deletion)' },
     },
     timeline: [
-      { color:'yellow', text:'<b>Investigation Agent</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
+      { color:'yellow', text:'<b>Investigator Agent</b> — shadow copy deletion detected, ransomware staging confirmed', time:'14:22', tag:'T1490',     host:'WIN-FS02'  },
       { color:'orange', text:'<b>Detection Logic Agent</b> — Office macro execution flagged on WIN-WS012',                time:'13:47', tag:'T1204',     host:'WIN-WS012' },
       { color:'indigo', text:'<b>Rule Validation Agent</b> — DLL sideloading rule matched DISM.exe',                      time:'14:05', tag:'T1574.002', host:'WIN-WS012' },
       { color:'green',  text:'<b>Orchestrator Agent</b> — Hunt TH-2026-040 started, 5 agents deployed',                  time:'13:15', tag:'',          host:'SYSTEM'    },

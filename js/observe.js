@@ -465,10 +465,10 @@ function renderHuntObserve(id) {
     <circle cx="50" cy="50" r="15" fill="rgba(20,184,166,.12)" stroke="#14b8a6" stroke-width="1.5"/>
     <text x="50" y="54" text-anchor="middle" style="font-size:13px;" fill="#14b8a6">💡</text>
     <text x="50" y="72" text-anchor="middle" class="topo-sub" fill="#4e6180">Hypothesis</text>
-    <!-- Investigation Agent (bottom-left) -->
+    <!-- Investigator Agent (bottom-left) -->
     <circle cx="50" cy="175" r="15" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5"/>
     <text x="50" y="179" text-anchor="middle" style="font-size:13px;" fill="#f59e0b">🧠</text>
-    <text x="50" y="197" text-anchor="middle" class="topo-sub" fill="#4e6180">Investigation</text>
+    <text x="50" y="197" text-anchor="middle" class="topo-sub" fill="#4e6180">Investigator</text>
     <!-- Detection (bottom-center) -->
     <circle cx="130" cy="185" r="15" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
     <text x="130" y="189" text-anchor="middle" style="font-size:13px;" fill="#10b981">⚙️</text>

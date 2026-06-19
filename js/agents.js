@@ -1,4 +1,4 @@
-﻿/* ── agents.js ────────────────────────────────────────────────────────────
+/* ── agents.js ────────────────────────────────────────────────────────────
    Agent drawer data (agentData). Loaded after app.js.
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -72,17 +72,17 @@ const agentData = {
     </div>` },
 
   orchestrator: { title:'Orchestrator Agent', sub:'Hunt Coordination & Synthesis · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives parsed CTI and tool context, assigns targeted investigation tasks to the Investigation Agent and rule-generation tasks to the Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">The Orchestrator is the central controller of the agentic pipeline. It receives parsed CTI and tool context, assigns targeted investigation tasks to the Investigator Agent and rule-generation tasks to the Detection Logic Agent, collects their outputs, and synthesises a unified hunt picture for the analyst. It also manages escalation routing — currently flagging 3 critical signals to the IR queue.</div></div>
     <div class="ds"><div class="ds-head">Agent Topology</div>
       <div style="font-size:11px;color:var(--sub);line-height:2;">
         🎛️ Orchestrator<br>
         &nbsp;&nbsp;├─ 💡 Hypothesis Agent <span style="color:var(--muted);font-size:10px;">(spawned first · generates hypotheses)</span><br>
-        &nbsp;&nbsp;├─ 🧠 Investigation Agent<br>
+        &nbsp;&nbsp;├─ 🧠 Investigator Agent<br>
         &nbsp;&nbsp;└─ ⚙️ Detection Logic Agent
       </div>
     </div>` },
 
-  tradecraft: { title:'Investigation Agent', sub:'Targeted SOC/Analytics Alert Retrieval · ALERTING', body:`
+  tradecraft: { title:'Investigator Agent', sub:'Targeted SOC/Analytics Alert Retrieval · ALERTING', body:`
     <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Performs targeted retrieval of SOC and Analytics alerts relevant to each threat hypothesis. It queries Splunk-backed alert sources, including RAA process-chain and command-line analytics, authentication anomalies, and network detections, then returns corroborating evidence, coverage gaps, and confidence context to the Orchestrator.</div></div>
     <div class="ds"><div class="ds-head">📊 Retrieved Alert Sources</div>
       <div class="ioc-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
@@ -101,7 +101,7 @@ const agentData = {
 ` },
 
   detection: { title:'Detection Logic Agent', sub:'Hunting Rule Creation · Active', body:`
-    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Translates hypotheses and Investigation Agent coverage gaps into executable detection rules. Generates multi-format output: KQL for Microsoft Sentinel, Sigma for SIEM-agnostic distribution, Splunk SPL, and YARA-L for endpoint platforms. Rules are automatically passed to the Rule Validation Agent before deployment.</div></div>
+    <div class="ds"><div class="ds-head">Role</div><div class="reasoning">Translates hypotheses and Investigator Agent coverage gaps into executable detection rules. Generates multi-format output: KQL for Microsoft Sentinel, Sigma for SIEM-agnostic distribution, Splunk SPL, and YARA-L for endpoint platforms. Rules are automatically passed to the Rule Validation Agent before deployment.</div></div>
     <div class="ds"><div class="ds-head">Output Formats</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;font-size:11px;">
         <span class="chip chip-blue">KQL</span><span class="chip chip-indigo">Sigma</span><span class="chip chip-gray">Splunk SPL</span><span class="chip chip-gray">YARA-L</span>
