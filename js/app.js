@@ -130,7 +130,7 @@ function resetCheckForHunt(huntId) {
         <span class="chip ${cm.statusClass || 'chip-gray'}" style="font-size:10px;">${cm.statusText || 'Inactive'}</span>
       </div>
       <div class="card-body">
-        <div class="section-agent-line"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - ${cm.closedMsg || 'no active check data for this hunt'}</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+        <div class="section-agent-line"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - ${cm.closedMsg || 'no active check data for this hunt'}</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
       </div>`;
       sumCard.style.display = '';
       document.getElementById('raa-card').style.display = 'none';
@@ -1006,10 +1006,10 @@ function renderSimilarHunts(huntId) {
   const matches = similarHunts[huntId] || [];
   document.getElementById('sim-hunt-count').textContent = matches.length + ' match' + (matches.length !== 1 ? 'es' : '');
   if (!matches.length) {
-    list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div><div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0;">No similar hunts found.</div>`;
+    list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div><div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0;">No similar hunts found.</div>`;
     return;
   }
-  list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>` + matches.map(h => `
+  list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>` + matches.map(h => `
     <div class="sim-hunt">
       <div class="sim-hunt-head">
         <span class="chip chip-blue" style="font-size:10px;">${h.id}</span>
@@ -1115,7 +1115,7 @@ function renderHuntPivot(id) {
   const seedHTML = p.seedData.map(s => `<div class="report-rec-item" style="font-size:11px;">📎 ${s}</div>`).join('');
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Agent Pivot Recommendation - identifies unresolved threads, proposes a follow-on hunt, and seeds the next Learn stage</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Agent Pivot Recommendation - identifies unresolved threads, proposes a follow-on hunt, and seeds the next Learn stage</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
       <div>
         <div class="label" style="margin-bottom:5px;">Proposed Next Hunt — <span style="color:var(--blue);font-weight:600;">${p.huntId}</span></div>
         <div style="font-size:12px;color:var(--sub);line-height:1.6;">${p.hypothesis}</div>

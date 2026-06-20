@@ -108,27 +108,27 @@ function renderHuntReport(id) {
     </div>
     ${ttpBanner}
     <div style="padding:10px 14px 0;">
-      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
     </div>
     <div class="report-lock-grid">
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-l">L</span><span class="lock-cell-label">Learn</span></div>
-        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Learn - CTI selection, TTP mapping, and hypothesis scope</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Learn - CTI selection, TTP mapping, and hypothesis scope</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
         <div class="report-lock-items">${ri(lItems)}</div>
       </div>
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-o">O</span><span class="lock-cell-label">Observe</span></div>
-        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Observe - environment baseline and expected observables</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Observe - environment baseline and expected observables</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
         <div class="report-lock-items">${ri(oItems)}</div>
       </div>
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-c">C</span><span class="lock-cell-label">Check</span></div>
-        <div class="section-agent-line" style="margin-bottom:8px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check - alert retrieval, query execution, and detection output</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check - alert retrieval, query execution, and detection output</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
         <div class="report-lock-items">${ri(cItems)}</div>
       </div>
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-k">K</span><span class="lock-cell-label">Keep</span></div>
-        <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Keep - findings, report, recommendations, and follow-on hunt</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Keep - findings, report, recommendations, and follow-on hunt</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
         <div class="report-lock-items">${ri(kItems)}</div>
       </div>
     </div>

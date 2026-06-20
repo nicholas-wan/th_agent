@@ -732,7 +732,7 @@ function renderCheckSummary(postRun, dataOverride) {
     <span class="chip ${s.status}" style="font-size:10px;">${s.statusLabel}</span>
   </div>
   <div class="card-body">
-    <div class="section-agent-line" style="margin-bottom:10px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - combines retrieved alerts, query results, coverage status, and remaining gaps</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+    <div class="section-agent-line" style="margin-bottom:10px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - combines retrieved alerts, query results, coverage status, and remaining gaps</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
     <div class="check-summary-tags">${tagsHTML}</div>
     <div class="check-summary-assessment">
       <span class="check-summary-assessment-label">🤖 Agent assessment</span>
@@ -887,7 +887,7 @@ function renderRAAResults(dataOverride) {
   </div>
   ${subhuntBanner}
   <div class="card-body" style="padding:${d.relevant ? '14px 15px' : '0'};">
-    <div class="section-agent-line" style="margin:${d.relevant ? '0 0 10px' : '14px 15px 0'};"><b>🧠 Investigator Agent</b><span>Relevant Alerts - retrieves targeted SOC and Analytics alerts, including RAA, and explains evidence fit</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+    <div class="section-agent-line" style="margin:${d.relevant ? '0 0 10px' : '14px 15px 0'};"><b>🧠 Investigator Agent</b><span>Relevant Alerts - retrieves targeted SOC and Analytics alerts, including RAA, and explains evidence fit</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
     ${bodyHTML}
   </div>`;
   card.style.display = '';
@@ -957,11 +957,11 @@ function renderGeneratedRulesCard() {
   }
 
   if (!rules.length) {
-    body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - no rules for this scope; select All subhunts or another subhunt to review available Check-stage rules</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>`;
+    body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - no rules for this scope; select All subhunts or another subhunt to review available Check-stage rules</span><button onclick="openAgentReasoning('dl')">View reasoning</button></div>`;
     return;
   }
 
-  body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - generates, tunes, and packages SPL rules for uncovered TTPs</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>` + rules.map((r, idx) => {
+  body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - generates, tunes, and packages SPL rules for uncovered TTPs</span><button onclick="openAgentReasoning('dl')">View reasoning</button></div>` + rules.map((r, idx) => {
     const isLast = idx === rules.length - 1;
     const finalCls = r.finalBadge === 'PASS' ? 'chip-green' : r.finalBadge === 'WARN' ? 'chip-yellow' : 'chip-red';
     const iterHtml = (r.iters && r.iters.length)

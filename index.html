@@ -494,7 +494,7 @@
             <button class="btn btn-outline btn-sm" onclick="setStep(1)">← Back</button>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:9px;">
-            <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Hunt Hypotheses - generates hypotheses from extracted TTPs, prior hunts, and analyst notes; select one to focus alert retrieval</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+            <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Hunt Hypotheses - generates hypotheses from extracted TTPs, prior hunts, and analyst notes; select one to focus alert retrieval</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
             <div class="hyp-recall">
               <!-- Header -->
               <div class="hyp-recall-head">
@@ -658,7 +658,7 @@
             <span class="chip chip-indigo" style="font-size:10px;" id="learn-sim-count">3 recalled</span>
           </div>
           <div class="card-body" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
-            <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Past Hunt Memory - recalls overlapping hunts, prior findings, analyst notes, and deployed rules to guide scope</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+            <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Past Hunt Memory - recalls overlapping hunts, prior findings, analyst notes, and deployed rules to guide scope</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
             <div class="learn-past-grid" id="learn-past-list">
               <!-- populated by renderLearnPastHunts() -->
             </div>
@@ -1089,7 +1089,7 @@
           </div>
         </div>
         <div class="card-body" style="padding:8px 13px;">
-          <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Timeline - ordered hunt record and event chronology</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+          <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Timeline - ordered hunt record and event chronology</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
           <div class="tl" id="keep-timeline">
             <!-- Populated by renderKeepHunt() -->
           </div>
@@ -1121,7 +1121,7 @@
           </div>
         </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;">
-          <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunter Notes - analyst collaboration and investigation annotations</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+          <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunter Notes - analyst collaboration and investigation annotations</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
           <div style="display:flex;flex-direction:column;gap:6px;">
             <div class="posting-as" id="posting-as-row">
               <!-- populated by renderPostingAs() -->
@@ -1215,12 +1215,12 @@
           <button onclick="clearAgentsFeed()" style="font-size:10px;padding:3px 10px;background:var(--s3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--sub);cursor:pointer;margin-left:10px;">Clear</button>
         </div>
         <div class="feed-filter-bar" id="feed-filter-bar">
-          <button class="ffp ffp-on" onclick="setFeedFilter('all',this)">All</button>
-          <button class="ffp" onclick="setFeedFilter('orch',this)">🎛️ Orch</button>
-          <button class="ffp" onclick="setFeedFilter('hyp',this)">💡 Hypothesis</button>
-          <button class="ffp" onclick="setFeedFilter('data',this)">🟠 Splunk ES</button>
-          <button class="ffp" onclick="setFeedFilter('ts',this)">🧠 Investigator</button>
-          <button class="ffp" onclick="setFeedFilter('dl',this)">⚙️ Detection</button>
+          <button class="ffp ffp-on" data-agent="all" onclick="setFeedFilter('all',this)">All</button>
+          <button class="ffp" data-agent="orch" onclick="setFeedFilter('orch',this)">🎛️ Orch</button>
+          <button class="ffp" data-agent="hyp" onclick="setFeedFilter('hyp',this)">💡 Hypothesis</button>
+          <button class="ffp" data-agent="data" onclick="setFeedFilter('data',this)">🟠 Splunk ES</button>
+          <button class="ffp" data-agent="ts" onclick="setFeedFilter('ts',this)">🧠 Investigator</button>
+          <button class="ffp" data-agent="dl" onclick="setFeedFilter('dl',this)">⚙️ Detection</button>
         </div>
         <div id="agents-reasoning-feed" class="agents-feed-log">
           <div class="agents-feed-empty" id="agents-feed-empty">

@@ -466,6 +466,14 @@ function setFeedFilter(agent, btn) {
   feed.querySelectorAll('.feed-block-sep').forEach(sep => { sep.style.display = ''; });
 }
 
+function openAgentReasoning(agent) {
+  const target = agent || 'all';
+  goSubTab('agents', document.getElementById('subtab-agents'));
+  const btn = document.querySelector(`.ffp[data-agent="${target}"]`) ||
+              document.querySelector(`.ffp[onclick*="'${target}'"]`);
+  setFeedFilter(target, btn);
+}
+
 function feedAddBlockSep(label) {
   const feed = document.getElementById('agents-reasoning-feed');
   if (!feed) return;
@@ -955,7 +963,7 @@ function _renderDynamicStages(keepId, huntId) {
     });
 
     s2body.innerHTML = `
-      <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Hunt Hypotheses - generated hunt hypotheses from scoped TTPs and prior hunt context</span><button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button></div>
+      <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Hunt Hypotheses - generated hunt hypotheses from scoped TTPs and prior hunt context</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${subs.map((sh, i) => {
           const lk = locks[sh.id] || {};

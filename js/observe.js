@@ -338,7 +338,7 @@ function renderHuntObserve(id) {
   const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
   const d = shData || huntData;
   const em = observeEditMode;
-  const reasoningBtn = `<button onclick="goSubTab('agents',document.getElementById('subtab-agents'))">View reasoning</button>`;
+  const reasoningBtn = `<button onclick="openAgentReasoning('hyp')">View reasoning</button>`;
 
   // Subhunt context banner
   const subhuntBannerHTML = shData ? `
