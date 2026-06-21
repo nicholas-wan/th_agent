@@ -135,6 +135,74 @@ const observeData = {
       Network: ['DRS replication traffic from non-DC source IP', 'LDAP queries for replication metadata from workstation subnet'],
       Authentication: ['CORP\\jsmith 4672 logons on WIN-DC01 in 72h window', 'Any non-admin account with Replicating Directory Changes rights'],
       'AD Changes': ['New SPN registrations on Tier-0 accounts', 'Delegation changes granting DS-Replication-Get-Changes', 'msDS-AllowedToDelegateTo modifications'],
+    },
+    subhunts: {
+      sh01: {
+        label: 'SH-01 · T1078.002 · Privileged Account Abuse', ttpChip: 'chip-yellow',
+        normal: [
+          { text: 'Domain Admin and Server Admin accounts log on to WIN-DC01/WIN-DC02 from approved jump hosts during 02:00-04:00 UTC maintenance windows.' },
+          { text: 'EventCode 4672 special privilege logons from IT admin groups are expected when paired with approved change tickets and source hosts in the admin VLAN.' },
+          { text: 'Service accounts used by backup, monitoring, and SCCM may request privileged sessions to DCs only from registered service hosts.' },
+          { text: 'CORP\\jsmith has prior administrative activity in TH-2026-041, but normal activity should not originate from workstation-class hosts or outside the approved window.' },
+          { text: 'Kerberos/NTLM authentication to Tier-0 assets should have a matching interactive admin session, ticket, or privileged access management checkout.' },
+        ],
+        suspicious: [
+          { text: 'EventCode 4672 special privilege logon to WIN-DC01 from a workstation-class source without a matching PAM checkout or change ticket.' },
+          { text: 'Privileged account reuse within 72 hours of the TH-2026-041 CORP\\jsmith lateral movement chain.' },
+          { text: 'Domain Admin authentication to multiple Tier-0 hosts from the same source within a short window, especially outside 06:00-22:00 UTC.' },
+          { text: 'Logon Type 3 or 10 to a DC followed by LDAP enumeration, replication-rights checks, or SPN/delegation queries.' },
+          { text: 'A privileged logon that is not followed by expected admin tooling such as MMC, PowerShell remoting from jump hosts, or approved backup activity.' },
+        ],
+        observables: {
+          Authentication: ['EventCode 4672 special privileges assigned', 'EventCode 4624 Type 3/10 to WIN-DC01', 'Source host class and admin VLAN membership'],
+          Accounts: ['CORP\\jsmith', 'Domain Admins members', 'Tier-0 service accounts'],
+          Context: ['PAM checkout records', 'change-ticket window', 'approved jump host list'],
+        }
+      },
+      sh02: {
+        label: 'SH-02 · T1484.001 · Domain Policy Modification', ttpChip: 'chip-yellow',
+        normal: [
+          { text: 'GPO and delegation changes are performed by AD engineering accounts during approved weekly change windows with matching ticket IDs.' },
+          { text: 'SPN registration changes are expected from SCCM and application deployment service accounts during documented software rollouts.' },
+          { text: 'Tier-0 OU ACL updates are rare and should be paired with administrative console activity from approved management hosts.' },
+          { text: 'msDS-AllowedToDelegateTo changes normally occur only for pre-approved service accounts and are recorded in the AD change log.' },
+          { text: 'Replication-rights assignments are limited to DC computer accounts and designated directory synchronization services.' },
+        ],
+        suspicious: [
+          { text: 'New or modified SPN on a Domain Admin, Tier-0 service account, or account touched by the TH-2026-041 pivot chain.' },
+          { text: 'GPO, OU ACL, or delegation modification outside the change window or from a non-AD engineering account.' },
+          { text: 'Granting GenericAll, WriteDACL, WriteOwner, or replication-related rights to a user or workstation account.' },
+          { text: 'msDS-AllowedToDelegateTo or TrustedToAuthForDelegation changes that broaden access to DC, LDAP, CIFS, or HOST services.' },
+          { text: 'A policy or delegation change shortly after privileged-account logon activity on WIN-DC01.' },
+        ],
+        observables: {
+          'AD Changes': ['EventCode 5136 directory object modified', 'EventCode 4739 domain policy changed', 'SPN add/remove events'],
+          Attributes: ['servicePrincipalName', 'msDS-AllowedToDelegateTo', 'nTSecurityDescriptor', 'userAccountControl'],
+          Scope: ['Tier-0 OUs', 'Domain Admin accounts', 'DC computer objects'],
+        }
+      },
+      sh03: {
+        label: 'SH-03 · T1003.006 · DCSync', ttpChip: 'chip-red',
+        normal: [
+          { text: 'DRS replication is expected only between WIN-DC01 and WIN-DC02 using DC computer accounts and known inter-DC network paths.' },
+          { text: 'Directory synchronization services may request replication metadata only from registered sync servers and approved service accounts.' },
+          { text: 'EventCode 4662 replication-rights access is normal for DC-to-DC activity when the source host is a domain controller.' },
+          { text: 'Backup and identity tooling may query AD metadata, but should not request DS-Replication-Get-Changes-All from workstation subnets.' },
+          { text: 'Replication traffic should align with known DC IPs, scheduled sync intervals, and expected RPC/LDAP service access patterns.' },
+        ],
+        suspicious: [
+          { text: 'EventCode 4662 with DS-Replication-Get-Changes or DS-Replication-Get-Changes-All from a non-DC source host.' },
+          { text: 'DRSUAPI or replication RPC activity initiated by a user account, workstation, jump host, or recently compromised source.' },
+          { text: 'Replication-rights access shortly after privileged-account abuse or delegation/SPN modification in the same 72-hour window.' },
+          { text: 'Use of secretsdump.py, mimikatz lsadump::dcsync, or equivalent behavior without an obvious process artifact on a DC.' },
+          { text: 'A non-DC account enumerating domain replication metadata and then accessing krbtgt, admin, or Tier-0 credential material.' },
+        ],
+        observables: {
+          'Key Events': ['EventCode 4662 with replication GUIDs', 'DS-Replication-Get-Changes-All', 'Directory Service Access audit events'],
+          Network: ['DRSUAPI RPC from non-DC source', 'LDAP replication metadata queries', 'unexpected DC endpoint mapper sessions'],
+          Accounts: ['Non-DC computer accounts', 'privileged users from TH-2026-041', 'newly delegated accounts'],
+        }
+      },
     }
   },
   '040': {
