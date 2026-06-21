@@ -1,221 +1,84 @@
-# PrimeTH ATHF — Project Reference
+# PrimeTH ATHF Reference
 
-## File Structure
+Static HTML/CSS/JS demo. There is no build step. Serve over HTTP; do not rely on `file://` because the KB loader fetches markdown at runtime.
 
-```
-index.html               HTML only — no inline CSS or JS
-css/styles.css           All styles
-js/app.js                Core: nav, hunt open, chat, pivot, TTP form, FAQ filter, init
-js/agents.js             agentData{} drawer content
-js/observe.js            Hunt Observe stage — data, edit mode, CRUD functions
-js/report.js             Hunt Report modal functions
-js/pipeline.js           LOCK pipeline feed — steps, pills, topology, play
-js/check.js              Check stage — rules, queries, Investigator alert retrieval, velocityData, findingComments
-js/keep.js               Keep stage — findings, timeline, TTP selector, notes
-js/kb-tab.js             KB tab — platform attack techniques, runbooks, env pane, RV modal
-kb/
-  skills.md              Source of truth for skillsData[]          (edit here)
-  runbooks.md            Source of truth for runbookData{}         (edit here)
-  environment.md         Source of truth for envData{} + crownJewels{}
-  skills-fallback.js     skillsData[] + skillDrafts[]              (local-dev fallback)
-  runbooks-fallback.js   runbookData{}                             (local-dev fallback)
-  environment-fallback.js envData{} + crownJewels{}               (local-dev fallback)
-  iocs.js                iocRepository[]
-  gate-decisions.js      gateDecisionLog{}
-```
+## Files
 
-**Script load order:**
-```
-kb/gate-decisions.js  kb/iocs.js  kb/skills-fallback.js  kb/runbooks-fallback.js  kb/environment-fallback.js
-js/app.js  js/agents.js  js/observe.js  js/report.js  js/pipeline.js
-js/check.js   ← declares velocityData, findingComments
-js/keep.js    ← uses velocityData, findingComments
-js/kb-tab.js
-```
-Fallback files declare globals as `const`. Never redeclare in `app.js`. HTTP serving overwrites from `.md` files at runtime via `initKbTab()`. No build step — use any static server (not `file://`).
+| Path | Purpose |
+|---|---|
+| `index.html` | Markup, panes, cards, modals |
+| `css/styles.css` | All styling |
+| `js/app.js` | Navigation, hunt switching, subhunt selection, Learn filtering |
+| `js/pipeline.js` | LOCK pipeline feed, agent pills, topology animation |
+| `js/observe.js` | Observe baseline data and inline card editing |
+| `js/check.js` | Check summaries, Investigator alert retrieval, detection rules |
+| `js/keep.js` | Keep findings, timeline, evidence graph, notes |
+| `js/report.js` | Hunt Report / LOCK record rendering |
+| `js/agents.js` | Agent drawer content |
+| `js/kb-tab.js` | Knowledge Base, tools, skills, runbook/environment modals |
+| `kb/*.md` | Source markdown for skills, runbooks, environment |
+| `kb/*-fallback.js` | Local fallback data loaded before markdown fetch succeeds |
 
----
+Script order matters: KB fallback files, then `js/app.js`, `js/agents.js`, `js/observe.js`, `js/report.js`, `js/pipeline.js`, `js/check.js`, `js/keep.js`, `js/kb-tab.js`.
 
-## Where to Edit
+## Current Model
 
-| Task | File | How |
+Agents:
+
+| Agent | Key | Owns |
 |---|---|---|
-| Style / layout | `css/styles.css` | Grep class name |
-| JS function | `js/*.js` | Grep function name → Read at offset |
-| HTML structure | `index.html` | Grep `#region PANE: <name>` |
-| Add platform attack technique | `kb/skills.md` + `kb/skills-fallback.js` | Copy any `## SK-…` block; keep both in sync |
-| Add TTP runbook | `kb/runbooks.md` | Copy any `## T…` block, fill fields |
-| Add IOC | `kb/iocs.js` | Append to `iocRepository[]` |
-| Edit environment | `kb/environment.md` | Edit fields directly; parser reads on load |
-| Gate decision log | `kb/gate-decisions.js` | Append to hunt's array |
-| Edit FAQ content | `index.html` | Grep `#region PANE: FAQ` |
+| Orchestrator Agent | `orchestrator` / feed `orch` | Coordination, topology, Keep synthesis |
+| Hypothesis Agent | `hypothesis` / feed `hyp` | Learn and Observe |
+| Investigator Agent | `tradecraft` / feed `ts` | Targeted SOC/Analytics alert retrieval, including RAA |
+| Detection Logic Agent | `detection` / feed `dl` | SPL rule generation and tuning |
 
-**`index.html` region map:**
-```
-#region PANE: Hunts            hunt list cards
-#region PANE: Hunt Detail      L/O/C/K pipeline + Keep stage
-#region MODALS: Hunt           report-overlay + history-overlay
-#region PANE: Agents           agent dashboard (Observe pane)
-#region PANE: Coverage         coverage tab
-#region PANE: Knowledge Base   KB tab + launch modal
-#region PANE: FAQ              FAQ accordion + search
-#region MODALS: Tools          rv-overlay · ec-overlay · rb-overlay · sk-overlay · kb-md-overlay
-```
+Rule Validation is a tool, not an agent. Do not add it to agent topology, agent filter pills, or agent model lists.
 
----
+Tools: Splunk Enterprise Security, Rule Validation, Coverage Checker.
 
-## CSS Variables
-```
---bg #080d18  --s1 #0f1623  --s2 #141d2e  --s3 #1a2338
---border #1f2d47  --border2 #263550
---blue #3b82f6  --indigo #6366f1  --green #10b981
---yellow #f59e0b  --red #ef4444  --orange #f97316  --teal #14b8a6
---text #e2e8f0  --sub #94a3b8  --muted #4e6180
---radius 8px  --radius-sm 5px
-```
+Skills: Tradecraft, Environment Context, Past Hunts.
 
----
+## LOCK Behavior
 
-## Key Data Globals
-
-| Variable | File | Notes |
+| Stage | Owner | Notes |
 |---|---|---|
-| `skillsData[]` / `skillDrafts[]` | `kb/skills-fallback.js` | `skillType: 'domain'` (platform attack techniques only) |
-| `runbookData{}` | `kb/runbooks-fallback.js` | Keyed by TTP ID e.g. `'T1003.001'` |
-| `envData{}` / `crownJewels{}` | `kb/environment-fallback.js` | monitoring, techStack; overwritten from environment.md at runtime |
-| `iocRepository[]` | `kb/iocs.js` | IOCs — displayed as "IOC Repository" in UI |
-| `observeData{}` | `js/observe.js` | Normal/suspicious/observables per hunt; editable in-place |
-| `gateDecisionLog{}` | `kb/gate-decisions.js` | Keyed by short hunt ID e.g. `'041'` |
-| `agentData{}` | `js/agents.js` | Drawer content keyed by agent key |
-| `keepData{}` | `js/keep.js` | Findings, timeline, evidence per hunt |
-| `velocityData{}` | `js/check.js` | MTTD, FP rate, sparklines per hunt |
-| `findingComments{}` | `js/check.js` | Threaded comments per finding |
+| Learn | Hypothesis Agent | Per selected subhunt, one hypothesis/technique should be visible |
+| Observe | Hypothesis Agent | Normal/Suspicious cards are read-only until the small pencil beside the count is clicked |
+| Check | Investigator Agent + Detection Logic Agent | Investigator retrieves relevant alerts; Detection Logic renders rules scoped to the selected subhunt |
+| Keep | Supervisor Agent | Findings, timeline, evidence graph, and Hunt Report are scoped to the selected subhunt |
 
----
+The subhunt sidebar has no `All subhunts` option. Opening a hunt selects the first subhunt by default. Switching subhunts must refresh Learn, Observe, Check, Keep, and Hunt Report.
 
-## Agents (fixed order)
+## Hunt Data
 
-| # | Icon | Name | Key | Color |
-|---|---|---|---|---|
-| 1 | 🎛️ | Orchestrator Agent | `orchestrator` | blue |
-| 2 | 💡 | Hypothesis Agent | `hypothesis` | teal |
-| 3 | 🧠 | Investigator Agent | `tradecraft` | yellow |
-| 4 | ⚙️ | Detection Logic Agent | `detection` | green |
+To add or modify a hunt, keep these in sync:
 
-Orchestrator spawns all. Hypothesis runs first. `agentData` keyed by agent key → `{ title, sub, body }`. `openAgentDrawer(key, row)`.
+| Data | File |
+|---|---|
+| `huntMeta` and `checkHuntMeta` | `js/app.js` |
+| `keepData`, `huntNotes` | `js/keep.js` |
+| `observeData` | `js/observe.js` |
+| `checkData`, RAA/check summaries, rules | `js/check.js` |
+| `closedHuntFeeds`, `closedLearnData` | `js/pipeline.js` |
+| Hunt card/table/switcher markup | `index.html` |
 
-> ✅ **Rule Validation** is a **tool** (not an agent) — `rv-tool-` CSS prefix, `rv-overlay` modal. Never add to agent lists, topology, feed pills, or `agentModels`.
+For each subhunt, TTPs should align across `keepData.subhunts`, Learn hypotheses, Check generated rules, RAA subhunt data, Observe profiles, and Keep `subhuntLock`.
 
-**Adding a new agent:** update `agentData` (agents.js), Observe pane rows, pipeline sidebar pills, apick grid, `feedAgents`, `updateAgentPills` steps, and feed timeline.
+## Canonical Hunts
 
----
+- `TH-2026-041`: Volt Typhoon. Four selected hypotheses/subhunts: `T1570`, `T1003.001`, `T1558.003`, `T1071.001`. Live pipeline animation is available only for this hunt.
+- `TH-2026-042`: Follow-up DCSync staging. Three subhunts: `T1078.002`, `T1484.001`, `T1003.006`. Active/preloaded; Run Pipeline is hidden.
+- `TH-2026-040` and `TH-2026-039`: Closed/preloaded. Run Pipeline is hidden.
 
-## Tools and Skills (sidebar)
+## Guardrails
 
-Cards are split into **Tools** and **Skills**. Subtitles = version only (e.g. `v2.1`).
+- Do not push or commit unless explicitly asked.
+- Do not use `git add .`; `AGENTS.md` may be untracked and should stay out unless requested.
+- Ignore LF-to-CRLF warnings on Windows.
+- Keep README concise; implementation truth lives in the JS data objects.
+- After changing hunt data, run:
 
-**Tools**
-
-| Icon | Name | CSS prefix | Color |
-|---|---|---|---|
-| 🟠 | Splunk Enterprise Security | inline | orange |
-| ✅ | Rule Validation | `rv-tool-` | purple |
-| 🛡️ | Coverage Checker | `cc-tool-` | amber |
-
-**Skills**
-
-| Icon | Name | CSS prefix | Color |
-|---|---|---|---|
-| 📚 | Tradecraft | `kb-tool-` | teal |
-| 🏗️ | Environment Context | `ec-tool-` | indigo |
-| 🗂️ | Past Hunts | `ph-tool-` | blue |
-
-Learn sidebar and Observe panel both show these — keep in sync. Adding a tool/skill: add CSS pairs, HTML in both panels, bump count chip.
-
----
-
-## LOCK Pipeline Stages
-
-| Stage | ID | Agent owner | Role |
-|---|---|---|---|
-| Learn | L | Hypothesis Agent | CTI → TTP extraction → hypotheses |
-| Observe | O | Hypothesis Agent | Editable environment baseline per hunt |
-| Check | C | Investigator Agent + Detection Logic Agent | Targeted SOC/Analytics alert retrieval, including RAA + SPL rule testing |
-| Keep | K | Supervisor Agent | Findings, timeline, evidence, hunt report |
-
----
-
-## Modals
-
-Open/close: `el.classList.add/remove('open')`. IDs: `history-overlay` `report-overlay` `rb-overlay` `ec-overlay` `rv-overlay`
-
----
-
-## Rules / Don'ts
-
-- ❌ "MCP Connected Tools" → ✅ "Tools" / "Skills"
-- ❌ "MCP Server · vX.Y" subtitles → ✅ version only
-- ❌ ev/min → ✅ ev/hr
-- ❌ Inline `<style>` or `<script>` in `index.html`
-- ❌ Redeclare globals from `kb/*.js` in `app.js`
-- ❌ Edit `kb/*-fallback.js` for data — edit `.md` files instead (keep both in sync for skills)
-- ❌ Edit `kb/skills.js` / `kb/runbooks.js` / `kb/environment.js` — legacy empty shells
-- ❌ Add "Tactic Techniques" tab — KB has Platform Attack Techniques only (`skillType: 'domain'`)
-
----
-
-## Operational Notes & Handoff
-
-**Repo / deploy**
-- Remote: `https://github.com/nicholas-wan/th_agent.git` · branch `main` · served via GitHub Pages.
-- No build step. Serve any static server (not `file://`). HTTP serving overwrites `kb/*-fallback.js` globals from the `.md` files at runtime via `initKbTab()`.
-- **Never push to GitHub unless the user explicitly says "push".** Commit only when asked.
-- Commit trailer: `Co-Authored-By: Claude <noreply@anthropic.com>`.
-- `watchorread.html` is an unrelated standalone file — leave it out of commits (don't `git add .`).
-- Windows checkout: Git warns LF→CRLF on commit — harmless, ignore.
-
-**Editing the demo data — source-of-truth order**
-When numbers/facts conflict across files, `js/pipeline.js` (the agent reasoning feed) is the authoritative tie-breaker — it walks the actual evidence step by step. Reconcile other files to it. The 041 narrative spans 8 files that must agree: `index.html`, `js/app.js`, `js/check.js`, `js/keep.js`, `js/observe.js`, `js/pipeline.js`, `js/report.js`, `kb/iocs.js`. After any data edit, grep the old value across all of these to catch stragglers.
-
-**Vestigial fields:** `keepData.NNN.criticals`/`highs` are NOT displayed — severity chips are computed live from the findings array (`f.sev === 'h'` etc). Edit the findings, not the counters.
-
-**Canonical facts — TH-2026-041 (Volt Typhoon, CISA AA24-038A)**
-Lateral Movement & Credential Harvesting. 8 TTPs extracted / 4 selected as hypotheses:
-- **H-01 T1570** Lateral Tool Transfer (PsExec) — conf 92% · 14 hosts · single CORP\jsmith pivot chain.
-- **H-02 T1003.001** LSASS Credential Dumping — conf 82% · **1 critical full-access (0x1fffff) hit on WIN-DC01 within 3 total ProcessAccess events** (other 2 are read-only `0x1410`, benign). rundll32 variant.
-- **H-03 T1558.003** Kerberoasting — conf 74% · **11 SPNs in 1 burst / 3 bursts total** · RC4 TGS-REQ (EventCode 4769) · threshold **>3 SPNs/user/5m** (NOT "15/hr") · 147 CMDB SPN exclusions · FP 22%→<2%.
-- **H-04 T1071.001** C2 Beacon (HTTPS) — conf **78%** · 2 Cobalt Strike sessions · 185.220.101.47:443/:8443 · beacon ~60s · **JA3 `769c10b06a1a2b7b7a26b0a2be2e88a4`** (the deployed-query hash — this is canonical, supersedes older `3b5074b1…` / `769c10b3d4…`).
-- Supporting signal: T1078.002 (off-hours valid-account auth) — merged into T1570 scope, not a separate hypothesis.
-- 4 rules deployed: `DL-2026-041-001..004`. Threat actor is **Volt Typhoon** everywhere (not APT29 — one generic "APT29" placeholder in the New-Hunt form input is intentional example text).
-
-**Canonical facts — TH-2026-042 (follow-up from 041)**
-Privileged Account Abuse & DCSync Staging — Tier-0 Assets. 3 TTPs, all selected:
-- **H-01 T1078.002** Privileged Account Abuse — conf 95% · jsmith Domain Admin auth on WIN-DC01.
-- **H-02 T1484.001** Domain Policy Modification — conf 78% · check delegation/SPN changes.
-- **H-03 T1003.006** DCSync — conf 82% · DRS replication from non-DC sources.
-- 2 rules in testing: `DL-2026-042-001..002`. Proposed next hunt: **TH-2026-043** (Golden Ticket detection).
-- Keep tab remains visible and accessible — hunt is still in Check stage, so Keep content is marked pending where appropriate.
-
-**Homepage layout**
-- **Stat cards** (top): Rules Deployed · Rules in Testing · MITRE Coverage · Critical Findings · Hunts Completed. All clickable — navigate to Coverage tab or hunt detail.
-- **Active Hunts**: full cards, descending chronological order. Currently 042 and 041.
-- **Completed Hunts**: compact searchable table. 9 rows from narrative-referenced hunts.
-- Hunt card tags show detection engineering output (e.g. "3 Rules in Testing", "2 Rules Deployed"), not CTI source jargon.
-- Hunt card stats show TTPs / Findings / Runtime (not agent count — that's a platform constant).
-
-**Hunt lifecycle & tab access**
-- **041 (live demo)**: LOCK sub-tabs are available on open. `runPipeline()` triggers the animated pipeline (selects r1 report, populates TTPs, advances stages 0→4 on timers). Only 041 has `feedSteps` data for live animation.
-- **042 (active, pre-loaded)**: loaded via `loadClosedPipeline` using `closedHuntFeeds['042']`. Stages 2-4 rendered dynamically from `keepData` subhunts via `_renderDynamicStages()`. Learn, Observe, Check, and Keep are all available immediately. Run Pipeline button visible but no-ops (guarded).
-- **040, 039 (closed)**: loaded via `loadClosedPipeline`. All tabs open (`pipelineLocked=true`). Run Pipeline button hidden. Stages 2-4 rendered dynamically.
-- **Adding a new hunt**: add entries to `huntMeta` + `checkHuntMeta` (app.js), `keepData` + `huntNotes` (keep.js), `observeData` (observe.js), `closedHuntFeeds` + `closedLearnData` (pipeline.js). Add a card or table row in index.html + a hunt-switcher entry. For active hunts, set `checkHuntMeta.active = true`.
-
-**Data objects per hunt** (minimum for a working hunt):
-
-| Object | File | Required for |
-|---|---|---|
-| `huntMeta[id]` | `js/app.js` | Detail pane header, defaultTab |
-| `checkHuntMeta[keepId]` | `js/app.js` | Check context strip, `active` flag for Check rendering |
-| `keepData[keepId]` | `js/keep.js` | Subhunts, findings, timeline, report, pivot |
-| `observeData[keepId]` | `js/observe.js` | Observe tab baseline |
-| `closedHuntFeeds[keepId]` | `js/pipeline.js` | Agent reasoning feed (triggers `loadClosedPipeline`) |
-| `closedLearnData[keepId]` | `js/pipeline.js` | Learn stage TTP table + report card |
+```powershell
+rg -n "old value|old label" .
+git diff --check
+```

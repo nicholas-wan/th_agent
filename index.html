@@ -516,7 +516,7 @@
               </div>
               <div id="hyp-branch-wrap">
               <!-- H-01: Confirmed -->
-              <div class="hyp-branch-row">
+              <div class="hyp-branch-row" data-ttp="T1570">
                 <div class="hyp-branch-top">
                   <span class="hyp-branch-num">H-01</span>
                   <span class="hyp-branch-icon">🎯</span>
@@ -527,7 +527,7 @@
                 <div class="hyp-branch-action">↳ Confidence elevated to High · single-hop threshold pre-applied · T1078.002 merged into scope (not a separate hypothesis)</div>
               </div>
               <!-- H-02: Net-new -->
-              <div class="hyp-branch-row">
+              <div class="hyp-branch-row" data-ttp="T1003.001">
                 <div class="hyp-branch-top">
                   <span class="hyp-branch-num">H-02</span>
                   <span class="hyp-branch-icon">🔴</span>
@@ -538,7 +538,7 @@
                 <div class="hyp-branch-action">↳ SK-029 LSASS exclusion list pre-loaded · scoped to DC VLAN · PROCESS_ALL_ACCESS handle from non-AV process only</div>
               </div>
               <!-- H-03: FPs -->
-              <div class="hyp-branch-row">
+              <div class="hyp-branch-row" data-ttp="T1558.003">
                 <div class="hyp-branch-top">
                   <span class="hyp-branch-num">H-03</span>
                   <span class="hyp-branch-icon">🔔</span>
@@ -549,7 +549,7 @@
                 <div class="hyp-branch-action">↳ 147-entry CMDB SPN exclusion list pre-loaded · RC4 threshold tuned to &gt;3 SPNs/user/5m · FP drops to &lt;2%</div>
               </div>
               <!-- H-04: Clean -->
-              <div class="hyp-branch-row">
+              <div class="hyp-branch-row" data-ttp="T1071.001">
                 <div class="hyp-branch-top">
                   <span class="hyp-branch-num">H-04</span>
                   <span class="hyp-branch-icon">❄️</span>
@@ -562,22 +562,22 @@
               </div><!-- /hyp-branch-wrap -->
             </div>
             <div id="hyp-cards-main">
-            <div class="hyp-card sel" onclick="selHyp(this)">
+            <div class="hyp-card sel" data-ttp="T1570" onclick="selHyp(this)">
               <div class="hyp-head"><span class="hyp-num">H-01</span><div class="hyp-text">Adversary has compromised a valid domain account (CORP\jsmith) and is performing east-west lateral movement via PsExec ADMIN$ file drop across 10.0.0.0/8.</div></div>
               <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1570</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
               <div class="hyp-rationale">CTI references PsExec ADMIN$ drop. TH-2026-038 confirmed 9-host jsmith pivot chain. T1078.002 off-hours auth anomaly scoped as supporting signal, not a separate hypothesis.</div>
             </div>
-            <div class="hyp-card" onclick="selHyp(this)">
+            <div class="hyp-card" data-ttp="T1003.001" onclick="selHyp(this)">
               <div class="hyp-head"><span class="hyp-num">H-02</span><div class="hyp-text">Attacker accessed LSASS memory on WIN-DC01 following lateral movement using a LOLBin with PROCESS_ALL_ACCESS handle to dump credentials.</div></div>
               <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1003.001</span><span class="chip chip-yellow" style="font-size:10px;">High confidence</span></div>
               <div class="hyp-rationale">Sysmon EventCode=10 PROCESS_ALL_ACCESS from non-AV source on Tier-0 DC. SK-029 exclusion list pre-loaded. Follows T1570 kill chain to WIN-DC01.</div>
             </div>
-            <div class="hyp-card" onclick="selHyp(this)">
+            <div class="hyp-card" data-ttp="T1558.003" onclick="selHyp(this)">
               <div class="hyp-head"><span class="hyp-num">H-03</span><div class="hyp-text">Attacker is requesting RC4-encrypted Kerberos service tickets for high-value SPNs to perform offline password cracking post-lateral-movement.</div></div>
               <div class="hyp-meta"><span class="chip chip-red" style="font-size:10px;">T1558.003</span><span class="chip chip-yellow" style="font-size:10px;">Medium confidence</span></div>
               <div class="hyp-rationale">Prior run (TH-2026-035) showed 22% FP from BackupExec/MSSQLSvc traffic. 147 CMDB SPN exclusions pre-loaded to reduce FP rate below 2%.</div>
             </div>
-            <div class="hyp-card" onclick="selHyp(this)">
+            <div class="hyp-card" data-ttp="T1071.001" onclick="selHyp(this)">
               <div class="hyp-head"><span class="hyp-num">H-04</span><div class="hyp-text">A C2 implant is beaconing over HTTPS using a Cobalt Strike malleable profile, identified via JA3 fingerprint and regular beacon interval anomaly.</div></div>
               <div class="hyp-meta"><span class="chip chip-indigo" style="font-size:10px;">T1071.001</span><span class="chip chip-blue" style="font-size:10px;">Medium confidence</span></div>
               <div class="hyp-rationale">Prior run (TH-2025-091) found zero JA3 hits — net-new cert-chain path added. Short-lived LE certs + non-browser user-agent + regular beacon interval (stdev &lt;5s).</div>
@@ -995,10 +995,11 @@
       <div class="card card-collapsible" id="generated-rules-card" style="border-color:rgba(16,185,129,.25);">
         <div class="card-head" onclick="toggleCollapse('generated-rules-card',event)" style="background:rgba(16,185,129,.04);">
           <div style="display:flex;flex-direction:column;gap:2px;">
-            <span class="card-title">📦 Detection Rule Output</span>
-            <span style="font-size:10px;color:var(--muted);" id="gen-rules-sub">One detection rule per subhunt TTP · ready for SIEM deployment</span>
+            <span class="card-title">⚙️ Detection Logic Agent — Detection Rule Output</span>
+            <span style="font-size:10px;color:var(--muted);" id="gen-rules-sub">Generates, tunes, and packages SPL rules for uncovered TTPs</span>
           </div>
           <div style="display:flex;gap:7px;align-items:center;">
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openAgentReasoning('dl')" style="font-size:10px;">View reasoning</button>
             <span class="chip chip-green" style="font-size:10px;">Ready</span>
             <button class="collapse-btn" onclick="toggleCollapse('generated-rules-card',event)">▾</button>
           </div>
@@ -1089,7 +1090,7 @@
           </div>
         </div>
         <div class="card-body" style="padding:8px 13px;">
-          <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Timeline - ordered hunt record and event chronology</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
+          <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Timeline - ordered hunt record and event chronology</span></div>
           <div class="tl" id="keep-timeline">
             <!-- Populated by renderKeepHunt() -->
           </div>
@@ -1121,7 +1122,7 @@
           </div>
         </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;">
-          <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunter Notes - analyst collaboration and investigation annotations</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
+          <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunter Notes - analyst collaboration and investigation annotations</span></div>
           <div style="display:flex;flex-direction:column;gap:6px;">
             <div class="posting-as" id="posting-as-row">
               <!-- populated by renderPostingAs() -->
@@ -1241,62 +1242,62 @@
             <span class="chip chip-blue" style="font-size:10px;margin-left:auto;">4 agents</span>
           </div>
           <div class="agents-topo-svg-wrap">
-            <svg viewBox="0 0 260 235" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+            <svg viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
               <defs>
                 <!-- Per-agent colored arrowheads -->
                 <marker id="arr-hyp"  markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#14b8a6" opacity=".5"/></marker>
                 <marker id="arr-ts"   markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#f59e0b" opacity=".5"/></marker>
                 <marker id="arr-dl"   markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#10b981" opacity=".5"/></marker>
-                <!-- Motion paths for traveling dots (orch center → agent center) -->
-                <path id="tp-hyp"  d="M130,112 L52,42"/>
-                <path id="tp-ts"   d="M130,112 L52,185"/>
-                <path id="tp-dl"   d="M130,112 L208,185"/>
+                <!-- Motion paths for traveling dots (orchestrator fan-out) -->
+                <path id="tp-hyp"  d="M130,42 L52,126"/>
+                <path id="tp-ts"   d="M130,42 L130,126"/>
+                <path id="tp-dl"   d="M130,42 L208,126"/>
               </defs>
 
               <!-- Secondary inter-agent lines (dashed, behind hub lines) -->
-              <line id="topo-sl-hyp-ts"  x1="52"  y1="57"  x2="52"  y2="170" stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
-              <line id="topo-sl-dl-ts"   x1="193" y1="185" x2="67"  y2="185" stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
+              <line id="topo-sl-hyp-ts"  x1="67"  y1="126" x2="115" y2="126" stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
+              <line id="topo-sl-dl-ts"   x1="145" y1="126" x2="193" y2="126" stroke="#4e6180" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.3"/>
 
-              <!-- Hub lines (shortened to node edge) -->
-              <line id="topo-l-hyp"  x1="130" y1="112" x2="63"  y2="52"  stroke="#263550" stroke-width="1.5" marker-end="url(#arr-hyp)"/>
-              <line id="topo-l-ts"   x1="130" y1="112" x2="63"  y2="175" stroke="#263550" stroke-width="1.5" marker-end="url(#arr-ts)"/>
-              <line id="topo-l-dl"   x1="130" y1="112" x2="197" y2="175" stroke="#263550" stroke-width="1.5" marker-end="url(#arr-dl)"/>
+              <!-- Orchestrator fan-out lines (shortened to node edges) -->
+              <line id="topo-l-hyp"  x1="115" y1="58" x2="63"  y2="114" stroke="#263550" stroke-width="1.5" marker-end="url(#arr-hyp)"/>
+              <line id="topo-l-ts"   x1="130" y1="64" x2="130" y2="111" stroke="#263550" stroke-width="1.5" marker-end="url(#arr-ts)"/>
+              <line id="topo-l-dl"   x1="145" y1="58" x2="197" y2="114" stroke="#263550" stroke-width="1.5" marker-end="url(#arr-dl)"/>
 
               <!-- Traveling dots (start parked at orch center, hidden) -->
-              <circle id="topo-dot-hyp"  cx="130" cy="112" r="3.5" fill="#14b8a6" opacity="0"><animateMotion id="topo-am-hyp"  dur="0.42s" begin="indefinite" fill="remove"><mpath href="#tp-hyp"/></animateMotion></circle>
-              <circle id="topo-dot-ts"   cx="130" cy="112" r="3.5" fill="#f59e0b" opacity="0"><animateMotion id="topo-am-ts"   dur="0.42s" begin="indefinite" fill="remove"><mpath href="#tp-ts"/></animateMotion></circle>
-              <circle id="topo-dot-dl"   cx="130" cy="112" r="3.5" fill="#10b981" opacity="0"><animateMotion id="topo-am-dl"   dur="0.42s" begin="indefinite" fill="remove"><mpath href="#tp-dl"/></animateMotion></circle>
+              <circle id="topo-dot-hyp"  cx="130" cy="42" r="3.5" fill="#14b8a6" opacity="0"><animateMotion id="topo-am-hyp"  dur="0.42s" begin="indefinite" fill="remove"><mpath href="#tp-hyp"/></animateMotion></circle>
+              <circle id="topo-dot-ts"   cx="130" cy="42" r="3.5" fill="#f59e0b" opacity="0"><animateMotion id="topo-am-ts"   dur="0.42s" begin="indefinite" fill="remove"><mpath href="#tp-ts"/></animateMotion></circle>
+              <circle id="topo-dot-dl"   cx="130" cy="42" r="3.5" fill="#10b981" opacity="0"><animateMotion id="topo-am-dl"   dur="0.42s" begin="indefinite" fill="remove"><mpath href="#tp-dl"/></animateMotion></circle>
 
               <!-- Status rings (shown when agent is active) -->
-              <circle id="topo-r-orch" cx="130" cy="112" r="27"  fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
-              <circle id="topo-r-hyp"  cx="52"  cy="42"  r="19"  fill="none" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
-              <circle id="topo-r-ts"   cx="52"  cy="185" r="19"  fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
-              <circle id="topo-r-dl"   cx="208" cy="185" r="19"  fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
+              <circle id="topo-r-orch" cx="130" cy="42"  r="27" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
+              <circle id="topo-r-hyp"  cx="52"  cy="126" r="19" fill="none" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
+              <circle id="topo-r-ts"   cx="130" cy="126" r="19" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
+              <circle id="topo-r-dl"   cx="208" cy="126" r="19" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 2" opacity="0" class="topo-status-ring"/>
 
-              <!-- Orchestrator hub (center) — outer dashed ring for hub differentiation -->
-              <circle cx="130" cy="112" r="27" fill="none" stroke="#3b82f6" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.2"/>
-              <circle id="topo-c-orch" cx="130" cy="112" r="22" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="2" style="cursor:pointer;" onclick="topoFilterFeed('orch')"/>
-              <circle cx="130" cy="112" r="9" fill="#3b82f6" class="topo-pulse" style="pointer-events:none;"/>
-              <text x="130" y="143" text-anchor="middle" fill="#94a3b8" style="font-size:9px;font-weight:600;pointer-events:none;">Orchestrator</text>
-              <text id="topo-lbl-orch" x="130" y="154" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
+              <!-- Orchestrator hub (top) — outer dashed ring for hub differentiation -->
+              <circle cx="130" cy="42" r="27" fill="none" stroke="#3b82f6" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.2"/>
+              <circle id="topo-c-orch" cx="130" cy="42" r="22" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="2" style="cursor:pointer;" onclick="topoFilterFeed('orch')"/>
+              <circle cx="130" cy="42" r="9" fill="#3b82f6" class="topo-pulse" style="pointer-events:none;"/>
+              <text x="130" y="78" text-anchor="middle" fill="#94a3b8" style="font-size:9px;font-weight:600;pointer-events:none;">Orchestrator</text>
+              <text id="topo-lbl-orch" x="130" y="89" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
 
-              <!-- Hypothesis (top-left) -->
-              <circle id="topo-c-hyp" cx="52" cy="42" r="15" fill="rgba(20,184,166,.12)" stroke="#14b8a6" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('hyp')"/>
-              <text x="52" y="47" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#14b8a6">💡</text>
-              <text x="52" y="64" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">Hypothesis</text>
-              <text id="topo-lbl-hyp" x="52" y="74" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
+              <!-- Hypothesis Agent -->
+              <circle id="topo-c-hyp" cx="52" cy="126" r="15" fill="rgba(20,184,166,.12)" stroke="#14b8a6" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('hyp')"/>
+              <text x="52" y="131" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#14b8a6">💡</text>
+              <text x="52" y="148" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">Hypothesis</text>
+              <text id="topo-lbl-hyp" x="52" y="158" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
 
-              <!-- Investigator Agent (bottom-left) -->
-              <circle id="topo-c-ts" cx="52" cy="185" r="15" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('ts')"/>
-              <text x="52" y="190" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#f59e0b">🧠</text>
-              <text x="52" y="207" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">INV</text>
-              <text id="topo-lbl-ts" x="52" y="217" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
+              <!-- Investigator Agent -->
+              <circle id="topo-c-ts" cx="130" cy="126" r="15" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('ts')"/>
+              <text x="130" y="131" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#f59e0b">🧠</text>
+              <text x="130" y="148" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">Investigator</text>
+              <text id="topo-lbl-ts" x="130" y="158" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
 
-              <!-- Detection Logic (bottom-right) -->
-              <circle id="topo-c-dl" cx="208" cy="185" r="15" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('dl')"/>
-              <text x="208" y="190" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#10b981">⚙️</text>
-              <text x="208" y="207" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">Detection</text>
-              <text id="topo-lbl-dl" x="208" y="217" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
+              <!-- Detection Logic Agent -->
+              <circle id="topo-c-dl" cx="208" cy="126" r="15" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5" style="cursor:pointer;" onclick="topoFilterFeed('dl')"/>
+              <text x="208" y="131" text-anchor="middle" style="font-size:12px;pointer-events:none;" fill="#10b981">⚙️</text>
+              <text x="208" y="148" text-anchor="middle" fill="#4e6180" style="font-size:8px;pointer-events:none;">Detection</text>
+              <text id="topo-lbl-dl" x="208" y="158" text-anchor="middle" fill="#4e6180" style="font-size:7.5px;font-family:monospace;pointer-events:none;"></text>
             </svg>
           </div>
         </div>
@@ -2856,7 +2857,7 @@
         <div class="faq-a">
           <p>False positive tuning follows a three-step approach in PrimeTH:</p>
           <ul>
-            <li><b>1 — Observe stage</b>: Document known-good behaviour under "What Normal Looks Like" and list approved processes/accounts/IPs in Expected Observables. Agents use this to auto-suggest exclusions.</li>
+            <li><b>1 — Observe stage</b>: Document known-good behaviour under "What Normal Looks Like" and approved exclusions under "What Suspicious Looks Like" tuning notes. Agents use this baseline to suggest exclusions.</li>
             <li><b>2 — Check stage exclusions</b>: Modify the SPL <code>| where NOT match(...)</code> or <code>| search NOT</code> clauses directly in the query editor. The Detection Logic Agent will suggest tuned versions based on the Observe baseline.</li>
             <li><b>3 — Runbooks</b>: Each TTP runbook in the Knowledge Base has an <b>Exclusions</b> section listing pre-validated FP patterns for that technique. Open the runbook from the KB tab to copy relevant exclusions.</li>
           </ul>

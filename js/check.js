@@ -719,20 +719,22 @@ function renderCheckSummary(postRun, dataOverride) {
     const d = checkData[_activeHuntId];
     if (!d) { card.style.display = 'none'; return; }
     s = postRun ? d.summaryPost : d.summaryPre;
-    subtitle = 'Combined Investigator alerts + detection query assessment';
+    subtitle = 'Retrieved alerts + detection query assessment';
   }
   const tagsHTML = s.tags.map(t =>
     `<span class="chip ${t.cls}" style="font-size:10px;">${t.label}: ${t.val}</span>`
   ).join('');
   card.innerHTML = `<div class="card-head">
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <span class="card-title">📊 Check Summary</span>
+      <span class="card-title">🧠 Investigator Agent + ⚙️ Detection Logic Agent — Check Summary</span>
       <span style="font-size:10px;color:var(--muted);">${subtitle}</span>
     </div>
-    <span class="chip ${s.status}" style="font-size:10px;">${s.statusLabel}</span>
+    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
+      <button class="btn btn-outline btn-sm" onclick="openAgentReasoning('ts')" style="font-size:10px;">View reasoning</button>
+      <span class="chip ${s.status}" style="font-size:10px;">${s.statusLabel}</span>
+    </div>
   </div>
   <div class="card-body">
-    <div class="section-agent-line" style="margin-bottom:10px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - combines retrieved alerts, query results, coverage status, and remaining gaps</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
     <div class="check-summary-tags">${tagsHTML}</div>
     <div class="check-summary-assessment">
       <span class="check-summary-assessment-label">🤖 Agent assessment</span>
@@ -812,7 +814,7 @@ function renderRAAResults(dataOverride) {
   } else {
     const huntData = checkData[_activeHuntId];
     if (!huntData) { card.style.display = 'none'; return; }
-    const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+    const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt) ? activeSubhunt : null;
     if (shId && huntData.raaSubhunts && huntData.raaSubhunts[shId]) {
       d = huntData.raaSubhunts[shId];
       // Resolve label from keep data subhunts if available
@@ -876,10 +878,11 @@ function renderRAAResults(dataOverride) {
 
   card.innerHTML = `<div class="card-head" onclick="toggleCollapse('raa-card',event)">
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <span class="card-title">🔬 Investigator Agent — Relevant Alerts</span>
-      <span style="font-size:10px;color:var(--muted);">SOC alerts &middot; RAA analytics &middot; Splunk evidence</span>
+      <span class="card-title">🧠 Investigator Agent — Relevant Alert Retrieval</span>
+      <span style="font-size:10px;color:var(--muted);">Retrieves targeted SOC and Analytics alerts, including RAA, and explains evidence fit</span>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
+      <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openAgentReasoning('ts')" style="font-size:10px;">View reasoning</button>
       <span class="chip chip-green" style="font-size:10px;">● Always On</span>
       <span class="card-summary">${raaSummary}</span>
       <button class="collapse-btn" onclick="toggleCollapse('raa-card',event)">▾</button>
@@ -887,7 +890,6 @@ function renderRAAResults(dataOverride) {
   </div>
   ${subhuntBanner}
   <div class="card-body" style="padding:${d.relevant ? '14px 15px' : '0'};">
-    <div class="section-agent-line" style="margin:${d.relevant ? '0 0 10px' : '14px 15px 0'};"><b>🧠 Investigator Agent</b><span>Relevant Alerts - retrieves targeted SOC and Analytics alerts, including RAA, and explains evidence fit</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
     ${bodyHTML}
   </div>`;
   card.style.display = '';
@@ -942,7 +944,7 @@ function renderGeneratedRulesCard() {
   let rules = checkData[_activeHuntId]?.genRules || [];
 
   // Filter to active subhunt if one is selected
-  if (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') {
+  if (typeof activeSubhunt !== 'undefined' && activeSubhunt) {
     const shData = keepData[_activeHuntId];
     const sh = shData?.subhunts?.find(s => s.id === activeSubhunt);
     if (sh) rules = rules.filter(r => r.ttp === sh.ttp);
@@ -957,18 +959,16 @@ function renderGeneratedRulesCard() {
   }
 
   if (!rules.length) {
-    body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - no rules for this scope; select All subhunts or another subhunt to review available Check-stage rules</span><button onclick="openAgentReasoning('dl')">View reasoning</button></div>`;
+    body.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:4px 0;">No rules for this subhunt; select another subhunt to review available Check-stage rules.</div>`;
     return;
   }
 
-  body.innerHTML = `<div class="section-agent-line" style="margin-bottom:10px;"><b>⚙️ Detection Logic Agent</b><span>Detection Rule Output - generates, tunes, and packages SPL rules for uncovered TTPs</span><button onclick="openAgentReasoning('dl')">View reasoning</button></div>` + rules.map((r, idx) => {
+  body.innerHTML = rules.map((r, idx) => {
     const isLast = idx === rules.length - 1;
     const finalCls = r.finalBadge === 'PASS' ? 'chip-green' : r.finalBadge === 'WARN' ? 'chip-yellow' : 'chip-red';
     const iterHtml = (r.iters && r.iters.length)
       ? `<div style="margin-top:8px;">
            <div style="font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
-             <span style="color:var(--sub);">⚙ Detection Logic Agent</span>
-             <span style="color:var(--border2);">·</span>
              <span>${r.iters.length} refinement attempt${r.iters.length !== 1 ? 's' : ''}</span>
            </div>
            ${_buildIterChainsHtml([{ ttp: r.ttp, name: r.name, finalBadge: r.finalBadge, iters: r.iters }])}

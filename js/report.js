@@ -7,72 +7,40 @@ function renderHuntReport(id) {
   const d = keepData[id];
   if (!d || !d.report) return;
   const r = d.report;
-  const lock = d.lock;
-  const ttpFilter = 'all'; // TTP selector removed — always show full hunt scope
-
-  const chip = document.getElementById('report-status-chip');
-  chip.textContent = r.status;
-  chip.className = 'chip ' + r.statusClass;
+  const activeSH = (typeof activeSubhunt !== 'undefined' && activeSubhunt) ? activeSubhunt : null;
+  const sh = activeSH && d.subhunts ? d.subhunts.find(s => s.id === activeSH) : null;
+  const lock = sh ? (d.subhuntLock?.[sh.id] || d.lock) : d.lock;
+  const ttpFilter = sh ? sh.ttp : 'all';
 
   // Filtered findings for this TTP scope
   const scopedFindings = ttpFilter === 'all'
     ? d.findings
-    : d.findings.filter(f => extractTTP(f.meta) === ttpFilter);
+    : d.findings.filter(f => f.sh === sh.id || f.ttp === ttpFilter || extractTTP(f.meta || '') === ttpFilter);
   const scopedCrits = scopedFindings.filter(f => f.sev === 'c').length;
   const scopedHighs = scopedFindings.filter(f => f.sev === 'h').length;
+  const chip = document.getElementById('report-status-chip');
+  if (chip) {
+    chip.textContent = r.status;
+    chip.className = 'chip ' + r.statusClass;
+  }
 
   // Update collapsed summary
   const rs = document.getElementById('report-summary');
   if (rs) rs.textContent = ttpFilter === 'all'
-    ? `${d.criticals} Critical · ${d.highs} High · ${r.status}`
+    ? `${scopedCrits} Critical · ${scopedHighs} High · ${r.status}`
     : `${ttpFilter} · ${scopedCrits} Critical · ${scopedHighs} High`;
 
   const u = users[d.createdBy] || {};
 
   const huntTitles = {
     '041': 'Volt Typhoon Lateral Movement & Credential Harvesting — Corp Domain',
+    '042': 'Privileged Account Abuse & DCSync Staging — Tier-0 Assets',
     '040': 'Ransomware Pre-cursor BEC Activity — Finance Segment',
     '039': 'Supply Chain Compromise Indicators — DevOps Pipeline',
   };
 
-  const ri = (items) => items.map(i =>
-    `<div class="report-lock-item ${i.cls}">${i.text}</div>`
-  ).join('');
-
-  // L — unchanged (hunt-level context always relevant)
-  const lItems = [{ cls: 'ri-blue', text: lock.l }];
-
-  // O — show only findings in the current TTP scope
-  const critFindings = scopedFindings.filter(f => f.sev === 'c');
-  const oItems = [{ cls: 'ri-blue', text: lock.o }];
-  critFindings.slice(0, 3).forEach(f => oItems.push({ cls: 'ri-red', text: f.title }));
-  if (scopedHighs > 0) oItems.push({ cls: 'ri-yellow',
-    text: `+${scopedHighs} High severity finding${scopedHighs > 1 ? 's' : ''}${ttpFilter !== 'all' ? ' for ' + ttpFilter : ' also recorded'}`
-  });
-  if (ttpFilter !== 'all' && !scopedFindings.length) {
-    oItems.push({ cls: 'ri-yellow', text: `No findings recorded for ${ttpFilter} in this hunt.` });
-  }
-
-  // C — unchanged
-  const raaInfo = lock.raa;
-  const raaItem = raaInfo
-    ? { cls: raaInfo.relevant && !raaInfo.partial ? 'ri-green' : 'ri-yellow', text: raaInfo.note }
-    : { cls: 'ri-yellow', text: 'RAA: no data recorded' };
-  const cItems = [
-    { cls: 'ri-blue', text: lock.c },
-    raaItem,
-    ...r.impact.map(i => ({ cls: 'ri-blue', text: `${i.val} ${i.lbl}` })),
-  ];
-
-  // K — filter recommendations that mention the active TTP; fall back to all if none match
-  let recPool = r.recommendations;
-  if (ttpFilter !== 'all') {
-    const matched = recPool.filter(rec => rec.includes(ttpFilter) || rec.replace(/<[^>]+>/g,'').toLowerCase().includes(ttpFilter.toLowerCase()));
-    if (matched.length) recPool = matched;
-  }
-  const kItems = recPool.slice(0, 4).map(rec => ({
-    cls: 'ri-green', text: rec.replace(/<[^>]+>/g, '')
-  }));
+  const stageText = text =>
+    `<div class="report-lock-text">${text || 'No stage content recorded.'}</div>`;
 
   // TTP filter banner — shown when scoped to a single TTP
   const ttpBanner = ttpFilter !== 'all' ? `
@@ -85,9 +53,9 @@ function renderHuntReport(id) {
 
   // Title: show TTP name when filtered, hunt title otherwise
   const reportTitle = ttpFilter !== 'all'
-    ? `<span style="font-size:12px;font-weight:700;color:var(--indigo);font-family:monospace;">${ttpFilter}</span>
+    ? `<span style="font-size:12px;font-weight:700;color:var(--indigo);font-family:monospace;">${d.title} · ${sh.label}</span>
        <span style="font-size:10px;color:var(--muted);">·</span>
-       <span style="font-size:11px;color:var(--sub);">${ttpShortName(ttpFilter) || huntTitles[id] || d.title}</span>`
+       <span style="font-size:11px;color:var(--sub);">${ttpFilter} · ${sh.name}</span>`
     : `<span style="font-size:12px;font-weight:700;color:var(--text);font-family:monospace;">${d.title}</span>
        <span style="font-size:10px;color:var(--muted);">·</span>
        <span style="font-size:11px;color:var(--sub);">${huntTitles[id] || d.title}</span>`;
@@ -108,28 +76,28 @@ function renderHuntReport(id) {
     </div>
     ${ttpBanner}
     <div style="padding:10px 14px 0;">
-      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
+      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span></div>
     </div>
     <div class="report-lock-grid">
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-l">L</span><span class="lock-cell-label">Learn</span></div>
         <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Learn - CTI selection, TTP mapping, and hypothesis scope</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
-        <div class="report-lock-items">${ri(lItems)}</div>
+        ${stageText(lock.l)}
       </div>
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-o">O</span><span class="lock-cell-label">Observe</span></div>
         <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Observe - environment baseline and expected observables</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
-        <div class="report-lock-items">${ri(oItems)}</div>
+        ${stageText(lock.o)}
       </div>
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-c">C</span><span class="lock-cell-label">Check</span></div>
         <div class="section-agent-line" style="margin-bottom:8px;"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check - alert retrieval, query execution, and detection output</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
-        <div class="report-lock-items">${ri(cItems)}</div>
+        ${stageText(lock.c)}
       </div>
       <div class="report-lock-cell">
         <div class="lock-cell-head"><span class="lock-letter lock-k">K</span><span class="lock-cell-label">Keep</span></div>
-        <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Keep - findings, report, recommendations, and follow-on hunt</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
-        <div class="report-lock-items">${ri(kItems)}</div>
+        <div class="section-agent-line" style="margin-bottom:8px;"><b>🎛️ Supervisor Agent</b><span>Keep - findings, report, recommendations, and follow-on hunt</span></div>
+        ${stageText(lock.k)}
       </div>
     </div>
   `;

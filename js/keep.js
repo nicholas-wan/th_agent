@@ -1,6 +1,6 @@
 ﻿/* ── Keep Stage ─────────────────────────────────────────────────────────
    Hunt data (keepData, huntNotes, findingComments), findings, timeline,
-   TTP selector, gate log, velocity card, swimlane view, notes.
+   subhunt scope, gate log, velocity card, swimlane view, notes.
    Loaded after app.js — references globals declared there.
    ──────────────────────────────────────────────────────────────────────── */
 // ── Keep tab — hunt data ──
@@ -115,7 +115,7 @@ const keepData = {
   '042': {
     title: 'TH-2026-042', label: 'DCSync Staging · Active', labelClass: 'chip-red',
     createdBy: 'marcus', createdAt: 'Apr 28, 2026 · 10:02',
-    criticals: 1, highs: 0,
+    criticals: 0, highs: 1,
     subhunts: [
       { id:'sh01', label:'SH-01', ttp:'T1078.002', name:'Privileged Account Abuse',  status:'active' },
       { id:'sh02', label:'SH-02', ttp:'T1484.001', name:'Domain Policy Modification', status:'active' },
@@ -125,24 +125,24 @@ const keepData = {
       sh01: {
         l: 'H-01 · T1078.002 scoped from TH-2026-041 follow-up. Enumerate privileged accounts authenticating from WIN-DC01 in the 72h attack window.',
         o: 'Reviewing EventCode 4672 special privilege logons on WIN-DC01.',
-        c: 'Pending — queries not yet executed.',
+        c: 'Check in progress — Investigator Agent retrieved one relevant EventCode 4672 alert; analyst validation pending.',
         k: 'Pending.',
       },
       sh02: {
         l: 'H-02 · T1484.001 scoped from AD delegation audit. Check for newly registered SPNs or delegation changes on Tier-0 accounts.',
         o: 'Reviewing AD change logs and SPN registration events.',
-        c: 'Pending — queries not yet executed.',
+        c: 'Check in progress — AD change telemetry is under review; no confirmed delegation, GPO, or SPN modification yet.',
         k: 'Pending.',
       },
       sh03: {
         l: 'H-03 · T1003.006 scoped from DCSync risk. Check for DRS replication requests from non-DC sources.',
         o: 'Reviewing EventCode 4662 with DS-Replication-Get-Changes extended rights.',
-        c: 'Pending — queries not yet executed.',
+        c: 'Check in progress — DCSync SPL candidate is in back-test against EventCode 4662 replication-rights activity.',
         k: 'Pending.',
       },
     },
     findings: [
-      { sev:'c', title:'Suspicious 4672 logon from non-admin workstation to WIN-DC01', ttp:'T1078.002', host:'WIN-DC01', time:'Apr 28 02:14', status:'open', score:88, sh:'sh01' },
+      { sev:'h', title:'Suspicious 4672 logon from non-admin workstation to WIN-DC01', ttp:'T1078.002', host:'WIN-DC01', time:'Apr 28 02:14', status:'open', score:78, sh:'sh01' },
     ],
     timeline: [
       { color:'red', text:'<b>Investigator Agent</b> — privileged logon anomaly on WIN-DC01', time:'10:14', tag:'T1078.002', host:'WIN-DC01' },
@@ -150,7 +150,7 @@ const keepData = {
     lock: {
       l: 'Seeded from TH-2026-041 follow-up recommendation. 3 TTPs scoped: T1078.002, T1484.001, T1003.006. Focus: privileged account abuse and DCSync staging on Tier-0 assets.',
       o: 'WIN-DC01 auth logs, AD change audit, SPN registration events in scope.',
-      c: 'Pending — 2 rules in testing, queries not yet executed.',
+      c: 'Check in progress — 1 relevant privileged-logon alert retrieved, 2 rules in testing, and AD delegation/SPN telemetry still under review.',
       k: 'Pending.',
     },
     report: {
@@ -158,7 +158,7 @@ const keepData = {
       summary: 'Follow-up hunt to TH-2026-041 investigating potential DCSync staging and privileged account abuse on Tier-0 domain controllers. Seeded with the confirmed CORP\\jsmith pivot chain.',
       approach: 'H-01 (Privileged Account Abuse) scoped from TH-2026-041 jsmith pivot chain. Enumerating all accounts that authenticated from WIN-DC01 in the 72h attack window. H-02 (Domain Policy Modification) checking for newly registered SPNs or delegation changes on Tier-0 accounts. H-03 (DCSync) checking for DRS replication requests from non-DC sources via EventCode 4662.',
       impact: [
-        { val:'1', lbl:'Critical finding', color:'var(--red)' },
+        { val:'1', lbl:'Open finding', color:'var(--yellow)' },
         { val:'18m', lbl:'Runtime so far', color:'var(--text)' },
         { val:'2', lbl:'Rules in testing', color:'var(--yellow)' },
         { val:'3', lbl:'TTPs scoped', color:'var(--blue)' },
@@ -327,6 +327,42 @@ const keepData = {
   }
 };
 
+// ── Cross-file hunt data checks ────────────────────────────────────────────
+// This demo keeps hunt facts in several static files. Warn loudly when the
+// core LOCK objects drift so narrative issues are visible during local review.
+function validateHuntDataIntegrity() {
+  Object.entries(keepData).forEach(([huntId, hunt]) => {
+    const subTtps = new Set((hunt.subhunts || []).map(sh => sh.ttp));
+    const learn = (typeof closedLearnData !== 'undefined') ? closedLearnData[huntId] : null;
+    const check = (typeof checkData !== 'undefined') ? checkData[huntId] : null;
+
+    if (learn?.prioritized) {
+      const selected = Array.from(learn.prioritized);
+      const missingSubhunts = selected.filter(ttp => !subTtps.has(ttp));
+      const extraSubhunts = Array.from(subTtps).filter(ttp => !learn.prioritized.has(ttp));
+      if (missingSubhunts.length || extraSubhunts.length) {
+        console.warn(`[hunt-data] ${huntId}: Learn selected TTPs do not match subhunts`, {
+          missingSubhunts,
+          extraSubhunts,
+        });
+      }
+    }
+
+    if (check?.genRules) {
+      const unmatchedRules = check.genRules.filter(rule => !subTtps.has(rule.ttp));
+      if (unmatchedRules.length) {
+        console.warn(`[hunt-data] ${huntId}: generated rules do not map to a subhunt TTP`, unmatchedRules.map(r => r.id));
+      }
+    }
+
+    const activeCheck = (typeof checkHuntMeta !== 'undefined') ? checkHuntMeta[huntId]?.active : false;
+    if (activeCheck && /not yet executed/i.test(hunt.lock?.c || '')) {
+      console.warn(`[hunt-data] ${huntId}: active Check narrative says queries are not executed`);
+    }
+  });
+}
+validateHuntDataIntegrity();
+
 // per-hunt notes store (pre-populated with demo notes)
 const huntNotes = {
   '041': [
@@ -380,7 +416,7 @@ function switchKeepHunt(id) {
     document.getElementById('keep-crit-chip').textContent = '—';
     document.getElementById('keep-high-chip').textContent = '—';
     document.getElementById('report-doc-body').innerHTML =
-      `<div style="padding:12px 14px 0;"><div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div></div><div style="padding:20px;font-size:12px;color:var(--muted);text-align:center;">No report — hunt is Draft.</div>`;
+      `<div style="padding:12px 14px 0;"><div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Hunt Report - LOCK record assembly and IR handoff summary</span></div></div><div style="padding:20px;font-size:12px;color:var(--muted);text-align:center;">No report — hunt is Draft.</div>`;
     const chip = document.getElementById('report-status-chip');
     if (chip) { chip.textContent = 'Draft'; chip.className = 'chip chip-gray'; }
     return;
@@ -422,15 +458,23 @@ function renderKeepHunt(id) {
   }
 
   // Use per-subhunt lock text if a subhunt is selected
-  const activeSH = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+  const activeSH = (typeof activeSubhunt !== 'undefined' && activeSubhunt) ? activeSubhunt : null;
 
-  // When a subhunt is selected, scope findings + timeline to that TTP
+  // When a subhunt is selected, scope findings + timeline to that TTP.
   let scopedD = d;
   if (activeSH && d.subhunts) {
     const sh = d.subhunts.find(s => s.id === activeSH);
     if (sh) {
+      const findingMatchesSubhunt = f =>
+        f.sh === sh.id ||
+        f.ttp === sh.ttp ||
+        (f.meta && f.meta.includes(sh.ttp));
       scopedD = Object.assign({}, d, {
-        findings: d.findings.filter(f => f.meta && f.meta.includes(sh.ttp)),
+        title: `${d.title} · ${sh.label}`,
+        activeSubhunt: sh,
+        activeSubhuntLock: d.subhuntLock?.[sh.id] || null,
+        allFindings: d.findings,
+        findings: d.findings.filter(findingMatchesSubhunt),
         timeline: d.timeline.filter(t => t.tag === sh.ttp || t.tag === ''),
       });
     }
@@ -455,13 +499,32 @@ function renderEvidenceGraph(d) {
   if (!wrap) return;
 
   if (!d.graph) {
-    if (card) card.style.display = 'none';
+    if (d.activeSubhunt) {
+      if (card) card.style.display = '';
+      if (chip) chip.textContent = d.activeSubhunt.ttp;
+      wrap.innerHTML = `<div class="section-agent-line" style="margin:10px 12px 0;"><b>🎛️ Supervisor Agent</b><span>Attack Graph - scoped evidence relationships for ${d.activeSubhunt.label}</span></div><div style="padding:18px 14px;text-align:center;font-size:11px;color:var(--muted);">No graph evidence recorded for ${d.activeSubhunt.ttp} yet.</div>`;
+    } else if (card) {
+      card.style.display = 'none';
+    }
     return;
   }
   if (card) card.style.display = '';
 
-  const { nodes, edges } = d.graph;
-  if (chip) chip.textContent = nodes.length + ' nodes · ' + edges.length + ' edges';
+  let { nodes, edges } = d.graph;
+  if (d.activeSubhunt) {
+    edges = edges.filter(e => (e.label || '').includes(d.activeSubhunt.ttp));
+    const nodeIds = new Set(edges.flatMap(e => [e.from, e.to]));
+    nodes = nodes.filter(n => nodeIds.has(n.id));
+    if (!edges.length) {
+      if (chip) chip.textContent = d.activeSubhunt.ttp;
+      wrap.innerHTML = `<div class="section-agent-line" style="margin:10px 12px 0;"><b>🎛️ Supervisor Agent</b><span>Attack Graph - scoped evidence relationships for ${d.activeSubhunt.label}</span></div><div style="padding:18px 14px;text-align:center;font-size:11px;color:var(--muted);">No graph evidence recorded for ${d.activeSubhunt.ttp} yet.</div>`;
+      return;
+    }
+  }
+
+  if (chip) chip.textContent = d.activeSubhunt
+    ? `${d.activeSubhunt.ttp} · ${nodes.length} nodes · ${edges.length} edges`
+    : nodes.length + ' nodes · ' + edges.length + ' edges';
 
   // Compute SVG bounds from node positions
   const pad = 40;
@@ -507,7 +570,7 @@ function renderEvidenceGraph(d) {
     </g>`;
   }).join('');
 
-  wrap.innerHTML = `<div class="section-agent-line" style="margin:10px 12px 0;"><b>🎛️ Supervisor Agent</b><span>Attack Graph - evidence relationships and investigation chain summary</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div><svg class="ev-graph-svg" viewBox="0 0 ${maxX} ${maxY}" xmlns="http://www.w3.org/2000/svg">${defs}${edgeSvg}${nodeSvg}</svg>`;
+  wrap.innerHTML = `<div class="section-agent-line" style="margin:10px 12px 0;"><b>🎛️ Supervisor Agent</b><span>Attack Graph - evidence relationships and investigation chain summary</span></div><svg class="ev-graph-svg" viewBox="0 0 ${maxX} ${maxY}" xmlns="http://www.w3.org/2000/svg">${defs}${edgeSvg}${nodeSvg}</svg>`;
 }
 
 function renderGateDecisionLog(huntId) {
@@ -573,12 +636,12 @@ function renderKeepFindings(d) {
   const fl = document.getElementById('keep-findings-list');
   const huntComments = findingComments[activeKeepHunt] || {};
   const usersObj = typeof users !== 'undefined' ? users : {};
-  const supervisorLine = `<div class="section-agent-line" style="margin:10px 0;"><b>🎛️ Supervisor Agent</b><span>Findings - hunt record curation, severity summary, and analyst handoff</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>`;
+  const supervisorLine = `<div class="section-agent-line" style="margin:10px 0;"><b>🎛️ Supervisor Agent</b><span>Findings - hunt record curation, severity summary, and analyst handoff</span></div>`;
 
   if (!filtered.length) {
     fl.innerHTML = `${supervisorLine}<div style="padding:20px;text-align:center;font-size:11px;color:var(--muted);">No findings for this subhunt.</div>`;
   } else {
-    const fullFindings = d.findings;
+    const fullFindings = d.allFindings || d.findings;
     fl.innerHTML = supervisorLine + filtered.map(f => {
       const globalIdx = fullFindings.indexOf(f);
       const comments = huntComments[globalIdx] || [];

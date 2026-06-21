@@ -2,9 +2,8 @@
    Hunt Observe stage functions. Loaded after app.js.
    ──────────────────────────────────────────────────────────────────────── */
 
-// ── Observe edit state ──
-let observeEditMode = false;
-let observeCurrentHunt = null;
+let observeCurrentScope = null;
+const observeEditCards = { normal: false, suspicious: false };
 
 // ── Hunt Observe ──
 const observeData = {
@@ -184,16 +183,62 @@ const observeData = {
 };
 
 // ── Helpers ──
+function _derivedObserveProfile(id, shId) {
+  const kd = (typeof keepData !== 'undefined') ? keepData[id] : null;
+  const keepSh = shId ? kd?.subhunts?.find(sh => sh.id === shId) : null;
+  const lockSh = shId ? kd?.subhuntLock?.[shId] : null;
+  if (!keepSh || !lockSh) return null;
+  return {
+    label: `${keepSh.label} · ${keepSh.ttp} · ${keepSh.name}`,
+    ttpChip: keepSh.ttp.includes('1071') ? 'chip-indigo' : keepSh.ttp.includes('1484') ? 'chip-yellow' : 'chip-red',
+    normal: [
+      { text: `Expected baseline review for ${keepSh.name}: validate known-good activity before escalating ${keepSh.ttp}.` },
+      { text: lockSh.l },
+    ],
+    suspicious: [
+      { text: lockSh.o },
+      { text: lockSh.c },
+    ],
+    observables: {
+      Technique: [`${keepSh.ttp} · ${keepSh.name}`, `${keepSh.status.charAt(0).toUpperCase() + keepSh.status.slice(1)} subhunt status`],
+      'Observe Focus': [lockSh.o],
+      'Check Focus': [lockSh.c],
+    },
+  };
+}
+
 function _obsTarget(id) {
   const huntData = observeData[id];
   if (!huntData) return null;
-  const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+  const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt) ? activeSubhunt : null;
+  if (shId && !huntData.subhunts) huntData.subhunts = {};
+  if (shId && !huntData.subhunts[shId]) {
+    const derived = _derivedObserveProfile(id, shId);
+    if (derived) huntData.subhunts[shId] = derived;
+  }
   const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
   return { huntData, shData, d: shData || huntData };
 }
 
 function _catDomId(cat) {
   return 'obs-add-obs-' + cat.replace(/[^a-zA-Z0-9]/g, '-');
+}
+
+function _obsFieldValue(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function _obsHtml(text) {
+  return _obsFieldValue(text);
+}
+
+function toggleObserveCardEdit(id, card) {
+  saveObserveEdits(id);
+  observeEditCards[card] = !observeEditCards[card];
+  renderHuntObserve(id);
 }
 
 // ── Save all in-progress input edits back to data before any re-render ──
@@ -225,13 +270,6 @@ function saveObserveEdits(id) {
       if (v) t.d.observables[cat][idx] = v;
     }
   });
-}
-
-// ── Toggle edit mode ──
-function toggleObserveEdit(id) {
-  if (observeEditMode) saveObserveEdits(id); // commit edits on Done
-  observeEditMode = !observeEditMode;
-  renderHuntObserve(id);
 }
 
 // ── Normal item CRUD ──
@@ -317,12 +355,6 @@ function obsAddCategory(id) {
 }
 
 function renderHuntObserve(id) {
-  // Reset edit mode when the user navigates to a different hunt
-  if (id !== observeCurrentHunt) {
-    observeEditMode = false;
-    observeCurrentHunt = id;
-  }
-
   const huntData = observeData[id];
   const main = document.getElementById('obs-main-body');
   const side = document.getElementById('obs-side-body');
@@ -334,11 +366,23 @@ function renderHuntObserve(id) {
   }
 
   // Resolve subhunt-specific data if a subhunt is selected
-  const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt !== 'all') ? activeSubhunt : null;
+  const shId = (typeof activeSubhunt !== 'undefined' && activeSubhunt) ? activeSubhunt : null;
+  const scopeKey = `${id}:${shId || 'hunt'}`;
+  if (scopeKey !== observeCurrentScope) {
+    observeCurrentScope = scopeKey;
+    observeEditCards.normal = false;
+    observeEditCards.suspicious = false;
+  }
+  if (shId && !huntData.subhunts) huntData.subhunts = {};
+  if (shId && !huntData.subhunts[shId]) {
+    const derived = _derivedObserveProfile(id, shId);
+    if (derived) huntData.subhunts[shId] = derived;
+  }
   const shData = (shId && huntData.subhunts && huntData.subhunts[shId]) ? huntData.subhunts[shId] : null;
   const d = shData || huntData;
-  const em = observeEditMode;
   const reasoningBtn = `<button onclick="openAgentReasoning('hyp')">View reasoning</button>`;
+  const editingNormal = !!observeEditCards.normal;
+  const editingSuspicious = !!observeEditCards.suspicious;
 
   // Subhunt context banner
   const subhuntBannerHTML = shData ? `
@@ -347,25 +391,17 @@ function renderHuntObserve(id) {
       <span class="chip ${shData.ttpChip}" style="font-size:10px;">${shData.label}</span>
     </div>` : '';
 
-  // Edit/Done toggle button
-  const editToggleHTML = `
-    <div class="obs-edit-bar">
-      <button class="obs-edit-toggle${em ? ' active' : ''}" onclick="toggleObserveEdit('${id}')">
-        ${em ? '✔ Done' : '✏ Edit'}
-      </button>
-    </div>`;
-
   // ── Normal items ──
   const normalItemsHTML = d.normal.map((n, idx) => `
     <div class="obs-item">
       <span class="obs-item-icon" style="color:var(--green);">✓</span>
-      ${em
-        ? `<input type="text" class="obs-edit-input obs-normal-input" value="${n.text.replace(/"/g, '&quot;')}" data-idx="${idx}">`
-        : `<span style="flex:1;">${n.text}</span>`}
-      ${em ? `<button class="obs-delete-btn" onclick="obsDeleteNormal('${id}',${idx})" title="Remove">✕</button>` : ''}
+      ${editingNormal
+        ? `<textarea class="obs-edit-input obs-inline-field obs-normal-input" rows="2" onblur="saveObserveEdits('${id}')" data-idx="${idx}">${_obsFieldValue(n.text)}</textarea>
+           <button class="obs-delete-btn" onclick="obsDeleteNormal('${id}',${idx})" title="Remove">✕</button>`
+        : `<span style="flex:1;">${_obsHtml(n.text)}</span>`}
     </div>`).join('') || `<div class="obs-empty-state">No baseline patterns yet.</div>`;
 
-  const normalAddHTML = em ? `
+  const normalAddHTML = editingNormal ? `
     <div class="obs-add-row">
       <input class="obs-add-input" id="obs-add-normal-input" placeholder="Add baseline pattern…"
              onkeydown="if(event.key==='Enter')obsAddNormal('${id}')">
@@ -376,13 +412,13 @@ function renderHuntObserve(id) {
   const suspItemsHTML = d.suspicious.map((s, idx) => `
     <div class="obs-item">
       <span class="obs-item-icon" style="color:var(--yellow);">⚠</span>
-      ${em
-        ? `<input type="text" class="obs-edit-input obs-susp-input" value="${s.text.replace(/"/g, '&quot;')}" data-idx="${idx}">`
-        : `<span style="flex:1;">${s.text}</span>`}
-      ${em ? `<button class="obs-delete-btn" onclick="obsDeleteSuspicious('${id}',${idx})" title="Remove">✕</button>` : ''}
+      ${editingSuspicious
+        ? `<textarea class="obs-edit-input obs-inline-field obs-susp-input" rows="2" onblur="saveObserveEdits('${id}')" data-idx="${idx}">${_obsFieldValue(s.text)}</textarea>
+           <button class="obs-delete-btn" onclick="obsDeleteSuspicious('${id}',${idx})" title="Remove">✕</button>`
+        : `<span style="flex:1;">${_obsHtml(s.text)}</span>`}
     </div>`).join('') || `<div class="obs-empty-state">No adversary patterns yet.</div>`;
 
-  const suspAddHTML = em ? `
+  const suspAddHTML = editingSuspicious ? `
     <div class="obs-add-row">
       <input class="obs-add-input" id="obs-add-susp-input" placeholder="Add adversary pattern…"
              onkeydown="if(event.key==='Enter')obsAddSuspicious('${id}')">
@@ -391,11 +427,13 @@ function renderHuntObserve(id) {
 
   main.innerHTML = `
     ${subhuntBannerHTML}
-    ${editToggleHTML}
     <div class="card">
       <div class="card-head">
         <span class="card-title">✅ What Normal Looks Like</span>
-        <span class="chip chip-green" style="font-size:10px;">${d.normal.length} baseline pattern${d.normal.length !== 1 ? 's' : ''}</span>
+        <div class="obs-head-actions">
+          <span class="chip chip-green" style="font-size:10px;">${d.normal.length} baseline pattern${d.normal.length !== 1 ? 's' : ''}</span>
+          <button class="obs-edit-card-btn${editingNormal ? ' on' : ''}" onclick="toggleObserveCardEdit('${id}','normal')" title="${editingNormal ? 'Done editing' : 'Edit normal patterns'}">✎</button>
+        </div>
       </div>
       <div class="card-body" style="padding:8px 14px;">
         <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>What Normal Looks Like - defines baseline behavior, exclusions, and normal telemetry for this hunt</span>${reasoningBtn}</div>
@@ -405,7 +443,10 @@ function renderHuntObserve(id) {
     <div class="card">
       <div class="card-head">
         <span class="card-title">⚠ What Suspicious Looks Like</span>
-        <span class="chip chip-yellow" style="font-size:10px;">${d.suspicious.length} adversary pattern${d.suspicious.length !== 1 ? 's' : ''}</span>
+        <div class="obs-head-actions">
+          <span class="chip chip-yellow" style="font-size:10px;">${d.suspicious.length} adversary pattern${d.suspicious.length !== 1 ? 's' : ''}</span>
+          <button class="obs-edit-card-btn${editingSuspicious ? ' on' : ''}" onclick="toggleObserveCardEdit('${id}','suspicious')" title="${editingSuspicious ? 'Done editing' : 'Edit suspicious patterns'}">✎</button>
+        </div>
       </div>
       <div class="card-body" style="padding:8px 14px;">
         <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>What Suspicious Looks Like - defines adversary patterns, anomaly thresholds, and escalation cues</span>${reasoningBtn}</div>
@@ -413,94 +454,5 @@ function renderHuntObserve(id) {
       </div>
     </div>`;
 
-  // ── Observables (side panel) ──
-  const obsHTML = Object.entries(d.observables).map(([cat, items]) => {
-    const catInputId = _catDomId(cat);
-    const deleteCatBtn = em
-      ? ` <button class="obs-delete-cat-btn" onclick="obsDeleteCategory('${id}','${cat}')" title="Delete category">✕</button>`
-      : '';
-
-    const itemsHTML = items.map((item, idx) =>
-      em
-        ? `<div class="obs-observable obs-observable-edit">
-             <input type="text" class="obs-edit-input obs-obs-input" value="${item.replace(/"/g, '&quot;')}" data-cat="${cat.replace(/"/g, '&quot;')}" data-idx="${idx}">
-             <button class="obs-delete-btn" onclick="obsDeleteObservable('${id}','${cat}',${idx})" title="Remove">✕</button>
-           </div>`
-        : `<div class="obs-observable">${item}</div>`
-    ).join('') || `<div class="obs-empty-state" style="font-size:10px;">No observables yet.</div>`;
-
-    const addRowHTML = em ? `
-      <div class="obs-add-row">
-        <input class="obs-add-input" id="${catInputId}" placeholder="Add observable…"
-               onkeydown="if(event.key==='Enter')obsAddObservable('${id}','${cat}')">
-        <button class="obs-add-btn" onclick="obsAddObservable('${id}','${cat}')">+ Add</button>
-      </div>` : '';
-
-    return `
-      <div class="obs-cat-label">${cat}${deleteCatBtn}</div>
-      ${itemsHTML}${addRowHTML}`;
-  }).join('');
-
-  const catAddHTML = em ? `
-    <div class="obs-cat-add-section">
-      <div class="obs-cat-label" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);">New Category</div>
-      <div class="obs-add-row">
-        <input class="obs-add-input" id="obs-add-cat-input" placeholder="Category name…"
-               onkeydown="if(event.key==='Enter')obsAddCategory('${id}')">
-        <button class="obs-add-btn" onclick="obsAddCategory('${id}')">+ Add</button>
-      </div>
-    </div>` : '';
-
-  const topoSVG = `<svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
-    <defs>
-      <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-        <path d="M0,0 L0,6 L6,3 z" fill="#263550"/>
-      </marker>
-    </defs>
-    <!-- Lines from Orchestrator (130,110) to agents -->
-    <line x1="130" y1="110" x2="50" y2="50"  stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
-    <line x1="130" y1="110" x2="210" y2="50" stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
-    <line x1="130" y1="110" x2="50" y2="175" stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
-    <line x1="130" y1="110" x2="210" y2="175"stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
-    <line x1="130" y1="110" x2="130" y2="185" stroke="#263550" stroke-width="1.5" class="topo-line" marker-end="url(#arr)"/>
-    <!-- Orchestrator node (center) -->
-    <circle cx="130" cy="110" r="22" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="2"/>
-    <circle cx="130" cy="110" r="8" fill="#3b82f6" class="topo-pulse"/>
-    <text x="130" y="141" text-anchor="middle" class="topo-label" fill="#94a3b8">Orchestrator</text>
-    <!-- Hypothesis (top-left) -->
-    <circle cx="50" cy="50" r="15" fill="rgba(20,184,166,.12)" stroke="#14b8a6" stroke-width="1.5"/>
-    <text x="50" y="54" text-anchor="middle" style="font-size:13px;" fill="#14b8a6">💡</text>
-    <text x="50" y="72" text-anchor="middle" class="topo-sub" fill="#4e6180">Hypothesis</text>
-    <!-- Investigator Agent (bottom-left) -->
-    <circle cx="50" cy="175" r="15" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5"/>
-    <text x="50" y="179" text-anchor="middle" style="font-size:13px;" fill="#f59e0b">🧠</text>
-    <text x="50" y="197" text-anchor="middle" class="topo-sub" fill="#4e6180">Investigator</text>
-    <!-- Detection (bottom-center) -->
-    <circle cx="130" cy="185" r="15" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
-    <text x="130" y="189" text-anchor="middle" style="font-size:13px;" fill="#10b981">⚙️</text>
-    <text x="130" y="207" text-anchor="middle" class="topo-sub" fill="#4e6180">Detection</text>
-    <!-- Validation (bottom-right) -->
-    <circle cx="210" cy="175" r="15" fill="rgba(139,92,246,.12)" stroke="#8b5cf6" stroke-width="1.5"/>
-    <text x="210" y="179" text-anchor="middle" style="font-size:13px;" fill="#8b5cf6">✅</text>
-    <text x="210" y="197" text-anchor="middle" class="topo-sub" fill="#4e6180">Validation</text>
-  </svg>`;
-
-  side.innerHTML = `
-    <div class="card topo-card">
-      <div class="card-head">
-        <span class="card-title">🔗 Agent Topology</span>
-        <span class="chip chip-blue" style="font-size:10px;">5 agents</span>
-      </div>
-      <div class="card-body" style="padding:8px 14px 0;">
-        <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Agent Topology - Observe context routing and agent handoff map</span>${reasoningBtn}</div>
-      </div>
-      <div class="topo-svg-wrap">${topoSVG}</div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">🔭 Expected Observables</span></div>
-      <div class="card-body" style="padding:8px 14px;">
-        <div class="section-agent-line" style="margin-bottom:8px;"><b>💡 Hypothesis Agent</b><span>Expected Observables - artifacts and telemetry categories to watch</span>${reasoningBtn}</div>
-        ${obsHTML}${catAddHTML}
-      </div>
-    </div>`;
+  side.innerHTML = '';
 }

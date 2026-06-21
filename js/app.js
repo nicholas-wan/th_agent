@@ -126,11 +126,17 @@ function resetCheckForHunt(huntId) {
       // Draft or no archived data — show placeholder only
       const sumCard = document.getElementById('check-summary-card');
       sumCard.innerHTML = `<div class="card-head">
-        <span class="card-title">📊 Check Summary</span>
-        <span class="chip ${cm.statusClass || 'chip-gray'}" style="font-size:10px;">${cm.statusText || 'Inactive'}</span>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span class="card-title">🧠 Investigator Agent + ⚙️ Detection Logic Agent — Check Summary</span>
+          <span style="font-size:10px;color:var(--muted);">No active Check-stage execution</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn btn-outline btn-sm" onclick="openAgentReasoning('ts')" style="font-size:10px;">View reasoning</button>
+          <span class="chip ${cm.statusClass || 'chip-gray'}" style="font-size:10px;">${cm.statusText || 'Inactive'}</span>
+        </div>
       </div>
       <div class="card-body">
-        <div class="section-agent-line"><b>🧠 Investigator Agent + ⚙️ Detection Logic Agent</b><span>Check Summary - ${cm.closedMsg || 'no active check data for this hunt'}</span><button onclick="openAgentReasoning('ts')">View reasoning</button></div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.6;">${cm.closedMsg || 'No active check data for this hunt'}</div>
       </div>`;
       sumCard.style.display = '';
       document.getElementById('raa-card').style.display = 'none';
@@ -154,7 +160,7 @@ const huntMeta = {
 };
 
 // ── Subhunt sidebar ──
-let activeSubhunt = 'all';
+let activeSubhunt = null;
 
 function renderSubhuntSidebar(huntId) {
   const keepId = huntId.replace('TH-2026-', '');
@@ -163,16 +169,16 @@ function renderSubhuntSidebar(huntId) {
   const d = keepData[keepId];
   if (!d || !d.subhunts || !d.subhunts.length) {
     sidebar.style.display = 'none';
+    activeSubhunt = null;
     return;
+  }
+  if (!d.subhunts.some(sh => sh.id === activeSubhunt)) {
+    activeSubhunt = d.subhunts[0].id;
   }
   sidebar.style.display = '';
   const dot = s => `<div class="sh-status-dot ${s}"></div>`;
   sidebar.innerHTML = `
     <div class="sh-section-label">Subhunts</div>
-    <div class="sh-nav-item${activeSubhunt === 'all' ? ' on' : ''}" onclick="switchSubhunt('all')">
-      <div class="sh-all-row"><div class="sh-all-dot"></div>All subhunts</div>
-    </div>
-    <div class="sh-divider"></div>
     ${d.subhunts.map(sh => `
       <div class="sh-nav-item${activeSubhunt === sh.id ? ' on' : ''}" onclick="switchSubhunt('${sh.id}')">
         <div class="sh-item-row">
@@ -187,19 +193,71 @@ function renderSubhuntSidebar(huntId) {
 }
 
 function switchSubhunt(id) {
+  const currentHuntId = document.getElementById('hd-id')?.textContent || '';
+  const currentKeepId = currentHuntId.replace('TH-2026-', '');
+  if (currentKeepId && typeof saveObserveEdits === 'function') saveObserveEdits(currentKeepId);
   activeSubhunt = id;
-  const huntId = document.getElementById('hd-id')?.textContent || '';
+  const huntId = currentHuntId;
   renderSubhuntSidebar(huntId);
   const keepId = huntId.replace('TH-2026-', '');
   if (keepId) {
+    if (typeof renderLearnForSubhunt === 'function') renderLearnForSubhunt(huntId, keepId);
     renderGeneratedRulesCard();
     renderKeepHunt(keepId);
+    if (typeof renderHuntReport === 'function') renderHuntReport(keepId);
     if (typeof renderHuntObserve === 'function') renderHuntObserve(keepId);
     if (typeof renderRAAResults === 'function') renderRAAResults();
   }
 }
 
+function getActiveSubhuntTtp(huntId) {
+  if (!activeSubhunt) return null;
+  const keepId = huntId.replace('TH-2026-', '');
+  return keepData[keepId]?.subhunts?.find(sh => sh.id === activeSubhunt)?.ttp || null;
+}
+
+function applyLearnSubhuntFilter() {
+  const huntId = document.getElementById('hd-id')?.textContent || '';
+  const activeTtp = getActiveSubhuntTtp(huntId);
+  const showAll = !activeTtp;
+
+  document.querySelectorAll('#hyp-branch-wrap .hyp-branch-row, #hyp-cards-main .hyp-card').forEach(el => {
+    const rowTtp = el.dataset.ttp || '';
+    el.style.display = showAll || rowTtp === activeTtp ? '' : 'none';
+  });
+  document.querySelectorAll('#hyp-cards-main .hyp-card.sel').forEach(el => {
+    if (el.style.display === 'none') el.classList.remove('sel');
+  });
+  const visibleCards = Array.from(document.querySelectorAll('#hyp-cards-main .hyp-card'))
+    .filter(el => el.style.display !== 'none');
+  if (visibleCards.length && !visibleCards.some(el => el.classList.contains('sel'))) {
+    visibleCards[0].classList.add('sel');
+  }
+
+  const customList = document.getElementById('custom-hyp-list');
+  if (customList) {
+    customList.querySelectorAll('.hyp-card').forEach(el => {
+      const rowTtp = el.dataset.ttp || '';
+      el.style.display = showAll || !rowTtp || rowTtp === activeTtp ? '' : 'none';
+    });
+  }
+}
+
+function renderLearnForSubhunt(huntId, keepId) {
+  if (keepId !== '041' && typeof _renderDynamicHypothesisStage === 'function') {
+    _renderDynamicHypothesisStage(keepId, huntId);
+    return;
+  }
+  applyLearnSubhuntFilter();
+}
+
 function openHunt(id) {
+  const previousHuntId = document.getElementById('hd-id')?.textContent || '';
+  const previousKeepId = previousHuntId.replace('TH-2026-', '');
+  if (previousKeepId && previousKeepId !== previousHuntId && typeof saveObserveEdits === 'function') {
+    saveObserveEdits(previousKeepId);
+  }
+
   const m = huntMeta[id] || {};
   // Capture current sub-tab BEFORE any navigation changes the pane state
   const alreadyInDetail = document.getElementById('pane-hunt-detail')?.classList.contains('on');
@@ -207,8 +265,10 @@ function openHunt(id) {
     ? (document.querySelector('.sub-tab.on')?.id?.replace('subtab-', '') || null)
     : null;
 
-  // Reset subhunt selection when opening a hunt
-  activeSubhunt = 'all';
+  // Reset subhunt selection when opening a hunt. Individual subhunts are the
+  // only sidebar options, so default to the first one when available.
+  const keepId = id.replace('TH-2026-', '');
+  activeSubhunt = keepData[keepId]?.subhunts?.[0]?.id || null;
 
   document.getElementById('hd-id').textContent = id;
   const statusEl = document.getElementById('hd-status');
@@ -222,13 +282,16 @@ function openHunt(id) {
   if (activeItem) activeItem.classList.add('hsw-active');
   // Navigate to hunt-detail pane, highlight Hunts nav tab (hunt-detail is a sub-view of Hunts)
   goTab('hunt-detail', document.querySelector('.nav-tab'));
-  // Show/hide Run Pipeline button — only for active hunts with live animation (041)
+  // Show/hide Run Pipeline button — only the 041 demo has live animation data.
   const pipelineBtn = document.getElementById('run-pipeline-btn');
-  if (pipelineBtn) pipelineBtn.style.display = (m.status && m.status.includes('Closed')) ? 'none' : '';
+  if (pipelineBtn) {
+    pipelineBtn.style.display = id === 'TH-2026-041' ? '' : 'none';
+    pipelineBtn.disabled = false;
+    pipelineBtn.textContent = '▶ Run Pipeline';
+  }
   // Reset pipeline bar + feed to clean state before populating for this hunt
   if (typeof resetPipeline === 'function') resetPipeline();
   // Render observe data for this hunt
-  const keepId = id.replace('TH-2026-', '');
   renderHuntObserve(keepId);
   // Don't preserve 'keep' tab for hunts with no Keep data (e.g., drafts) — redirect to their defaultTab
   const hasKeepData = !!keepData[keepId];
@@ -250,6 +313,7 @@ function openHunt(id) {
   } else {
     updateSubTabGating();
   }
+  if (typeof renderLearnForSubhunt === 'function') renderLearnForSubhunt(id, keepId);
 }
 
 // ── Mobile nav ──
@@ -551,7 +615,7 @@ function renderHypothesisBranchRows() {
       actionText = `↳ Baseline detection path scoped from CTI report · confidence Low`;
     }
 
-    return `<div class="hyp-branch-row">
+    return `<div class="hyp-branch-row" data-ttp="${t.id}">
       <div class="hyp-branch-top">
         <span class="hyp-branch-num">${hNum}</span>
         <span class="hyp-branch-icon">${icon}</span>
@@ -562,6 +626,7 @@ function renderHypothesisBranchRows() {
       <div class="hyp-branch-action">${actionText}</div>
     </div>`;
   }).join('');
+  applyLearnSubhuntFilter();
 }
 
 function renderHypothesisCards() {
@@ -607,12 +672,13 @@ function renderHypothesisCards() {
     const selCls    = i === 0 ? ' sel' : '';
     const stmt      = (stmtFn[t.tactic] || defaultStmt)(t);
     const rat       = (ratFn[t.tactic]  || defaultRat)(t);
-    return `<div class="hyp-card${selCls}" onclick="selHyp(this)">
+    return `<div class="hyp-card${selCls}" data-ttp="${t.id}" onclick="selHyp(this)">
       <div class="hyp-head"><span class="hyp-num">${hNum}</span><div class="hyp-text">${stmt}</div></div>
       <div class="hyp-meta"><span class="chip ${ttpChip}" style="font-size:10px;">${t.id}</span><span class="chip ${confClass}" style="font-size:10px;">${confText}</span></div>
       <div class="hyp-rationale">${rat}</div>
     </div>`;
   }).join('');
+  applyLearnSubhuntFilter();
 }
 
 function updateRefDataBanner() {
@@ -1006,10 +1072,10 @@ function renderSimilarHunts(huntId) {
   const matches = similarHunts[huntId] || [];
   document.getElementById('sim-hunt-count').textContent = matches.length + ' match' + (matches.length !== 1 ? 'es' : '');
   if (!matches.length) {
-    list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div><div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0;">No similar hunts found.</div>`;
+    list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span></div><div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0;">No similar hunts found.</div>`;
     return;
   }
-  list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>` + matches.map(h => `
+  list.innerHTML = `<div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Similar Past Hunts - record linkage and reusable hunt context</span></div>` + matches.map(h => `
     <div class="sim-hunt">
       <div class="sim-hunt-head">
         <span class="chip chip-blue" style="font-size:10px;">${h.id}</span>
@@ -1115,7 +1181,7 @@ function renderHuntPivot(id) {
   const seedHTML = p.seedData.map(s => `<div class="report-rec-item" style="font-size:11px;">📎 ${s}</div>`).join('');
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Agent Pivot Recommendation - identifies unresolved threads, proposes a follow-on hunt, and seeds the next Learn stage</span><button onclick="openAgentReasoning('orch')">View reasoning</button></div>
+      <div class="section-agent-line"><b>🎛️ Supervisor Agent</b><span>Agent Pivot Recommendation - identifies unresolved threads, proposes a follow-on hunt, and seeds the next Learn stage</span></div>
       <div>
         <div class="label" style="margin-bottom:5px;">Proposed Next Hunt — <span style="color:var(--blue);font-weight:600;">${p.huntId}</span></div>
         <div style="font-size:12px;color:var(--sub);line-height:1.6;">${p.hypothesis}</div>
@@ -1765,7 +1831,7 @@ function renderCustomHypotheses() {
   if (!customHypotheses.length) { list.innerHTML = ''; return; }
   list.innerHTML = customHypotheses.map((h, i) => {
     const st = h.sentenceText || '';
-    return `<div class="hyp-card custom-hyp-card" onclick="selHyp(this)">
+    return `<div class="hyp-card custom-hyp-card" data-ttp="${h.ttpId || ''}" onclick="selHyp(this)">
       <div class="hyp-head">
         <span class="hyp-num">${h.num}</span>
         <div class="hyp-text">${h.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
@@ -1778,6 +1844,7 @@ function renderCustomHypotheses() {
       ${st ? `<div class="hyp-rationale" style="border-left:2px solid rgba(99,102,241,.3);padding-left:7px;margin-top:4px;font-style:italic;">"${st.replace(/</g,'&lt;').replace(/>/g,'&gt;')}"</div>` : ''}
     </div>`;
   }).join('');
+  applyLearnSubhuntFilter();
 }
 
 // ── Sentence tooltip IIFE ──

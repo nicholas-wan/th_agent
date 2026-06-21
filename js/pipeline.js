@@ -1,5 +1,5 @@
 ﻿/* ── Pipeline / Feed ────────────────────────────────────────────────────
-   LOCK pipeline state (maxStep, feedSteps, feedAgents), feed renderer
+   LOCK pipeline state (maxStep, feedSteps, feedActors), feed renderer
    (feedAddEntry/Block/Sep), agent pills, topology pulse, setStep/play.
    Loaded after app.js — references globals declared there.
    ──────────────────────────────────────────────────────────────────────── */
@@ -41,8 +41,10 @@ function updateAgentPills(i) {
   set('ap-ts',   s.ts);   set('ap-dl',   s.dl);
 }
 
-// ── Live agent feed ──
-const feedAgents = {
+// ── Live reasoning feed actors ──
+// Includes agents plus tools that can speak in the feed. Tools remain tools in
+// the UI; this map only gives feed cards a display label, icon, and color.
+const feedActors = {
   hyp:  { icon:'💡', name:'Hypothesis' },
   orch: { icon:'🎛️', name:'Orchestrator' },
   data: { icon:'🟠', name:'Splunk ES' },
@@ -239,7 +241,7 @@ function _addThinking(agent) {
   if (!feed) return null;
   const empty = document.getElementById('agents-feed-empty');
   if (empty) empty.remove();
-  const ag  = feedAgents[agent] || { icon:'🤖', name:'Agent' };
+  const ag  = feedActors[agent] || { icon:'🤖', name:'Actor' };
   const col = feedAgentColors[agent] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
   const el  = document.createElement('div');
   el.className  = 'feed-thinking';
@@ -299,7 +301,7 @@ function feedAddEntry(e, onComplete) {
   const { type, agent, to } = e;
 
   // Micro-state label
-  const label = to ? `→ ${feedAgents[to]?.name || to}` : (_microState[type] || 'active');
+  const label = to ? `→ ${feedActors[to]?.name || to}` : (_microState[type] || 'active');
   _setAgentLegendStatus(agent, label);
   if (to) _setAgentLegendStatus(to, 'receiving…');
 
@@ -334,7 +336,7 @@ function feedAddBlock(e, doStream = false, onDone) {
   const empty = document.getElementById('agents-feed-empty');
   if (empty) empty.remove();
 
-  const ag      = feedAgents[agent] || { icon:'🤖', name:'Agent' };
+  const ag      = feedActors[agent] || { icon:'🤖', name:'Actor' };
   const col     = feedAgentColors[agent] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
   const now     = new Date();
   const tsStr   = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
@@ -344,7 +346,7 @@ function feedAddBlock(e, doStream = false, onDone) {
 
   let headHtml;
   if (type === 'relay' && to) {
-    const toAg  = feedAgents[to] || { icon:'🤖', name:'Agent' };
+    const toAg  = feedActors[to] || { icon:'🤖', name:'Actor' };
     const toCol = feedAgentColors[to] || { bg:'rgba(148,163,184,.15)', border:'#94a3b8' };
     headHtml = `<div class="feed-block-avatar" style="background:${col.bg};border:1px solid ${col.border};">${ag.icon}</div>
       <span class="feed-block-name">${ag.name}</span>
@@ -602,11 +604,7 @@ function pulseTopoLine(agent) {
 }
 
 function topoFilterFeed(agent) {
-  let matchPill = null;
-  document.querySelectorAll('.ffp').forEach(b => {
-    const oc = b.getAttribute('onclick') || '';
-    if (oc.includes(`'${agent}'`)) matchPill = b;
-  });
+  const matchPill = document.querySelector(`.ffp[data-agent="${agent}"]`);
   setFeedFilter(agent, matchPill);
 }
 
@@ -747,7 +745,7 @@ function resetPipeline() {
   // Restore Stage 1 info-bar
   const s1ib = document.querySelector('#stage-1 .info-bar');
   if (s1ib && _origStage1InfoBar) s1ib.innerHTML = _origStage1InfoBar;
-  // Restore Stage 2 (overwritten by _renderDynamicStages for non-041 hunts)
+  // Restore Stage 2 (overwritten by _renderDynamicHypothesisStage for non-041 hunts)
   const s2 = document.getElementById('stage-2');
   if (s2 && _origStage2Body) s2.innerHTML = _origStage2Body;
   // Reset repo-loaded-badge
@@ -896,17 +894,17 @@ const closedLearnData = {
 };
 
 // ── Feed data integrity validator ──────────────────────────────────────────
-// Runs once at page load. Any entry that references an agent key not present
-// in feedAgents / feedAgentColors fires a console.warn immediately, making
+// Runs once at page load. Any entry that references an actor key not present
+// in feedActors / feedAgentColors fires a console.warn immediately, making
 // regressions visible without needing to step through the pipeline manually.
-// To fix a warning: add the missing key to BOTH feedAgents AND feedAgentColors.
+// To fix a warning: add the missing key to BOTH feedActors AND feedAgentColors.
 function _validateFeedData() {
-  const known = new Set(Object.keys(feedAgents));
+  const known = new Set(Object.keys(feedActors));
 
-  // 1. feedAgents ↔ feedAgentColors must be in sync
-  const missingColor = Object.keys(feedAgents).filter(k => !feedAgentColors[k]);
+  // 1. feedActors ↔ feedAgentColors must be in sync
+  const missingColor = Object.keys(feedActors).filter(k => !feedAgentColors[k]);
   if (missingColor.length) {
-    console.warn('[pipeline] feedAgents ↔ feedAgentColors mismatch — no color entry for:', missingColor.join(', '));
+    console.warn('[pipeline] feedActors ↔ feedAgentColors mismatch — no color entry for:', missingColor.join(', '));
   }
 
   // 2. Check every entry in a feed array
@@ -914,10 +912,10 @@ function _validateFeedData() {
     entries.forEach((e, i) => {
       if (!e || e.sep) return;
       if (e.agent && !known.has(e.agent)) {
-        console.warn(`[pipeline] ${source}[${i}]: agent "${e.agent}" not in feedAgents — will render as generic 🤖 with no colour`);
+        console.warn(`[pipeline] ${source}[${i}]: agent "${e.agent}" not in feedActors — will render as generic 🤖 with no colour`);
       }
       if (e.to && !known.has(e.to)) {
-        console.warn(`[pipeline] ${source}[${i}]: to "${e.to}" not in feedAgents — relay header will render as generic 🤖 with no colour`);
+        console.warn(`[pipeline] ${source}[${i}]: to "${e.to}" not in feedActors — relay header will render as generic 🤖 with no colour`);
       }
     });
   }
@@ -930,19 +928,19 @@ function _validateFeedData() {
 }
 _validateFeedData();
 
-// ── Render stages 2-4 dynamically for non-041 hunts ──
-function _renderDynamicStages(keepId, huntId) {
+// ── Render dynamic hypothesis stage for non-041 hunts ──
+function _renderDynamicHypothesisStage(keepId, huntId) {
   const kd = (typeof keepData !== 'undefined') ? keepData[keepId] : null;
   const ld = closedLearnData[keepId];
   const subs = kd?.subhunts || [];
   const locks = kd?.subhuntLock || {};
   const cm = (typeof checkHuntMeta !== 'undefined') ? checkHuntMeta[keepId] : null;
-  const isActive = cm && cm.active;
+  const activeTtp = (typeof getActiveSubhuntTtp === 'function') ? getActiveSubhuntTtp(huntId) : null;
+  const visibleSubs = activeTtp ? subs.filter(sh => sh.ttp === activeTtp) : subs;
 
   // ── Stage 2: Hypotheses ──
   const s2body = document.querySelector('#stage-2 .card-body');
   if (s2body && subs.length) {
-    const statusIcon = s => s === 'confirmed' ? '✅' : s === 'active' ? '🔵' : '⬜';
     const statusChip = s => s === 'confirmed'
       ? '<span class="chip chip-green" style="font-size:10px;">Confirmed</span>'
       : s === 'active'
@@ -965,12 +963,13 @@ function _renderDynamicStages(keepId, huntId) {
     s2body.innerHTML = `
       <div class="section-agent-line"><b>💡 Hypothesis Agent</b><span>Hunt Hypotheses - generated hunt hypotheses from scoped TTPs and prior hunt context</span><button onclick="openAgentReasoning('hyp')">View reasoning</button></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        ${subs.map((sh, i) => {
+        ${visibleSubs.map((sh) => {
           const lk = locks[sh.id] || {};
           const conf = confMap[sh.ttp] || '—';
-          return `<div class="hyp-card" style="cursor:default;">
+          const originalIdx = subs.findIndex(s => s.id === sh.id);
+          return `<div class="hyp-card" data-ttp="${sh.ttp}" style="cursor:default;">
             <div class="hyp-head">
-              <span class="hyp-num">H-0${i+1}</span>
+              <span class="hyp-num">H-0${originalIdx + 1}</span>
               <div class="hyp-text">${lk.l || sh.name}</div>
             </div>
             <div class="hyp-meta">
@@ -1036,8 +1035,8 @@ function loadClosedPipeline(huntId, keepId) {
     if (s) s.className = 'stage card show';
   }
 
-  // For non-041 hunts, dynamically render stages 2-4 from hunt data
-  if (!is041) _renderDynamicStages(keepId, huntId);
+  // For non-041 hunts, dynamically render the hypothesis cards from hunt data
+  if (!is041) _renderDynamicHypothesisStage(keepId, huntId);
 
   // Hide/show TTP selection buttons (only interactive for 041 live pipeline)
   const ttpBtnBar = document.getElementById('ttp-btn-bar');
